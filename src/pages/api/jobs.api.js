@@ -4,7 +4,10 @@ export async function createJob(payload) {
   const res = await http.post("/api/jobs", payload);
   return res.data.job;
 }
-
+export async function updateJob(id, payload) {
+  const res = await http.patch(`/api/jobs/${id}`, payload);
+  return res.data.job;
+}
 export async function listJobs(status) {
   const url = status
     ? `/api/jobs?status=${encodeURIComponent(status)}`

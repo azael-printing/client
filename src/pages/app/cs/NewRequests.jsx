@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import { listJobs, workflowAction } from "../../api/jobs.api";
 
-export default function InProduction() {
+export default function NewRequests() {
   const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
 
   async function load() {
     try {
       setErr("");
-      const data = await listJobs("IN_PRODUCTION");
-      setJobs(data);
+      setJobs(await listJobs("NEW_REQUEST"));
     } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to load in production jobs");
+      setErr(e?.response?.data?.message || "Failed to load new requests");
     }
   }
 
@@ -19,12 +18,12 @@ export default function InProduction() {
     load();
   }, []);
 
-  async function complete(jobId) {
+  async function approve(jobId) {
     try {
-      await workflowAction(jobId, "PRODUCTION_COMPLETE");
-      await load();
+      await workflowAction(jobId, "CS_PRODUCTION_READY");
+      load();
     } catch (e) {
-      alert(e?.response?.data?.message || "Failed to complete production");
+      alert(e?.response?.data?.message || "Failed to approve production");
     }
   }
 
@@ -32,7 +31,7 @@ export default function InProduction() {
     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-extrabold text-primary">
-          Operator — In Production
+          CS — New Requests
         </h2>
         <button
           onClick={load}
@@ -43,7 +42,8 @@ export default function InProduction() {
       </div>
 
       <p className="mt-2 text-zinc-700">
-        Jobs you accepted appear here (status: <b>IN_PRODUCTION</b>).
+        These are jobs created by you that don’t require design (or haven’t been
+        pushed forward yet).
       </p>
 
       {err && <div className="mt-3 text-red-600 font-bold">{err}</div>}
@@ -55,11 +55,10 @@ export default function InProduction() {
               <th className="py-2 pr-4">Job#</th>
               <th className="py-2 pr-4">Work</th>
               <th className="py-2 pr-4">Customer</th>
-              <th className="py-2 pr-4">Qty</th>
+              <th className="py-2 pr-4">Designer Required</th>
               <th className="py-2 pr-4">Action</th>
             </tr>
           </thead>
-
           <tbody>
             {jobs.map((j) => (
               <tr key={j.id} className="border-t border-zinc-200">
@@ -67,23 +66,28 @@ export default function InProduction() {
                 <td className="py-2 pr-4">{j.workType}</td>
                 <td className="py-2 pr-4">{j.customerName}</td>
                 <td className="py-2 pr-4">
-                  {j.qty} {j.unitType}
+                  {j.designerRequired ? "Yes" : "No"}
                 </td>
                 <td className="py-2 pr-4">
-                  <button
-                    onClick={() => complete(j.id)}
-                    className="px-3 py-2 rounded-xl bg-success text-white font-bold hover:opacity-90"
-                  >
-                    Production Completed
-                  </button>
+                  {!j.designerRequired ? (
+                    <button
+                      onClick={() => approve(j.id)}
+                      className="px-3 py-2 rounded-xl bg-primary text-white font-bold hover:opacity-90"
+                    >
+                      Approve → Production Ready
+                    </button>
+                  ) : (
+                    <span className="text-zinc-500 font-semibold">
+                      Design flow
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}
-
             {jobs.length === 0 && (
               <tr>
-                <td className="py-4 text-zinc-600" colSpan={5}>
-                  No jobs currently in production.
+                <td colSpan={5} className="py-4 text-zinc-600">
+                  No new requests.
                 </td>
               </tr>
             )}

@@ -32,8 +32,20 @@ import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 import CreateOrder from "./pages/app/jobs/CreateOrder";
 import JobsList from "./pages/app/jobs/JobsList";
 //
+import NewRequests from "./pages/app/cs/NewRequests";
+import InProductionCS from "./pages/app/cs/InProduction";
+
+// import DesignAssigned from "./pages/app/designer/DesignAssigned";
+// import InDesign from "./pages/app/designer/InDesign";
+import DesignCompleted from "./pages/app/cs/DesignCompleted";
+import ProductionCompleted from "./pages/app/cs/ProductionCompleted";
+
+import DesignAssigned from "./pages/app/designer/DesignAssigned";
+import InDesign from "./pages/app/designer/InDesign";
+
 import OperatorRequests from "./pages/app/operator/OperatorRequests";
 import InProduction from "./pages/app/operator/InProduction";
+
 function BootGate({ children }) {
   const { booting } = useAuth();
   if (booting) return <LoadingSplash />;
@@ -79,9 +91,25 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="create-order" element={<CreateOrder />} />
               <Route path="jobs" element={<JobsList />} />
               {/* ========= */}
-              <Route path="operator-requests" element={<OperatorRequests />} />
-              <Route path="in-production" element={<InProduction />} />
 
+              {/* ====== */}
+              <Route path="cs-design-completed" element={<DesignCompleted />} />
+              <Route
+                path="cs-production-completed"
+                element={<ProductionCompleted />}
+              />
+              <Route path="cs-new-requests" element={<NewRequests />} />
+              <Route path="cs-in-production" element={<InProductionCS />} />
+
+              {/* <Route path="designer-assigned" element={<DesignAssigned />} />
+              <Route path="designer-in-design" element={<InDesign />} />
+               */}
+              <Route path="designer-assigned" element={<DesignAssigned />} />
+              <Route path="designer-in-design" element={<InDesign />} />
+
+              <Route path="operator-requests" element={<OperatorRequests />} />
+              <Route path="operator-in-production" element={<InProduction />} />
+              {/* ==== */}
               <Route index element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

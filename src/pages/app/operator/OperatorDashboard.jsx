@@ -19,11 +19,24 @@ export default function OperatorDashboard() {
           >
             New Requests
           </Link>
-          <Link
+          {/* <Link
             to="/app/in-production"
             className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-bgLight transition"
           >
             In Production
+          </Link> */}
+
+          {/* <Link
+            to="/app/operator-requiest"
+            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-bgLight transition"
+          >
+            Operator In Request
+          </Link> */}
+          <Link
+            to="/app/operator-in-production"
+            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-bgLight transition"
+          >
+            Operator in Production
           </Link>
         </div>
       </div>

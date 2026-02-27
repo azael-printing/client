@@ -1,4 +1,3 @@
-// OperatorRequests.jsx
 import { useEffect, useState } from "react";
 import { listJobs, workflowAction } from "../../api/jobs.api";
 
@@ -9,9 +8,12 @@ export default function OperatorRequests() {
   async function load() {
     try {
       setErr("");
-      setJobs(await listJobs("PRODUCTION_READY"));
+      const data = await listJobs("PRODUCTION_READY");
+      setJobs(data);
     } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to load operator requests");
+      setErr(
+        e?.response?.data?.message || "Failed to load production-ready jobs",
+      );
     }
   }
 
@@ -20,15 +22,19 @@ export default function OperatorRequests() {
   }, []);
 
   async function accept(jobId) {
-    await workflowAction(jobId, "OPERATOR_ACCEPT");
-    load();
+    try {
+      await workflowAction(jobId, "OPERATOR_ACCEPT");
+      await load();
+    } catch (e) {
+      alert(e?.response?.data?.message || "Failed to accept job");
+    }
   }
 
   return (
     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-extrabold text-primary">
-          New Production Requests
+          Operator — New Requests
         </h2>
         <button
           onClick={load}
@@ -37,6 +43,10 @@ export default function OperatorRequests() {
           Refresh
         </button>
       </div>
+
+      <p className="mt-2 text-zinc-700">
+        Only jobs approved by CS appear here (status: <b>PRODUCTION_READY</b>).
+      </p>
 
       {err && <div className="mt-3 text-red-600 font-bold">{err}</div>}
 
@@ -47,16 +57,21 @@ export default function OperatorRequests() {
               <th className="py-2 pr-4">Job#</th>
               <th className="py-2 pr-4">Work</th>
               <th className="py-2 pr-4">Customer</th>
+              <th className="py-2 pr-4">Qty</th>
               <th className="py-2 pr-4">Status</th>
               <th className="py-2 pr-4">Action</th>
             </tr>
           </thead>
+
           <tbody>
             {jobs.map((j) => (
               <tr key={j.id} className="border-t border-zinc-200">
                 <td className="py-2 pr-4 font-bold text-primary">#{j.jobNo}</td>
                 <td className="py-2 pr-4">{j.workType}</td>
                 <td className="py-2 pr-4">{j.customerName}</td>
+                <td className="py-2 pr-4">
+                  {j.qty} {j.unitType}
+                </td>
                 <td className="py-2 pr-4">{j.status}</td>
                 <td className="py-2 pr-4">
                   <button
@@ -68,10 +83,11 @@ export default function OperatorRequests() {
                 </td>
               </tr>
             ))}
+
             {jobs.length === 0 && (
               <tr>
-                <td className="py-4 text-zinc-600" colSpan={5}>
-                  No new requests.
+                <td className="py-4 text-zinc-600" colSpan={6}>
+                  No production-ready jobs.
                 </td>
               </tr>
             )}

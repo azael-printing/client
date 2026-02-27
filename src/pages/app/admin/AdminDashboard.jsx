@@ -1,4 +1,5 @@
 // AdminDashboard.jsx
+import NotificationsPanel from "../../../components/app/NotificationsPanel";
 export default function AdminDashboard() {
   return (
     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">

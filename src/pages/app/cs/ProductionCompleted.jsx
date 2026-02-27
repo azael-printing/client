@@ -1,17 +1,20 @@
+// ProductionCompleted.jsx
 import { useEffect, useState } from "react";
-import { listJobs, workflowAction } from "../../api/jobs.api";
+import { listJobs } from "../../api/jobs.api";
 
-export default function InProduction() {
+export default function ProductionCompleted() {
   const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
 
   async function load() {
     try {
       setErr("");
-      const data = await listJobs("IN_PRODUCTION");
-      setJobs(data);
+      setJobs(await listJobs("PRODUCTION_DONE"));
     } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to load in production jobs");
+      setErr(
+        e?.response?.data?.message ||
+          "Failed to load production completed jobs",
+      );
     }
   }
 
@@ -19,20 +22,11 @@ export default function InProduction() {
     load();
   }, []);
 
-  async function complete(jobId) {
-    try {
-      await workflowAction(jobId, "PRODUCTION_COMPLETE");
-      await load();
-    } catch (e) {
-      alert(e?.response?.data?.message || "Failed to complete production");
-    }
-  }
-
   return (
     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-extrabold text-primary">
-          Operator — In Production
+          Production Completed
         </h2>
         <button
           onClick={load}
@@ -41,10 +35,6 @@ export default function InProduction() {
           Refresh
         </button>
       </div>
-
-      <p className="mt-2 text-zinc-700">
-        Jobs you accepted appear here (status: <b>IN_PRODUCTION</b>).
-      </p>
 
       {err && <div className="mt-3 text-red-600 font-bold">{err}</div>}
 
@@ -55,35 +45,22 @@ export default function InProduction() {
               <th className="py-2 pr-4">Job#</th>
               <th className="py-2 pr-4">Work</th>
               <th className="py-2 pr-4">Customer</th>
-              <th className="py-2 pr-4">Qty</th>
-              <th className="py-2 pr-4">Action</th>
+              <th className="py-2 pr-4">Status</th>
             </tr>
           </thead>
-
           <tbody>
             {jobs.map((j) => (
               <tr key={j.id} className="border-t border-zinc-200">
                 <td className="py-2 pr-4 font-bold text-primary">#{j.jobNo}</td>
                 <td className="py-2 pr-4">{j.workType}</td>
                 <td className="py-2 pr-4">{j.customerName}</td>
-                <td className="py-2 pr-4">
-                  {j.qty} {j.unitType}
-                </td>
-                <td className="py-2 pr-4">
-                  <button
-                    onClick={() => complete(j.id)}
-                    className="px-3 py-2 rounded-xl bg-success text-white font-bold hover:opacity-90"
-                  >
-                    Production Completed
-                  </button>
-                </td>
+                <td className="py-2 pr-4">{j.status}</td>
               </tr>
             ))}
-
             {jobs.length === 0 && (
               <tr>
-                <td className="py-4 text-zinc-600" colSpan={5}>
-                  No jobs currently in production.
+                <td colSpan={4} className="py-4 text-zinc-600">
+                  No production completed jobs.
                 </td>
               </tr>
             )}
