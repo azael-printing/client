@@ -3,7 +3,7 @@ import bgvideo from "../public/printing-advert.mp4";
 export default function Home() {
   return (
     <div>
-      <section className="relative min-h-[calc(100vh-72px)] flex items-center   justify-center overflow-hidden">
+      <section className="relative min-h-[calc(100vh-72px)] flex items-center   justify-center overflow-hidden ">
         {/* Replace src with your real video path in /public */}
         <video
           className="absolute inset-0 w-full h-full object-cover"
@@ -43,17 +43,17 @@ export default function Home() {
         </div>
       </section>
       <section className="relative  flex items-center   justify-center ">
-        <div className=" col-span-4 border-x-amber-950 boarder-y-amber-800">
-          <h1 className=" bg-blue-600 border-spacing-10 mt-20 py-4 px-7  rounded-3xl text-white text-3xl md:text-5xl font-extrabold tracking-tight">
+        <div className=" max-w-6xl mx-auto px-4 py-10">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-blue-700">
             {" "}
             Our Services{" "}
           </h1>
         </div>
       </section>
 
-      <section className="relative  flex items-center   justify-center ">
-        <div>
-          <h1 className=" bg-blue-600 border-spacing-10 mt-20 py-4 px-7  rounded-3xl text-white text-3xl md:text-5xl font-extrabold tracking-tight">
+      <section className="relative  flex items-center   justify-center  ">
+        <div className="max-w-6xl mx-auto px-4 py-10">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-blue-700">
             {" "}
             About Us{" "}
           </h1>
@@ -61,24 +61,24 @@ export default function Home() {
       </section>
 
       <section className="relative  flex items-center   justify-center ">
-        <div>
-          <h1 className=" bg-blue-600 border-spacing-10 mt-20 py-4 px-7  rounded-3xl text-white text-3xl md:text-5xl font-extrabold tracking-tight">
+        <div className="max-w-6xl mx-auto px-4 py-10">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-blue-700">
             {" "}
             Our Team{" "}
           </h1>
         </div>
       </section>
       <section className="relative  flex items-center   justify-center ">
-        <div>
-          <h1 className="  bg-blue-600 border-spacing-10 mt-20 py-4 px-7  rounded-3xl text-white text-3xl md:text-5xl font-extrabold tracking-tight">
+        <div className="ax-w-6xl mx-auto px-4 py-10">
+          <h1 className=" text-2xl md:text-3xl font-extrabold text-blue-700">
             {" "}
             Our Collegues{" "}
           </h1>
         </div>
       </section>
       <section className="relative  flex items-center   justify-center ">
-        <div>
-          <h1 className=" bg-blue-600 border-spacing-10 mt-20 py-4 px-7  rounded-3xl text-white text-3xl md:text-5xl font-extrabold tracking-tight">
+        <div className="ax-w-6xl mx-auto px-4 py-10">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-blue-700">
             {" "}
             Contact Us{" "}
           </h1>
