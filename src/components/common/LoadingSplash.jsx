@@ -9,7 +9,7 @@ export default function LoadingSplash() {
           alt="Azael Printing"
           className="h-14 mx-auto drop-shadow"
         />
-        <div className="mt-3 text-sm opacity-90">Loading…</div>
+        <div className="mt-3 text-lg opacity-90 animate-pulse">Loading…</div>
       </div>
     </div>
   );

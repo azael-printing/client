@@ -28,6 +28,11 @@ import DesignerDashboard from "./pages/app/designer/DesignerDashboard";
 import OperatorDashboard from "./pages/app/operator/OperatorDashboard";
 import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 
+//
+import FinanceOverview from "./pages/app/finance/FinanceOverview";
+import FinanceLayout from "./components/layouts/FinanceLayout";
+import FinanceJobs from "./pages/app/finance/FinanceJobs";
+import FinanceAudit from "./pages/app/finance/FinanceAudit";
 // Wireing routes in /app jobs
 import CreateOrder from "./pages/app/jobs/CreateOrder";
 import JobsList from "./pages/app/jobs/JobsList";
@@ -45,6 +50,9 @@ import InDesign from "./pages/app/designer/InDesign";
 
 import OperatorRequests from "./pages/app/operator/OperatorRequests";
 import InProduction from "./pages/app/operator/InProduction";
+
+import FinanceWaiting from "./pages/app/finance/FinanceWaiting";
+import FinanceDoneTracking from "./pages/app/finance/FinanceDoneTracking";
 
 function BootGate({ children }) {
   const { booting } = useAuth();
@@ -85,8 +93,34 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="cs" element={<CSDashboard />} />
               <Route path="designer" element={<DesignerDashboard />} />
               <Route path="operator" element={<OperatorDashboard />} />
-              <Route path="finance" element={<FinanceDashboard />} />
+              {/* <Route path="finance" element={<FinanceDashboard />} /> */}
+              {/*  */}
 
+              <Route path="finance" element={<FinanceLayout />}>
+                <Route path="overview" element={<FinanceOverview />} />
+                <Route path="jobs" element={<FinanceJobs />} />
+                <Route path="audit" element={<FinanceAudit />} />
+
+                {/* keep these pages for later; we will implement */}
+                <Route
+                  path="revenue"
+                  element={
+                    <div className="p-6 font-bold text-zinc-600">
+                      Revenue (next)
+                    </div>
+                  }
+                />
+                <Route
+                  path="expenses"
+                  element={
+                    <div className="p-6 font-bold text-zinc-600">
+                      Expenses (next)
+                    </div>
+                  }
+                />
+
+                <Route index element={<FinanceOverview />} />
+              </Route>
               {/* ✅ jobs MUST be inside /app */}
               <Route path="create-order" element={<CreateOrder />} />
               <Route path="jobs" element={<JobsList />} />
@@ -101,9 +135,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="cs-new-requests" element={<NewRequests />} />
               <Route path="cs-in-production" element={<InProductionCS />} />
 
-              {/* <Route path="designer-assigned" element={<DesignAssigned />} />
-              <Route path="designer-in-design" element={<InDesign />} />
-               */}
+              <Route path="finance-waiting" element={<FinanceWaiting />} />
+              <Route path="finance-done" element={<FinanceDoneTracking />} />
+
               <Route path="designer-assigned" element={<DesignAssigned />} />
               <Route path="designer-in-design" element={<InDesign />} />
 

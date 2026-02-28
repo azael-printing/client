@@ -1,8 +1,9 @@
 // NotificationsPanel.jsx
 import { useEffect, useState } from "react";
+
 import {
-  listMyNotifications,
-  markNotificationSeen,
+  myNotifications,
+  markNotificationRead,
 } from "../../pages/api/notifications.api";
 
 export default function NotificationsPanel() {
@@ -12,7 +13,7 @@ export default function NotificationsPanel() {
   async function load() {
     try {
       setErr("");
-      const data = await listMyNotifications();
+      const data = await myNotifications();
       setItems(data);
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load notifications");
@@ -23,9 +24,13 @@ export default function NotificationsPanel() {
     load();
   }, []);
 
-  async function seen(id) {
-    await markNotificationSeen(id);
-    load();
+  async function markRead(id) {
+    try {
+      await markNotificationRead(id);
+      load();
+    } catch (e) {
+      alert(e?.response?.data?.message || "Failed to mark read");
+    }
   }
 
   return (
@@ -42,31 +47,37 @@ export default function NotificationsPanel() {
 
       {err && <div className="mt-3 text-red-600 font-bold">{err}</div>}
 
-      <div className="mt-4 space-y-2">
-        {items.length === 0 && (
-          <div className="text-sm text-zinc-600">No notifications.</div>
-        )}
-
+      <div className="mt-4 grid gap-3">
         {items.map((n) => (
           <div
             key={n.id}
-            className={`p-4 rounded-2xl border ${n.seenAt ? "border-zinc-200" : "border-primary"} `}
+            className={`border rounded-2xl p-4 ${
+              n.isRead
+                ? "border-zinc-200 bg-white"
+                : "border-primary bg-bgLight"
+            }`}
           >
-            <div className="font-bold text-zinc-900">{n.message}</div>
-            <div className="text-xs text-zinc-500 mt-1">
+            <div className="text-sm text-zinc-600">
               {new Date(n.createdAt).toLocaleString()}
             </div>
+            <div className="mt-1 font-bold text-zinc-900">{n.message}</div>
 
-            {!n.seenAt && (
-              <button
-                onClick={() => seen(n.id)}
-                className="mt-3 px-3 py-2 rounded-xl bg-primary text-white font-bold hover:opacity-90"
-              >
-                Mark Seen
-              </button>
-            )}
+            <div className="mt-3 flex gap-2">
+              {!n.isRead && (
+                <button
+                  onClick={() => markRead(n.id)}
+                  className="px-3 py-2 rounded-xl bg-primary text-white font-bold hover:opacity-90"
+                >
+                  Mark as Read
+                </button>
+              )}
+            </div>
           </div>
         ))}
+
+        {items.length === 0 && (
+          <div className="text-zinc-600">No notifications.</div>
+        )}
       </div>
     </div>
   );
