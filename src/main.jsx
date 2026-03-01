@@ -23,10 +23,18 @@ import Management from "./pages/public/Management";
 import Login from "./pages/auth/Login";
 
 import AdminDashboard from "./pages/app/admin/AdminDashboard";
-import CSDashboard from "./pages/app/cs/CSDashboard";
+// import CSDashboard from "./pages/app/cs/CSDashboard";
+import CSLayout from "./components/layouts/CsLayout";
+import CSOverview from "./pages/app/cs/CSOverview";
+import CSNewRequests from "./pages/app/cs/CSNewRequests";
+import CSInDesign from "./pages/app/cs/CSInDesign";
+import CSInProduction from "./pages/app/cs/CSInProduction";
+import CSCompleted from "./pages/app/cs/CSCompleted";
+import CSAudit from "./pages/app/cs/CSAudit";
+
 import DesignerDashboard from "./pages/app/designer/DesignerDashboard";
 import OperatorDashboard from "./pages/app/operator/OperatorDashboard";
-import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
+// import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 
 //
 import FinanceOverview from "./pages/app/finance/FinanceOverview";
@@ -90,11 +98,21 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               }
             >
               <Route path="admin" element={<AdminDashboard />} />
-              <Route path="cs" element={<CSDashboard />} />
+              {/* <Route path="cs" element={<CSDashboard />} /> */}
               <Route path="designer" element={<DesignerDashboard />} />
               <Route path="operator" element={<OperatorDashboard />} />
               {/* <Route path="finance" element={<FinanceDashboard />} /> */}
               {/*  */}
+
+              <Route path="cs" element={<CSLayout />}>
+                <Route path="overview" element={<CSOverview />} />
+                <Route path="new" element={<CSNewRequests />} />
+                <Route path="design" element={<CSInDesign />} />
+                <Route path="production" element={<CSInProduction />} />
+                <Route path="completed" element={<CSCompleted />} />
+                <Route path="audit" element={<CSAudit />} />
+                <Route index element={<CSOverview />} />
+              </Route>
 
               <Route path="finance" element={<FinanceLayout />}>
                 <Route path="overview" element={<FinanceOverview />} />
