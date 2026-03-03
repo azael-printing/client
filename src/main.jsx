@@ -32,7 +32,14 @@ import CSInProduction from "./pages/app/cs/CSInProduction";
 import CSCompleted from "./pages/app/cs/CSCompleted";
 import CSAudit from "./pages/app/cs/CSAudit";
 
-import DesignerDashboard from "./pages/app/designer/DesignerDashboard";
+// import DesignerDashboard from "./pages/app/designer/DesignerDashboard";
+import DesignerLayout from "./components/layouts/DesignerLayout";
+import DesignerOverview from "./pages/app/designer/DesignerOverview";
+import DesignerQueue from "./pages/app/designer/DesignerQueue";
+import DesignerInDesign from "./pages/app/designer/DesignerInDesign";
+import DesignerCompleted from "./pages/app/designer/DesignerCompleted";
+import DesignerAudit from "./pages/app/designer/DesignerAudit";
+
 import OperatorDashboard from "./pages/app/operator/OperatorDashboard";
 // import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 
@@ -99,7 +106,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             >
               <Route path="admin" element={<AdminDashboard />} />
               {/* <Route path="cs" element={<CSDashboard />} /> */}
-              <Route path="designer" element={<DesignerDashboard />} />
+              {/* <Route path="designer" element={<DesignerDashboard />} /> */}
               <Route path="operator" element={<OperatorDashboard />} />
               {/* <Route path="finance" element={<FinanceDashboard />} /> */}
               {/*  */}
@@ -112,6 +119,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="completed" element={<CSCompleted />} />
                 <Route path="audit" element={<CSAudit />} />
                 <Route index element={<CSOverview />} />
+              </Route>
+
+              <Route path="designer" element={<DesignerLayout />}>
+                <Route path="overview" element={<DesignerOverview />} />
+                <Route path="queue" element={<DesignerQueue />} />
+                <Route path="in-design" element={<DesignerInDesign />} />
+                <Route path="completed" element={<DesignerCompleted />} />
+                <Route path="audit" element={<DesignerAudit />} />
+                <Route index element={<DesignerOverview />} />
               </Route>
 
               <Route path="finance" element={<FinanceLayout />}>
