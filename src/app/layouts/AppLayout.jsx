@@ -6,7 +6,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-bgLight">
-      <div className="bg-white border-b border-zinc-200">
+      {/* <div className="bg-white border-b border-zinc-200">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="font-extrabold text-primary">
             Azael System
@@ -23,11 +23,11 @@ export default function AppLayout() {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <Outlet />
-      </div>
+      {/* <div className="max-w-6xl mx-auto px-4 py-8"> */}
+      <Outlet />
+      {/* </div> */}
     </div>
   );
 }

@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import { listJobs } from "../../api/jobs.api";
+import { listOperatorJobsByStatus } from "../../api/operator.api";
 
-export default function InProductionCS() {
+export default function OperatorCompleted() {
   const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
 
   async function load() {
     try {
       setErr("");
-      setJobs(await listJobs("IN_PRODUCTION"));
+      const a = await listOperatorJobsByStatus("PRODUCTION_DONE");
+      setJobs(
+        (a || []).sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt)),
+      );
     } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to load in production jobs");
+      setErr(e?.response?.data?.message || "Failed to load completed jobs");
     }
   }
 
@@ -22,7 +25,7 @@ export default function InProductionCS() {
     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-extrabold text-primary">
-          CS — In Production
+          Completed Production
         </h2>
         <button
           onClick={load}
@@ -36,27 +39,29 @@ export default function InProductionCS() {
 
       <div className="mt-4 overflow-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-left text-zinc-600">
+          <thead className="text-left text-zinc-500">
             <tr>
               <th className="py-2 pr-4">Job#</th>
-              <th className="py-2 pr-4">Work</th>
               <th className="py-2 pr-4">Customer</th>
+              <th className="py-2 pr-4">Work</th>
               <th className="py-2 pr-4">Status</th>
             </tr>
           </thead>
           <tbody>
             {jobs.map((j) => (
               <tr key={j.id} className="border-t border-zinc-200">
-                <td className="py-2 pr-4 font-bold text-primary">#{j.jobNo}</td>
-                <td className="py-2 pr-4">{j.workType}</td>
+                <td className="py-2 pr-4 font-extrabold text-primary">
+                  #{j.jobNo}
+                </td>
                 <td className="py-2 pr-4">{j.customerName}</td>
-                <td className="py-2 pr-4">{j.status}</td>
+                <td className="py-2 pr-4">{j.workType}</td>
+                <td className="py-2 pr-4 font-bold">{j.status}</td>
               </tr>
             ))}
             {jobs.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-4 text-zinc-600">
-                  No jobs in production.
+                <td colSpan={4} className="py-4 text-zinc-500">
+                  No completed items.
                 </td>
               </tr>
             )}

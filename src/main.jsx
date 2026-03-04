@@ -40,7 +40,7 @@ import DesignerInDesign from "./pages/app/designer/DesignerInDesign";
 import DesignerCompleted from "./pages/app/designer/DesignerCompleted";
 import DesignerAudit from "./pages/app/designer/DesignerAudit";
 
-import OperatorDashboard from "./pages/app/operator/OperatorDashboard";
+// import OperatorDashboard from "./pages/app/operator/OperatorDashboard";
 // import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 
 //
@@ -52,22 +52,18 @@ import FinanceAudit from "./pages/app/finance/FinanceAudit";
 import CreateOrder from "./pages/app/jobs/CreateOrder";
 import JobsList from "./pages/app/jobs/JobsList";
 //
-import NewRequests from "./pages/app/cs/NewRequests";
-import InProductionCS from "./pages/app/cs/InproductionCs";
 
-// import DesignAssigned from "./pages/app/designer/DesignAssigned";
-// import InDesign from "./pages/app/designer/InDesign";
-import DesignCompleted from "./pages/app/cs/DesignCompleted";
-import ProductionCompleted from "./pages/app/cs/ProductionCompleted";
+import AdminLayout from "./components/layouts/AdminLayout";
+//
+import OperatorLayout from "./components/layouts/OperatorLayout";
+import OperatorOverview from "./pages/app/operator/OperatorOverview";
+import OperatorQueue from "./pages/app/operator/OperatorQueue";
+import OperatorInProduction from "./pages/app/operator/OperatorInProduction";
+import OperatorCompleted from "./pages/app/operator/OperatorCompleted";
+import OperatorAudit from "./pages/app/operator/OperatorAudit";
 
-import DesignAssigned from "./pages/app/designer/DesignAssigned";
-import InDesign from "./pages/app/designer/InDesign";
-
-import OperatorRequests from "./pages/app/operator/OperatorRequests";
-import InProduction from "./pages/app/operator/InProduction";
-
-import FinanceWaiting from "./pages/app/finance/FinanceWaiting";
-import FinanceDoneTracking from "./pages/app/finance/FinanceDoneTracking";
+// import FinanceWaiting from "./pages/app/finance/FinanceWaiting";
+// import FinanceDoneTracking from "./pages/app/finance/FinanceDoneTracking";
 
 function BootGate({ children }) {
   const { booting } = useAuth();
@@ -104,15 +100,55 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 </ProtectedRoute>
               }
             >
-              <Route path="admin" element={<AdminDashboard />} />
-              {/* <Route path="cs" element={<CSDashboard />} /> */}
-              {/* <Route path="designer" element={<DesignerDashboard />} /> */}
-              <Route path="operator" element={<OperatorDashboard />} />
-              {/* <Route path="finance" element={<FinanceDashboard />} /> */}
-              {/*  */}
+              {/* ADMIN DASHBOARD WITH NESTED SIDEBAR  */}
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+
+                {/* Admin internal pages (render inside AdminLayout main content) */}
+                <Route path="jobs" element={<JobsList />} />
+                <Route path="create-order" element={<CreateOrder />} />
+
+                {/* Admin finance inside AdminLayout */}
+                <Route path="finance">
+                  <Route index element={<Navigate to="overview" replace />} />
+                  <Route path="overview" element={<FinanceOverview />} />
+                  <Route path="jobs" element={<FinanceJobs />} />
+                  <Route path="audit" element={<FinanceAudit />} />
+                  <Route
+                    path="revenue"
+                    element={
+                      <div className="p-6 font-bold text-zinc-600">
+                        Revenue (next)
+                      </div>
+                    }
+                  />
+                  <Route
+                    path="expenses"
+                    element={
+                      <div className="p-6 font-bold text-zinc-600">
+                        Expenses (next)
+                      </div>
+                    }
+                  />
+                </Route>
+              </Route>
+              {/* ================== */}
+              <Route path="operator" element={<OperatorLayout />}>
+                <Route path="overview" element={<OperatorOverview />} />
+                <Route path="queue" element={<OperatorQueue />} />
+                <Route
+                  path="in-production"
+                  element={<OperatorInProduction />}
+                />
+                <Route path="completed" element={<OperatorCompleted />} />
+                <Route path="audit" element={<OperatorAudit />} />
+                <Route index element={<OperatorOverview />} />
+              </Route>
 
               <Route path="cs" element={<CSLayout />}>
                 <Route path="overview" element={<CSOverview />} />
+                <Route path="create-order" element={<CreateOrder />} />
+                <Route path="jobs" element={<JobsList />} />
                 <Route path="new" element={<CSNewRequests />} />
                 <Route path="design" element={<CSInDesign />} />
                 <Route path="production" element={<CSInProduction />} />
@@ -134,8 +170,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="overview" element={<FinanceOverview />} />
                 <Route path="jobs" element={<FinanceJobs />} />
                 <Route path="audit" element={<FinanceAudit />} />
-
-                {/* keep these pages for later; we will implement */}
                 <Route
                   path="revenue"
                   element={
@@ -160,23 +194,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="jobs" element={<JobsList />} />
               {/* ========= */}
 
-              {/* ====== */}
-              <Route path="cs-design-completed" element={<DesignCompleted />} />
-              <Route
-                path="cs-production-completed"
-                element={<ProductionCompleted />}
-              />
-              <Route path="cs-new-requests" element={<NewRequests />} />
-              <Route path="cs-in-production" element={<InProductionCS />} />
-
-              <Route path="finance-waiting" element={<FinanceWaiting />} />
-              <Route path="finance-done" element={<FinanceDoneTracking />} />
-
-              <Route path="designer-assigned" element={<DesignAssigned />} />
-              <Route path="designer-in-design" element={<InDesign />} />
-
-              <Route path="operator-requests" element={<OperatorRequests />} />
-              <Route path="operator-in-production" element={<InProduction />} />
               {/* ==== */}
               <Route index element={<Navigate to="/" replace />} />
             </Route>

@@ -40,7 +40,9 @@ export default function Login() {
         );
       } else {
         setErr(
-          e.response.data?.message || `Login failed (${e.response.status})`,
+          e.response.data?.message ||
+            `Connect to the Internet
+            You're offline. Check your connection. (${e.response.status})`,
         );
       }
       // endd
