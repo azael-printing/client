@@ -1,251 +1,144 @@
-// CreateOrder
-// import { useState } from "react";
-// import { createJob } from "../../api/jobs.api";
-
-// export default function CreateOrder() {
-//   const [form, setForm] = useState({
-//     customerName: "",
-//     customerPhone: "",
-//     machine: "UV / Engraving",
-//     workType: "",
-//     description: "",
-//     qty: 1,
-//     unitType: "pcs",
-//     designerRequired: true,
-//     urgency: "NORMAL",
-//     deliveryType: "PICKUP",
-//     deliveryDate: "",
-//     deliveryTime: "",
-//     unitPrice: 1,
-//     vatEnabled: true,
-//   });
-
-//   const [msg, setMsg] = useState("");
-//   const [err, setErr] = useState("");
-//   const [loading, setLoading] = useState(false);
-
-//   function setField(k, v) {
-//     setForm((p) => ({ ...p, [k]: v }));
-//   }
-
-//   async function onSubmit(e) {
-//     e.preventDefault();
-//     setMsg("");
-//     setErr("");
-//     setLoading(true);
-//     try {
-//       const payload = {
-//         ...form,
-//         qty: Number(form.qty),
-//         unitPrice: Number(form.unitPrice),
-//         deliveryDate: form.deliveryDate ? form.deliveryDate : undefined,
-//         deliveryTime: form.deliveryTime ? form.deliveryTime : undefined,
-//       };
-//       const job = await createJob(payload);
-//       setMsg(`Created Job #${job.jobNo} successfully.`);
-//     } catch (e) {
-//       setErr(e?.response?.data?.message || "Failed to create job");
-//     } finally {
-//       setLoading(false);
-//     }
-//   }
-
-//   return (
-//     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-//       <h2 className="text-2xl font-extrabold text-primary">Create Order</h2>
-
-//       <form onSubmit={onSubmit} className="mt-6 grid md:grid-cols-2 gap-4">
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           placeholder="Customer Name"
-//           value={form.customerName}
-//           onChange={(e) => setField("customerName", e.target.value)}
-//         />
-
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           placeholder="Customer Phone"
-//           value={form.customerPhone}
-//           onChange={(e) => setField("customerPhone", e.target.value)}
-//         />
-
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           placeholder="Machine"
-//           value={form.machine}
-//           onChange={(e) => setField("machine", e.target.value)}
-//         />
-
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           placeholder="Work Type"
-//           value={form.workType}
-//           onChange={(e) => setField("workType", e.target.value)}
-//         />
-
-//         <textarea
-//           className="p-3 rounded-xl border border-zinc-200 md:col-span-2 min-h-[100px]"
-//           placeholder="Description"
-//           value={form.description}
-//           onChange={(e) => setField("description", e.target.value)}
-//         />
-
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           type="number"
-//           step="1"
-//           min="1"
-//           value={form.qty}
-//           onChange={(e) => setField("qty", e.target.value)}
-//         />
-
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           placeholder="Unit Type (pcs, m2, etc)"
-//           value={form.unitType}
-//           onChange={(e) => setField("unitType", e.target.value)}
-//         />
-
-//         <select
-//           className="p-3 rounded-xl border border-zinc-200"
-//           value={form.designerRequired ? "YES" : "NO"}
-//           onChange={(e) =>
-//             setField("designerRequired", e.target.value === "YES")
-//           }
-//         >
-//           <option value="YES">Designer Required: Yes</option>
-//           <option value="NO">Designer Required: No</option>
-//         </select>
-
-//         <select
-//           className="p-3 rounded-xl border border-zinc-200"
-//           value={form.urgency}
-//           onChange={(e) => setField("urgency", e.target.value)}
-//         >
-//           <option value="NORMAL">Urgency: Normal</option>
-//           <option value="HIGH">Urgency: High (+300)</option>
-//           <option value="URGENT">Urgency: Urgent (+1000)</option>
-//         </select>
-
-//         <select
-//           className="p-3 rounded-xl border border-zinc-200"
-//           value={form.deliveryType}
-//           onChange={(e) => setField("deliveryType", e.target.value)}
-//         >
-//           <option value="PICKUP">Pickup</option>
-//           <option value="DELIVERY">Delivery</option>
-//         </select>
-
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           type="date"
-//           value={form.deliveryDate}
-//           onChange={(e) => setField("deliveryDate", e.target.value)}
-//         />
-
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           type="time"
-//           value={form.deliveryTime}
-//           onChange={(e) => setField("deliveryTime", e.target.value)}
-//         />
-
-//         <input
-//           className="p-3 rounded-xl border border-zinc-200"
-//           type="number"
-//           step="0.01"
-//           min="0"
-//           value={form.unitPrice}
-//           onChange={(e) => setField("unitPrice", e.target.value)}
-//         />
-
-//         <label className="flex items-center gap-2 text-sm font-bold text-zinc-700">
-//           <input
-//             type="checkbox"
-//             checked={form.vatEnabled}
-//             onChange={(e) => setField("vatEnabled", e.target.checked)}
-//           />
-//           VAT Enabled (15%)
-//         </label>
-
-//         <button
-//           disabled={loading}
-//           className="md:col-span-2 p-3 rounded-xl bg-primary text-white font-extrabold hover:opacity-90 disabled:opacity-50"
-//         >
-//           {loading ? "Creating..." : "Create Order"}
-//         </button>
-
-//         {msg && (
-//           <div className="md:col-span-2 text-success font-bold">{msg}</div>
-//         )}
-//         {err && (
-//           <div className="md:col-span-2 text-red-600 font-bold">{err}</div>
-//         )}
-//       </form>
-//     </div>
-//   );
-// }
-import { useMemo, useState } from "react";
-import { createJob } from "../../api/jobs.api";
-import { useAuth } from "../../../app/providers/AuthProvider";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createJob } from "../../api/jobs.api";
+import {
+  getCustomers,
+  addCustomer,
+  getMachines,
+  addMachine,
+  getItems,
+  addItem,
+  addPrice,
+  lookupPricesByItem,
+} from "../../api/ref.api";
 
-const URGENCY_FEES = {
-  NORMAL: 0,
-  HIGH: 300,
-  URGENT: 1000,
+const URGENCY_FEES = { NORMAL: 0, HIGH: 300, URGENT: 1000 };
+
+const PAYMENT_ACCOUNTS = {
+  vat: {
+    cbe: "Payment Method (CBE): 1000542470333",
+    tele: "Payment Method (Tele birr): 0941413132",
+  },
+  novat: {
+    cbe: "Payment Method (CBE): 1000508510218",
+    tele: "Payment Method (Tele birr): 0944781211",
+  },
 };
 
-const BANK_TEXT = {
-  cbe: "Payment Method (CBE): 1000 0000 0000",
-  tele: "Payment Method (Tele birr): 0911 000 000",
-};
-
-function cn(...xs) {
-  return xs.filter(Boolean).join(" ");
+function todayMinDate() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+function nowMinTime() {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mi}`;
 }
 
 export default function CreateOrder() {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [customers, setCustomers] = useState([]);
+  const [machines, setMachines] = useState([]);
+  const [items, setItems] = useState([]);
+  const [priceOptions, setPriceOptions] = useState([]); // rules for selected item
+
+  // Modals
+  const [modal, setModal] = useState(null); // "customer" | "machine" | "item" | "price" | null
+  const [tmp, setTmp] = useState({}); // modal form fields
+
+  const minDate = todayMinDate();
+  const minTimeToday = nowMinTime();
+
   const [f, setF] = useState({
-    customerName: "",
-    customerPhone: "",
-    machine: "",
-    workType: "",
+    customerId: "",
+    itemId: "",
+    priceRuleId: "",
+    machineId: "",
+
     description: "",
     qty: "",
     unitType: "pcs",
-    designerRequired: false,
     urgency: "NORMAL",
+    designerRequired: false,
 
     deliveryDate: "",
     deliveryTime: "",
     deliveryType: "PICKUP",
 
-    unitPrice: "",
     vatEnabled: true,
-
-    // payment status should NOT appear in quotation
-    paymentStatus: "UNPAID",
+    unitPrice: 0,
   });
+
+  function update(key, value) {
+    setF((p) => ({ ...p, [key]: value }));
+  }
+
+  async function loadRefs() {
+    const [c, m, i] = await Promise.all([
+      getCustomers(),
+      getMachines(),
+      getItems(),
+    ]);
+    setCustomers(c);
+    setMachines(m);
+    setItems(i);
+  }
+
+  useEffect(() => {
+    loadRefs();
+  }, []);
+
+  // when item selected, load price rules and auto-fill unitType + first price + machine
+  useEffect(() => {
+    (async () => {
+      if (!f.itemId) {
+        setPriceOptions([]);
+        return;
+      }
+      const item = items.find((x) => x.id === f.itemId);
+      if (item?.defaultUnit) update("unitType", item.defaultUnit);
+
+      const rules = await lookupPricesByItem(f.itemId);
+      setPriceOptions(rules);
+
+      if (rules.length > 0) {
+        // default to first rule
+        update("priceRuleId", rules[0].id);
+        update("machineId", rules[0].machineId);
+        update("unitPrice", rules[0].unitPrice);
+        update("vatEnabled", rules[0].vatEnabled);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.itemId]);
+
+  // when price rule changes, auto-fill machine + unitPrice + vat
+  useEffect(() => {
+    if (!f.priceRuleId) return;
+    const rule = priceOptions.find((r) => r.id === f.priceRuleId);
+    if (!rule) return;
+    update("machineId", rule.machineId);
+    update("unitPrice", rule.unitPrice);
+    update("vatEnabled", rule.vatEnabled);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.priceRuleId]);
 
   const qtyNum = Number(f.qty || 0);
   const unitPriceNum = Number(f.unitPrice || 0);
 
-  // Delivery payment rule:
-  // You said: "delivery payment cannot be showed on quotation rather it should be distributed in unit price"
-  // For now: delivery fee is 0 unless DELIVERY. If DELIVERY, we add 500 birr (you can change later).
+  // Delivery fee: hidden in quotation; distributed in unit price (simple fixed 500 if delivery)
   const deliveryFee = f.deliveryType === "DELIVERY" ? 500 : 0;
-
   const urgencyFee = URGENCY_FEES[f.urgency] || 0;
 
   const subtotal = useMemo(() => {
-    // distribute delivery fee into unit price (not shown separately)
     if (!qtyNum || !unitPriceNum) return 0;
-    const effectiveUnit = unitPriceNum + deliveryFee / qtyNum;
-    return effectiveUnit * qtyNum + urgencyFee;
+    const effUnit = unitPriceNum + deliveryFee / qtyNum;
+    return effUnit * qtyNum + urgencyFee;
   }, [qtyNum, unitPriceNum, deliveryFee, urgencyFee]);
 
   const vatAmount = useMemo(
@@ -254,22 +147,26 @@ export default function CreateOrder() {
   );
   const total = useMemo(() => subtotal + vatAmount, [subtotal, vatAmount]);
 
+  const customer = customers.find((x) => x.id === f.customerId);
+  const item = items.find((x) => x.id === f.itemId);
+  const machine = machines.find((x) => x.id === f.machineId);
+
   const quotationText = useMemo(() => {
     const date = new Date().toISOString().slice(0, 10);
-
+    const jobDesc = f.description || item?.name || "-";
     return `Azael printing Proforma Invoice
 Date: ${date}
 
 Job Details:
-- Job Description: ${f.description || f.workType || "-"}
+- Job Description: ${jobDesc}
 - Quantity: ${f.qty || "-"} ${f.unitType || ""}
-- Unit Price: ${f.unitPrice || "-"}
+- Unit Price: ${unitPriceNum || "-"}
 - Urgency level: ${f.urgency}
 - Total Price: ${Math.round(total).toLocaleString()}
 
 Payment Information:
-- ${BANK_TEXT.cbe}
-- ${BANK_TEXT.tele}
+${f.vatEnabled ? PAYMENT_ACCOUNTS.vat.cbe : PAYMENT_ACCOUNTS.novat.cbe}
+${f.vatEnabled ? PAYMENT_ACCOUNTS.vat.tele : PAYMENT_ACCOUNTS.novat.tele}
 
 Note:
 - ADAVANCE PAYMENT SHOULD BE 50%
@@ -277,138 +174,233 @@ Note:
 - Thanks for choosing us`;
   }, [
     f.description,
-    f.workType,
+    item?.name,
     f.qty,
     f.unitType,
-    f.unitPrice,
+    unitPriceNum,
     f.urgency,
     total,
   ]);
-
-  function update(key, value) {
-    setF((p) => ({ ...p, [key]: value }));
-  }
 
   async function copyQuotation() {
     await navigator.clipboard.writeText(quotationText);
     alert("Quotation copied");
   }
 
+  function validateDateTime() {
+    if (!f.deliveryDate) return true;
+    if (f.deliveryDate < minDate) return false;
+    if (f.deliveryDate === minDate && f.deliveryTime) {
+      return f.deliveryTime >= minTimeToday;
+    }
+    return true;
+  }
+
   async function submitCreate() {
+    if (!f.customerId) return alert("Select Customer");
+    if (!f.itemId) return alert("Select Work Type");
+    if (!f.priceRuleId) return alert("Select Price");
+    if (!f.qty || Number(f.qty) <= 0) return alert("Enter valid quantity");
+    if (!validateDateTime())
+      return alert("Delivery date/time must be current or future only");
+
     try {
       const payload = {
-        customerName: f.customerName,
-        customerPhone: f.customerPhone,
-        machine: f.machine,
-        workType: f.workType,
+        customerName: customer?.name,
+        customerPhone: customer?.phone,
+        machine: machine?.name,
+        workType: item?.name,
         description: f.description,
         qty: Number(f.qty),
         unitType: f.unitType,
-        designerRequired: !!f.designerRequired,
         urgency: f.urgency,
+        designerRequired: !!f.designerRequired,
+        deliveryType: f.deliveryType,
         deliveryDate: f.deliveryDate
           ? new Date(f.deliveryDate).toISOString()
           : null,
         deliveryTime: f.deliveryTime || null,
-        deliveryType: f.deliveryType,
-        unitPrice: Number(f.unitPrice),
+        unitPrice: unitPriceNum,
         vatEnabled: !!f.vatEnabled,
-        // backend should compute vat/subtotal/total too, but we keep clean
       };
 
       const job = await createJob(payload);
-      alert(`Job created: #${job.jobNo || ""}`);
+      alert(`Job created: AZ-${job.jobNo}`);
       navigate("/app/admin/jobs", { replace: false });
     } catch (e) {
       alert(e?.response?.data?.message || "Failed to create job");
     }
   }
 
+  async function handleCreateModal() {
+    try {
+      if (modal === "customer") {
+        await addCustomer(tmp.name, tmp.phone);
+      } else if (modal === "machine") {
+        await addMachine(tmp.name);
+      } else if (modal === "item") {
+        await addItem(tmp.name, tmp.defaultUnit || "pcs");
+      } else if (modal === "price") {
+        await addPrice(
+          tmp.itemId,
+          tmp.machineId,
+          Number(tmp.unitPrice),
+          tmp.vatEnabled !== false,
+        );
+      }
+      setModal(null);
+      setTmp({});
+      await loadRefs();
+      // reload price options if needed
+      if (f.itemId) {
+        const rules = await lookupPricesByItem(f.itemId);
+        setPriceOptions(rules);
+      }
+      alert("Saved");
+    } catch (e) {
+      alert(e?.response?.data?.message || "Failed to save");
+    }
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
-      {/* LEFT: FORM */}
+      {/* LEFT FORM */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-        <h2 className="text-2xl font-extrabold text-primary">Create Order</h2>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h2 className="text-2xl font-extrabold text-primary">Create Order</h2>
 
-        {/* Customer Info */}
-        <div className="mt-5">
-          <div className="font-extrabold text-zinc-900">Customer Info</div>
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Customer name
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                value={f.customerName}
-                onChange={(e) => update("customerName", e.target.value)}
-                placeholder="Abc"
-              />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Phone number
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                value={f.customerPhone}
-                onChange={(e) => update("customerPhone", e.target.value)}
-                placeholder="+251..."
-              />
-            </div>
+          {/* Top buttons */}
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => {
+                setModal("customer");
+                setTmp({ name: "", phone: "" });
+              }}
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
+            >
+              Register Customer
+            </button>
+            <button
+              onClick={() => {
+                setModal("item");
+                setTmp({ name: "", defaultUnit: "pcs" });
+              }}
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
+            >
+              Add Item
+            </button>
+            <button
+              onClick={() => {
+                setModal("machine");
+                setTmp({ name: "" });
+              }}
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
+            >
+              Add Machine
+            </button>
+            <button
+              onClick={() => {
+                setModal("price");
+                setTmp({
+                  itemId: "",
+                  machineId: "",
+                  unitPrice: "",
+                  vatEnabled: true,
+                });
+              }}
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
+            >
+              Add Price
+            </button>
           </div>
         </div>
 
-        {/* Job Details */}
+        {/* Customer */}
+        <div className="mt-6">
+          <div className="font-extrabold text-zinc-900">Customer</div>
+          <select
+            className="mt-2 w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+            value={f.customerId}
+            onChange={(e) => update("customerId", e.target.value)}
+          >
+            <option value="">Select Customer</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.phone})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Work Type */}
+        <div className="mt-6">
+          <div className="font-extrabold text-zinc-900">Work Type</div>
+          <select
+            className="mt-2 w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+            value={f.itemId}
+            onChange={(e) => update("itemId", e.target.value)}
+          >
+            <option value="">Select Work Type</option>
+            {items.map((it) => (
+              <option key={it.id} value={it.id}>
+                {it.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Price rule selection (auto fills machine & unit price) */}
+        <div className="mt-6">
+          <div className="font-extrabold text-zinc-900">Price</div>
+          <select
+            className="mt-2 w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+            value={f.priceRuleId}
+            onChange={(e) => update("priceRuleId", e.target.value)}
+            disabled={!f.itemId}
+          >
+            <option value="">Select Price</option>
+            {priceOptions.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.machine?.name} — {Math.round(r.unitPrice).toLocaleString()}{" "}
+                (VAT {r.vatEnabled ? "Yes" : "No"})
+              </option>
+            ))}
+          </select>
+
+          <div className="mt-2 text-sm text-zinc-500 font-bold">
+            Machine:{" "}
+            <span className="text-zinc-800">{machine?.name || "-"}</span> | Unit
+            price:{" "}
+            <span className="text-primary font-extrabold">
+              {Math.round(unitPriceNum || 0).toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Details */}
         <div className="mt-6">
           <div className="font-extrabold text-zinc-900">Job Details</div>
 
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Machine
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                value={f.machine}
-                onChange={(e) => update("machine", e.target.value)}
-                placeholder="Mimaki / Roland / Konica / Heat Press"
-              />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Work Type
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                value={f.workType}
-                onChange={(e) => update("workType", e.target.value)}
-                placeholder="Business card, Banner, Sticker..."
-              />
-            </div>
-
             <div className="sm:col-span-2">
               <div className="text-sm font-bold text-zinc-700 mb-1">
                 Description
               </div>
               <textarea
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[100px]"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[90px]"
                 value={f.description}
                 onChange={(e) => update("description", e.target.value)}
-                placeholder="free text"
+                placeholder="Important notes for designer/operator"
               />
             </div>
 
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Quantity
-              </div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">Qty</div>
               <input
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200"
                 value={f.qty}
                 onChange={(e) => update("qty", e.target.value)}
-                placeholder="1,2,3..."
+                placeholder="number"
               />
             </div>
 
@@ -417,11 +409,25 @@ Note:
                 Unit Type
               </div>
               <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
                 value={f.unitType}
-                onChange={(e) => update("unitType", e.target.value)}
-                placeholder="pcs / sqm / meter..."
+                disabled
               />
+            </div>
+
+            <div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">
+                Urgency
+              </div>
+              <select
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                value={f.urgency}
+                onChange={(e) => update("urgency", e.target.value)}
+              >
+                <option value="NORMAL">Normal</option>
+                <option value="HIGH">High (+300)</option>
+                <option value="URGENT">Urgent (+1000)</option>
+              </select>
             </div>
 
             <div>
@@ -439,55 +445,35 @@ Note:
                 <option value="yes">yes</option>
               </select>
             </div>
-
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Urgency Level
-              </div>
-              <select
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-                value={f.urgency}
-                onChange={(e) => update("urgency", e.target.value)}
-              >
-                <option value="NORMAL">Normal (no extra)</option>
-                <option value="HIGH">High (+300)</option>
-                <option value="URGENT">Urgent (+1000)</option>
-              </select>
-            </div>
           </div>
         </div>
 
-        {/* Delivery */}
+        {/* Delivery restrictions */}
         <div className="mt-6">
           <div className="font-extrabold text-zinc-900">Delivery Details</div>
-
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Delivery Date
-              </div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">Date</div>
               <input
                 type="date"
+                min={minDate}
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200"
                 value={f.deliveryDate}
                 onChange={(e) => update("deliveryDate", e.target.value)}
               />
             </div>
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Delivery Time
-              </div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">Time</div>
               <input
                 type="time"
+                min={f.deliveryDate === minDate ? minTimeToday : undefined}
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200"
                 value={f.deliveryTime}
                 onChange={(e) => update("deliveryTime", e.target.value)}
               />
             </div>
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Pickup or Delivery
-              </div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">Type</div>
               <select
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
                 value={f.deliveryType}
@@ -498,139 +484,88 @@ Note:
               </select>
             </div>
           </div>
-
-          <div className="mt-2 text-xs text-zinc-500 font-bold">
-            Delivery fee is distributed into Unit Price (not shown on
-            quotation).
-          </div>
         </div>
 
-        {/* Pricing */}
-        <div className="mt-6">
-          <div className="font-extrabold text-zinc-900">Pricing</div>
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Unit Price
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                value={f.unitPrice}
-                onChange={(e) => update("unitPrice", e.target.value)}
-                placeholder="1,2,3..."
-              />
-            </div>
-
-            <div className="flex items-end gap-2">
-              <label className="flex items-center gap-2 font-bold text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={f.vatEnabled}
-                  onChange={(e) => update("vatEnabled", e.target.checked)}
-                />
-                VAT? (15%)
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-3 text-sm font-bold text-zinc-700">
-            Total price:{" "}
-            <span className="text-primary font-extrabold">
-              {Math.round(total).toLocaleString()}
-            </span>
-          </div>
+        {/* Totals */}
+        <div className="mt-6 text-sm font-bold text-zinc-700">
+          Total:{" "}
+          <span className="text-primary font-extrabold">
+            {Math.round(total).toLocaleString()}
+          </span>
+          <span className="ml-2 text-zinc-400">
+            (VAT {f.vatEnabled ? "Yes" : "No"})
+          </span>
         </div>
       </div>
 
-      {/* RIGHT: SUMMARY + QUOTATION */}
+      {/* RIGHT: Summary + Quotation */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
         <h2 className="text-2xl font-extrabold text-primary">Summary</h2>
         <div className="text-xs text-zinc-400 font-bold mt-1">
           Fill details - Review summary - Save
         </div>
 
-        <div className="mt-5">
-          <div className="font-extrabold text-zinc-900">Customer Info</div>
-          <div className="mt-2 text-sm">
-            <div>
-              <span className="font-bold">Customer name:</span>{" "}
-              {f.customerName || "..."}
-            </div>
-            <div>
-              <span className="font-bold">Phone number:</span>{" "}
-              {f.customerPhone || "..."}
-            </div>
+        <div className="mt-5 text-sm grid gap-2">
+          <div>
+            <span className="font-extrabold">Customer name:</span>{" "}
+            {customer?.name || "..."}
           </div>
-        </div>
-
-        <div className="mt-5">
-          <div className="font-extrabold text-zinc-900">Job Details</div>
-          <div className="mt-2 text-sm">
-            <div>
-              <span className="font-bold">Machine</span> {f.machine || "..."}
-            </div>
-            <div>
-              <span className="font-bold">Work Type</span> {f.workType || "..."}
-            </div>
-            <div>
-              <span className="font-bold">Description</span>{" "}
-              {f.description || "..."}
-            </div>
-            <div>
-              <span className="font-bold">Quantity</span> {f.qty || "..."}{" "}
-              {f.unitType}
-            </div>
-            <div>
-              <span className="font-bold">Designer Required</span>{" "}
-              {f.designerRequired ? "yes" : "no"}
-            </div>
-            <div>
-              <span className="font-bold">Urgency Level</span> {f.urgency}
-            </div>
+          <div>
+            <span className="font-extrabold">Phone number:</span>{" "}
+            {customer?.phone || "..."}
           </div>
-        </div>
 
-        <div className="mt-5">
-          <div className="font-extrabold text-zinc-900">Delivery Details</div>
-          <div className="mt-2 text-sm">
-            <div>
-              <span className="font-bold">Delivery Date</span>{" "}
-              {f.deliveryDate || "..."}
-            </div>
-            <div>
-              <span className="font-bold">Delivery Time</span>{" "}
-              {f.deliveryTime || "..."}
-            </div>
-            <div>
-              <span className="font-bold">Pickup or Delivery</span>{" "}
-              {f.deliveryType}
-            </div>
+          <div className="mt-2">
+            <span className="font-extrabold">Machine:</span>{" "}
+            {machine?.name || "..."}
           </div>
-        </div>
+          <div>
+            <span className="font-extrabold">Work Type:</span>{" "}
+            {item?.name || "..."}
+          </div>
+          <div>
+            <span className="font-extrabold">Description:</span>{" "}
+            {f.description || "..."}
+          </div>
+          <div>
+            <span className="font-extrabold">Quantity:</span> {f.qty || "..."}{" "}
+            {f.unitType}
+          </div>
+          <div>
+            <span className="font-extrabold">Urgency:</span> {f.urgency}
+          </div>
 
-        <div className="mt-5">
-          <div className="font-extrabold text-zinc-900">Pricing</div>
-          <div className="mt-2 text-sm">
-            <div>
-              <span className="font-bold">Unit Price</span>{" "}
-              {f.unitPrice || "..."}
-            </div>
-            <div>
-              <span className="font-bold">VAT</span>{" "}
-              {f.vatEnabled ? "yes" : "no"}
-            </div>
-            <div>
-              <span className="font-bold">Total price</span>{" "}
-              {Math.round(total).toLocaleString()}
-            </div>
+          <div className="mt-2">
+            <span className="font-extrabold">Delivery Date:</span>{" "}
+            {f.deliveryDate || "..."}
+          </div>
+          <div>
+            <span className="font-extrabold">Delivery Time:</span>{" "}
+            {f.deliveryTime || "..."}
+          </div>
+          <div>
+            <span className="font-extrabold">Delivery Type:</span>{" "}
+            {f.deliveryType}
+          </div>
+
+          <div className="mt-2">
+            <span className="font-extrabold">Unit Price:</span>{" "}
+            {Math.round(unitPriceNum || 0).toLocaleString()}
+          </div>
+          <div>
+            <span className="font-extrabold">VAT:</span>{" "}
+            {f.vatEnabled ? "Yes" : "No"}
+          </div>
+          <div>
+            <span className="font-extrabold">Total price:</span>{" "}
+            {Math.round(total).toLocaleString()}
           </div>
         </div>
 
         <div className="mt-5 flex gap-2">
           <button
             onClick={copyQuotation}
-            className="px-4 py-2 rounded-xl border border-zinc-200 font-extrabold text-primary hover:bg-bgLight transition flex items-center gap-2"
+            className="px-4 py-2 rounded-xl border border-zinc-200 font-extrabold text-primary hover:bg-bgLight transition"
           >
             Copy quotation
           </button>
@@ -639,7 +574,7 @@ Note:
             onClick={submitCreate}
             className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-extrabold hover:opacity-90 transition"
           >
-            Quotation Approved
+            Sent quotation
           </button>
         </div>
 
@@ -652,6 +587,148 @@ Note:
           </pre>
         </div>
       </div>
+
+      {/* MODAL */}
+      {modal && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setModal(null)}
+          />
+          <div className="absolute left-1/2 top-1/2 w-[95%] max-w-[520px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-5 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="font-extrabold text-primary text-xl">
+                {modal === "customer" && "Register Customer"}
+                {modal === "machine" && "Add Machine"}
+                {modal === "item" && "Add Item"}
+                {modal === "price" && "Add Price"}
+              </div>
+              <button
+                onClick={() => setModal(null)}
+                className="px-3 py-2 rounded-xl border border-zinc-200 font-bold hover:bg-bgLight"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              {modal === "customer" && (
+                <>
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                    placeholder="Name"
+                    value={tmp.name || ""}
+                    onChange={(e) =>
+                      setTmp((p) => ({ ...p, name: e.target.value }))
+                    }
+                  />
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                    placeholder="Phone"
+                    value={tmp.phone || ""}
+                    onChange={(e) =>
+                      setTmp((p) => ({ ...p, phone: e.target.value }))
+                    }
+                  />
+                </>
+              )}
+
+              {modal === "machine" && (
+                <input
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                  placeholder="Machine name"
+                  value={tmp.name || ""}
+                  onChange={(e) =>
+                    setTmp((p) => ({ ...p, name: e.target.value }))
+                  }
+                />
+              )}
+
+              {modal === "item" && (
+                <>
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                    placeholder="Work type name"
+                    value={tmp.name || ""}
+                    onChange={(e) =>
+                      setTmp((p) => ({ ...p, name: e.target.value }))
+                    }
+                  />
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                    placeholder="Default unit (pcs/sqm/meter)"
+                    value={tmp.defaultUnit || "pcs"}
+                    onChange={(e) =>
+                      setTmp((p) => ({ ...p, defaultUnit: e.target.value }))
+                    }
+                  />
+                </>
+              )}
+
+              {modal === "price" && (
+                <>
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                    value={tmp.itemId || ""}
+                    onChange={(e) =>
+                      setTmp((p) => ({ ...p, itemId: e.target.value }))
+                    }
+                  >
+                    <option value="">Select item</option>
+                    {items.map((it) => (
+                      <option key={it.id} value={it.id}>
+                        {it.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                    value={tmp.machineId || ""}
+                    onChange={(e) =>
+                      setTmp((p) => ({ ...p, machineId: e.target.value }))
+                    }
+                  >
+                    <option value="">Select machine</option>
+                    {machines.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                    placeholder="Unit price"
+                    value={tmp.unitPrice || ""}
+                    onChange={(e) =>
+                      setTmp((p) => ({ ...p, unitPrice: e.target.value }))
+                    }
+                  />
+
+                  <label className="flex items-center gap-2 font-bold text-zinc-700">
+                    <input
+                      type="checkbox"
+                      checked={tmp.vatEnabled !== false}
+                      onChange={(e) =>
+                        setTmp((p) => ({ ...p, vatEnabled: e.target.checked }))
+                      }
+                    />
+                    VAT enabled
+                  </label>
+                </>
+              )}
+
+              <button
+                onClick={handleCreateModal}
+                className="mt-2 px-4 py-3 rounded-xl bg-success text-white font-extrabold hover:opacity-90 transition"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
