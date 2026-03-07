@@ -27,25 +27,25 @@ export async function addItem(name, defaultUnit = "pcs") {
   return res.data.item;
 }
 
-export async function getAllPrices() {
-  const res = await http.get("/api/ref/prices");
-  return res.data.items;
-}
+//  ----------- Add price ----
 export async function addPrice(
   itemId,
   machineId,
   unitPrice,
   vatEnabled = true,
+  variant = null,
+  variantLabel = null,
 ) {
   const res = await http.post("/api/ref/prices", {
     itemId,
     machineId,
     unitPrice,
     vatEnabled,
+    variant,
+    variantLabel,
   });
   return res.data.item;
 }
-
 export async function lookupPricesByItem(itemId) {
   const res = await http.get(
     `/api/ref/prices/lookup?itemId=${encodeURIComponent(itemId)}`,

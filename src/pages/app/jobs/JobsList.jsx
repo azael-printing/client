@@ -1,9 +1,10 @@
 //JOB LIST
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { listJobs, updateJob } from "../../api/jobs.api";
 import { useAuth } from "../../../app/providers/AuthProvider";
-
+// IMPORTING Machine API and Load list option
+import { getMachines } from "../../../pages/api/ref.api";
 function cn(...xs) {
   return xs.filter(Boolean).join(" ");
 }
@@ -47,6 +48,26 @@ function downloadFile(filename, content) {
   URL.revokeObjectURL(url);
 }
 
+const STATUS_OPTIONS = [
+  "NEW_REQUEST",
+  "FINANCE_WAITING_APPROVAL",
+  "FINANCE_APPROVED",
+  "DESIGN_ASSIGNED",
+  "DESIGN_PENDING",
+  "DESIGN_WAITING",
+  "IN_DESIGN",
+  "DESIGN_DONE",
+  "PRODUCTION_READY",
+  "PRODUCTION_PENDING",
+  "PRODUCTION_WAITING",
+  "IN_PRODUCTION",
+  "PRODUCTION_DONE",
+  "DELIVERED",
+  "CANCELLED",
+];
+
+const PAYMENT_OPTIONS = ["UNPAID", "PARTIAL", "PAID", "CREDIT"];
+
 function Badge({ text }) {
   const map = {
     IN_PRODUCTION: "bg-blue-100 text-blue-700",
@@ -88,11 +109,12 @@ export default function JobsList() {
   const [machineFilter, setMachineFilter] = useState(qs.get("machine") || "");
   const [statusFilter, setStatusFilter] = useState(qs.get("status") || "");
   const [paymentFilter, setPaymentFilter] = useState("");
+  const [machineOptions, setMachineOptions] = useState();
 
   const [selected, setSelected] = useState(null);
 
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const pageSize = 4;
 
   async function load() {
     try {
@@ -106,6 +128,15 @@ export default function JobsList() {
       }
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load jobs");
+      <Navigate to="/login" />;
+    }
+
+    // Load machines for SELECT (admin update modal)
+    try {
+      const ms = await getMachines();
+      setMachineOptions(ms || []);
+    } catch {
+      setMachineOptions([]);
     }
   }
 
@@ -394,7 +425,7 @@ export default function JobsList() {
                     </button>
                   </div>
 
-                  <div className="mt-4 grid gap-3">
+                  {/* <div className="mt-4 grid gap-3">
                     <div>
                       <div className="text-sm font-bold text-zinc-700 mb-1">
                         Machine
@@ -435,6 +466,98 @@ export default function JobsList() {
                           }))
                         }
                       />
+                    </div>
+
+                    <div>
+                      <div className="text-sm font-bold text-zinc-700 mb-1">
+                        Delivery Date
+                      </div>
+                      <input
+                        type="date"
+                        className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                        value={draft.deliveryDate}
+                        onChange={(e) =>
+                          setDraft((p) => ({
+                            ...p,
+                            deliveryDate: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        await saveSelected({
+                          machine: draft.machine,
+                          status: draft.status,
+                          paymentStatus: draft.paymentStatus,
+                          deliveryDate: draft.deliveryDate || null,
+                        });
+                        setEditOpen(false);
+                      }}
+                      className="mt-2 px-4 py-3 rounded-xl bg-success text-white font-extrabold hover:opacity-90 transition"
+                    >
+                      Confirm Update
+                    </button>
+                  </div> */}
+                  <div className="mt-4 grid gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-zinc-700 mb-1">
+                        Machine
+                      </div>
+                      <select
+                        className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                        value={draft.machine}
+                        onChange={(e) =>
+                          setDraft((p) => ({ ...p, machine: e.target.value }))
+                        }
+                      >
+                        <option value="">Select Machine</option>
+                        {machineOptions.map((m) => (
+                          <option key={m.id} value={m.name}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-zinc-700 mb-1">
+                        Status
+                      </div>
+                      <select
+                        className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                        value={draft.status}
+                        onChange={(e) =>
+                          setDraft((p) => ({ ...p, status: e.target.value }))
+                        }
+                      >
+                        {STATUS_OPTIONS.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-zinc-700 mb-1">
+                        Payment Status
+                      </div>
+                      <select
+                        className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                        value={draft.paymentStatus}
+                        onChange={(e) =>
+                          setDraft((p) => ({
+                            ...p,
+                            paymentStatus: e.target.value,
+                          }))
+                        }
+                      >
+                        {PAYMENT_OPTIONS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>

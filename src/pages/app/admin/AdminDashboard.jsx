@@ -170,7 +170,7 @@ export default function AdminDashboard() {
               key={m.machine}
               onClick={() =>
                 navigate(
-                  `/app/admin/jobs?machine=${encodeURIComponent(m.machineKey)}`,
+                  `/app/admin/jobs?machine=${encodeURIComponent(m.machineKey) || m.machine}`,
                 )
               }
               className="w-full text-left rounded-2xl border border-zinc-200 p-4 hover:shadow-md transition bg-white"

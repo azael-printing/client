@@ -25,6 +25,12 @@ const PAYMENT_ACCOUNTS = {
   },
 };
 
+const PAYMENT_STATUS_OPTIONS = [
+  { value: "UNPAID", label: "Unpaid" },
+  { value: "PARTIAL", label: "Partial" },
+  { value: "PAID", label: "Paid" },
+];
+
 function todayMinDate() {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -39,39 +45,66 @@ function nowMinTime() {
   return `${hh}:${mi}`;
 }
 
+function onlyLettersSpaces(s) {
+  return String(s || "").replace(/[^A-Za-z\s]/g, "");
+}
+function onlyDigitsMax10(s) {
+  return String(s || "")
+    .replace(/\D/g, "")
+    .slice(0, 10);
+}
+function onlyNumberLike(s) {
+  // allows decimals
+  const cleaned = String(s || "").replace(/[^0-9.]/g, "");
+  // prevent multiple dots
+  const parts = cleaned.split(".");
+  if (parts.length <= 2) return cleaned;
+  return parts[0] + "." + parts.slice(1).join("");
+}
+
 export default function CreateOrder() {
   const navigate = useNavigate();
 
   const [customers, setCustomers] = useState([]);
   const [machines, setMachines] = useState([]);
   const [items, setItems] = useState([]);
-  const [priceOptions, setPriceOptions] = useState([]); // rules for selected item
+  const [priceOptions, setPriceOptions] = useState([]);
 
-  // Modals
-  const [modal, setModal] = useState(null); // "customer" | "machine" | "item" | "price" | null
-  const [tmp, setTmp] = useState({}); // modal form fields
+  const [modal, setModal] = useState(null); // customer | machine | item | price | null
+  const [tmp, setTmp] = useState({});
 
   const minDate = todayMinDate();
   const minTimeToday = nowMinTime();
 
   const [f, setF] = useState({
+    // Customer selection OR manual entry (as your UI requires fields)
     customerId: "",
+    customerName: "",
+    customerPhone: "",
+
+    // Job refs
     itemId: "",
     priceRuleId: "",
     machineId: "",
 
+    // Job details
     description: "",
     qty: "",
     unitType: "pcs",
-    urgency: "NORMAL",
     designerRequired: false,
+    urgency: "NORMAL",
 
+    // Delivery
     deliveryDate: "",
     deliveryTime: "",
     deliveryType: "PICKUP",
 
-    vatEnabled: true,
+    // Pricing
     unitPrice: 0,
+    vatEnabled: true,
+    paymentStatus: "UNPAID",
+    depositPaid: false,
+    depositAmount: "",
   });
 
   function update(key, value) {
@@ -84,40 +117,61 @@ export default function CreateOrder() {
       getMachines(),
       getItems(),
     ]);
-    setCustomers(c);
-    setMachines(m);
-    setItems(i);
+    setCustomers(c || []);
+    setMachines(m || []);
+    setItems(i || []);
   }
 
   useEffect(() => {
-    loadRefs();
+    loadRefs().catch((e) =>
+      alert(e?.response?.data?.message || "Failed to load reference data"),
+    );
   }, []);
 
-  // when item selected, load price rules and auto-fill unitType + first price + machine
+  // When a customer is selected, auto-fill name/phone fields
+  useEffect(() => {
+    if (!f.customerId) return;
+    const c = customers.find((x) => x.id === f.customerId);
+    if (!c) return;
+    setF((p) => ({
+      ...p,
+      customerName: c.name || "",
+      customerPhone: c.phone || "",
+    }));
+  }, [f.customerId, customers]);
+
+  // Load price rules when item selected, auto-fill defaults
   useEffect(() => {
     (async () => {
       if (!f.itemId) {
         setPriceOptions([]);
+        update("priceRuleId", "");
+        update("machineId", "");
+        update("unitPrice", 0);
         return;
       }
-      const item = items.find((x) => x.id === f.itemId);
-      if (item?.defaultUnit) update("unitType", item.defaultUnit);
+
+      const selectedItem = items.find((x) => x.id === f.itemId);
+      if (selectedItem?.defaultUnit)
+        update("unitType", selectedItem.defaultUnit);
 
       const rules = await lookupPricesByItem(f.itemId);
-      setPriceOptions(rules);
+      setPriceOptions(rules || []);
 
-      if (rules.length > 0) {
-        // default to first rule
-        update("priceRuleId", rules[0].id);
-        update("machineId", rules[0].machineId);
-        update("unitPrice", rules[0].unitPrice);
-        update("vatEnabled", rules[0].vatEnabled);
+      if (rules?.length) {
+        const r0 = rules[0];
+        update("priceRuleId", r0.id);
+        update("machineId", r0.machineId);
+        update("unitPrice", r0.unitPrice);
+        update("vatEnabled", r0.vatEnabled);
       }
-    })();
+    })().catch((e) =>
+      alert(e?.response?.data?.message || "Failed to load price rules"),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [f.itemId]);
 
-  // when price rule changes, auto-fill machine + unitPrice + vat
+  // When price changes, auto-fill machine/unitPrice/vat
   useEffect(() => {
     if (!f.priceRuleId) return;
     const rule = priceOptions.find((r) => r.id === f.priceRuleId);
@@ -131,8 +185,7 @@ export default function CreateOrder() {
   const qtyNum = Number(f.qty || 0);
   const unitPriceNum = Number(f.unitPrice || 0);
 
-  // Delivery fee: hidden in quotation; distributed in unit price (simple fixed 500 if delivery)
-  const deliveryFee = f.deliveryType === "DELIVERY" ? 500 : 0;
+  const deliveryFee = f.deliveryType === "DELIVERY" ? 500 : 0; // hidden in unit price
   const urgencyFee = URGENCY_FEES[f.urgency] || 0;
 
   const subtotal = useMemo(() => {
@@ -147,26 +200,55 @@ export default function CreateOrder() {
   );
   const total = useMemo(() => subtotal + vatAmount, [subtotal, vatAmount]);
 
-  const customer = customers.find((x) => x.id === f.customerId);
+  // Auto behavior: if PAID -> depositPaid=true and depositAmount=total
+  useEffect(() => {
+    if (f.paymentStatus === "PAID") {
+      setF((p) => ({
+        ...p,
+        depositPaid: true,
+        depositAmount: String(Math.round(total)),
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.paymentStatus, total]);
+
+  const depositAmountNum = Number(f.depositAmount || 0);
+  const remainingBalance = useMemo(() => {
+    if (f.paymentStatus === "PAID") return 0;
+    const rem = total - (f.depositPaid ? depositAmountNum : 0);
+    return rem > 0 ? rem : 0;
+  }, [total, f.depositPaid, depositAmountNum, f.paymentStatus]);
+
   const item = items.find((x) => x.id === f.itemId);
   const machine = machines.find((x) => x.id === f.machineId);
+
+  function validateDateTime() {
+    if (!f.deliveryDate) return true;
+    if (f.deliveryDate < minDate) return false;
+    if (f.deliveryDate === minDate && f.deliveryTime)
+      return f.deliveryTime >= minTimeToday;
+    return true;
+  }
 
   const quotationText = useMemo(() => {
     const date = new Date().toISOString().slice(0, 10);
     const jobDesc = f.description || item?.name || "-";
+    const pay = f.vatEnabled ? PAYMENT_ACCOUNTS.vat : PAYMENT_ACCOUNTS.novat;
+
     return `Azael printing Proforma Invoice
 Date: ${date}
 
 Job Details:
+
 - Job Description: ${jobDesc}
-- Quantity: ${f.qty || "-"} ${f.unitType || ""}
-- Unit Price: ${unitPriceNum || "-"}
-- Urgency level: ${f.urgency}
-- Total Price: ${Math.round(total).toLocaleString()}
+-Quantity: ${f.qty || "-"} ${f.unitType || ""}
+- Unit Price - ${unitPriceNum || "-"}
+- Urgency level- ${f.urgency}
+- Total Price- ${Math.round(total).toLocaleString()}
 
 Payment Information:
-${f.vatEnabled ? PAYMENT_ACCOUNTS.vat.cbe : PAYMENT_ACCOUNTS.novat.cbe}
-${f.vatEnabled ? PAYMENT_ACCOUNTS.vat.tele : PAYMENT_ACCOUNTS.novat.tele}
+- ${pay.cbe}
+- ${pay.tele}
 
 Note:
 - ADAVANCE PAYMENT SHOULD BE 50%
@@ -180,67 +262,114 @@ Note:
     unitPriceNum,
     f.urgency,
     total,
+    f.vatEnabled,
   ]);
 
   async function copyQuotation() {
-    await navigator.clipboard.writeText(quotationText);
-    alert("Quotation copied");
-  }
-
-  function validateDateTime() {
-    if (!f.deliveryDate) return true;
-    if (f.deliveryDate < minDate) return false;
-    if (f.deliveryDate === minDate && f.deliveryTime) {
-      return f.deliveryTime >= minTimeToday;
+    try {
+      await navigator.clipboard.writeText(quotationText);
+      alert("Success: Quotation copied");
+    } catch {
+      alert("Fail: Could not copy quotation");
     }
-    return true;
   }
 
-  async function submitCreate() {
-    if (!f.customerId) return alert("Select Customer");
-    if (!f.itemId) return alert("Select Work Type");
-    if (!f.priceRuleId) return alert("Select Price");
-    if (!f.qty || Number(f.qty) <= 0) return alert("Enter valid quantity");
+  async function approveQuotation() {
+    // Validation (as requested)
+    if (!f.customerName.trim()) return alert("Fail: Customer name required");
+    if (!/^[A-Za-z\s]+$/.test(f.customerName.trim()))
+      return alert("Fail: Customer name must be alphabets only");
+
+    if (f.customerPhone && !/^\d{10}$/.test(f.customerPhone))
+      return alert("Fail: Phone must be exactly 10 digits (or leave empty)");
+
+    if (!f.itemId) return alert("Fail: Select Work Type");
+    if (!f.priceRuleId) return alert("Fail: Select Price");
+    if (!qtyNum || qtyNum <= 0) return alert("Fail: Quantity must be a number");
+
     if (!validateDateTime())
-      return alert("Delivery date/time must be current or future only");
+      return alert("Fail: Delivery date/time must be current or future only");
+
+    if (f.depositPaid && f.paymentStatus !== "PAID") {
+      if (!Number.isFinite(depositAmountNum) || depositAmountNum < 0)
+        return alert("Fail: Deposit amount invalid");
+      if (depositAmountNum > total)
+        return alert("Fail: Deposit cannot exceed total");
+    }
 
     try {
       const payload = {
-        customerName: customer?.name,
-        customerPhone: customer?.phone,
+        customerName: f.customerName.trim(),
+        customerPhone: f.customerPhone ? f.customerPhone : null,
+
         machine: machine?.name,
         workType: item?.name,
+
         description: f.description,
-        qty: Number(f.qty),
+        qty: qtyNum,
         unitType: f.unitType,
-        urgency: f.urgency,
         designerRequired: !!f.designerRequired,
+        urgency: f.urgency,
+
         deliveryType: f.deliveryType,
         deliveryDate: f.deliveryDate
           ? new Date(f.deliveryDate).toISOString()
           : null,
         deliveryTime: f.deliveryTime || null,
+
         unitPrice: unitPriceNum,
         vatEnabled: !!f.vatEnabled,
+
+        // extra pricing fields (backend may ignore for now)
+        paymentStatus: f.paymentStatus,
+        depositAmount:
+          f.paymentStatus === "PAID"
+            ? total
+            : f.depositPaid
+              ? depositAmountNum
+              : 0,
+        remainingBalance,
       };
 
       const job = await createJob(payload);
-      alert(`Job created: AZ-${job.jobNo}`);
-      navigate("/app/admin/jobs", { replace: false });
+      alert(`Success: Job created AZ-${job.jobNo}`);
+      navigate("/app/admin/jobs");
     } catch (e) {
-      alert(e?.response?.data?.message || "Failed to create job");
+      alert(e?.response?.data?.message || "Fail: Failed to create job");
     }
   }
 
   async function handleCreateModal() {
     try {
       if (modal === "customer") {
-        await addCustomer(tmp.name, tmp.phone);
-      } else if (modal === "machine") {
-        await addMachine(tmp.name);
-      } else if (modal === "item") {
-        await addItem(tmp.name, tmp.defaultUnit || "pcs");
-      } else if (modal === "price") {
+        const name = onlyLettersSpaces(tmp.name).trim();
+        const phone = onlyDigitsMax10(tmp.phone).trim();
+
+        if (!name) return alert("Fail: Name required");
+        // phone not required, but if provided must be 10 digits
+        if (phone && phone.length !== 10)
+          return alert("Fail: Phone must be exactly 10 digits");
+
+        await addCustomer(name, phone || ""); // backend will enforce digits if given
+      }
+
+      if (modal === "machine") {
+        const name = String(tmp.name || "").trim();
+        if (!name) return alert("Fail: Machine name required");
+        await addMachine(name);
+      }
+
+      if (modal === "item") {
+        const name = String(tmp.name || "").trim();
+        if (!name) return alert("Fail: Item name required");
+        await addItem(name, String(tmp.defaultUnit || "pcs").trim());
+      }
+
+      if (modal === "price") {
+        if (!tmp.itemId) return alert("Fail: Select item");
+        if (!tmp.machineId) return alert("Fail: Select machine");
+        if (!tmp.unitPrice || Number(tmp.unitPrice) <= 0)
+          return alert("Fail: Enter unit price");
         await addPrice(
           tmp.itemId,
           tmp.machineId,
@@ -248,28 +377,29 @@ Note:
           tmp.vatEnabled !== false,
         );
       }
+
       setModal(null);
       setTmp({});
       await loadRefs();
-      // reload price options if needed
+
       if (f.itemId) {
         const rules = await lookupPricesByItem(f.itemId);
-        setPriceOptions(rules);
+        setPriceOptions(rules || []);
       }
-      alert("Saved");
+
+      alert("Success: Saved");
     } catch (e) {
-      alert(e?.response?.data?.message || "Failed to save");
+      alert(e?.response?.data?.message || "Fail: Save failed");
     }
   }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
-      {/* LEFT FORM */}
+      {/* LEFT */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h2 className="text-2xl font-extrabold text-primary">Create Order</h2>
 
-          {/* Top buttons */}
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => {
@@ -280,6 +410,7 @@ Note:
             >
               Register Customer
             </button>
+
             <button
               onClick={() => {
                 setModal("item");
@@ -289,6 +420,7 @@ Note:
             >
               Add Item
             </button>
+
             <button
               onClick={() => {
                 setModal("machine");
@@ -298,6 +430,7 @@ Note:
             >
               Add Machine
             </button>
+
             <button
               onClick={() => {
                 setModal("price");
@@ -315,76 +448,102 @@ Note:
           </div>
         </div>
 
-        {/* Customer */}
+        {/* CUSTOMER INFORMATION */}
         <div className="mt-6">
-          <div className="font-extrabold text-zinc-900">Customer</div>
-          <select
-            className="mt-2 w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-            value={f.customerId}
-            onChange={(e) => update("customerId", e.target.value)}
-          >
-            <option value="">Select Customer</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.phone})
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="font-extrabold text-zinc-900 border-b border-zinc-200 pb-2">
+            Customer Information
+          </div>
 
-        {/* Work Type */}
-        <div className="mt-6">
-          <div className="font-extrabold text-zinc-900">Work Type</div>
-          <select
-            className="mt-2 w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-            value={f.itemId}
-            onChange={(e) => update("itemId", e.target.value)}
-          >
-            <option value="">Select Work Type</option>
-            {items.map((it) => (
-              <option key={it.id} value={it.id}>
-                {it.name}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">
+                Customer name
+              </div>
+              <input
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                value={f.customerName}
+                onChange={(e) =>
+                  update("customerName", onlyLettersSpaces(e.target.value))
+                }
+                placeholder="Abel Mekonen"
+              />
+            </div>
 
-        {/* Price rule selection (auto fills machine & unit price) */}
-        <div className="mt-6">
-          <div className="font-extrabold text-zinc-900">Price</div>
-          <select
-            className="mt-2 w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-            value={f.priceRuleId}
-            onChange={(e) => update("priceRuleId", e.target.value)}
-            disabled={!f.itemId}
-          >
-            <option value="">Select Price</option>
-            {priceOptions.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.machine?.name} — {Math.round(r.unitPrice).toLocaleString()}{" "}
-                (VAT {r.vatEnabled ? "Yes" : "No"})
-              </option>
-            ))}
-          </select>
-
-          <div className="mt-2 text-sm text-zinc-500 font-bold">
-            Machine:{" "}
-            <span className="text-zinc-800">{machine?.name || "-"}</span> | Unit
-            price:{" "}
-            <span className="text-primary font-extrabold">
-              {Math.round(unitPriceNum || 0).toLocaleString()}
-            </span>
+            <div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">Phone</div>
+              <input
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                value={f.customerPhone}
+                onChange={(e) =>
+                  update("customerPhone", onlyDigitsMax10(e.target.value))
+                }
+                placeholder="10 digits (optional)"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Details */}
-        <div className="mt-6">
-          <div className="font-extrabold text-zinc-900">Job Details</div>
+        {/* JOB DETAILS */}
+        <div className="mt-8">
+          <div className="font-extrabold text-zinc-900 border-b border-zinc-200 pb-2">
+            Job Details
+          </div>
 
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+          <div className="mt-4 grid gap-3">
+            <div>
               <div className="text-sm font-bold text-zinc-700 mb-1">
-                Description
+                Work type
+              </div>
+              <select
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                value={f.itemId}
+                onChange={(e) => update("itemId", e.target.value)}
+              >
+                <option value="">Select Work Type</option>
+                {items.map((it) => (
+                  <option key={it.id} value={it.id}>
+                    {it.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Machine
+                </div>
+                <select
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
+                  value={f.machineId}
+                  onChange={(e) => update("machineId", e.target.value)}
+                  disabled
+                >
+                  <option value="">
+                    {machine?.name || "Auto selected by price"}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Unit Type
+                </div>
+                <select
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                  value={f.unitType}
+                  onChange={(e) => update("unitType", e.target.value)}
+                >
+                  <option value="pcs">pcs</option>
+                  <option value="sqm">sqm</option>
+                  <option value="meter">meter</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">
+                Description (very important for Designer / Operator)
               </div>
               <textarea
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[90px]"
@@ -394,66 +553,94 @@ Note:
               />
             </div>
 
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">Qty</div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                value={f.qty}
-                onChange={(e) => update("qty", e.target.value)}
-                placeholder="number"
-              />
-            </div>
-
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Unit Type
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Quantity
+                </div>
+                <input
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                  value={f.qty}
+                  onChange={(e) =>
+                    update("qty", onlyNumberLike(e.target.value))
+                  }
+                  placeholder="numbers only"
+                />
               </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
-                value={f.unitType}
-                disabled
-              />
+
+              <div className="grid gap-3 grid-cols-2">
+                <div>
+                  <div className="text-sm font-bold text-zinc-700 mb-1">
+                    Designer Required?
+                  </div>
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                    value={f.designerRequired ? "YES" : "NO"}
+                    onChange={(e) =>
+                      update("designerRequired", e.target.value === "YES")
+                    }
+                  >
+                    <option value="NO">No</option>
+                    <option value="YES">Yes</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div className="text-sm font-bold text-zinc-700 mb-1">
+                    Urgency Level
+                  </div>
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                    value={f.urgency}
+                    onChange={(e) => update("urgency", e.target.value)}
+                  >
+                    <option value="URGENT">Urgent</option>
+                    <option value="HIGH">High</option>
+                    <option value="NORMAL">Normal</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
+            {/* PRICE RULE */}
             <div>
               <div className="text-sm font-bold text-zinc-700 mb-1">
-                Urgency
+                Price list
               </div>
               <select
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-                value={f.urgency}
-                onChange={(e) => update("urgency", e.target.value)}
+                value={f.priceRuleId}
+                onChange={(e) => update("priceRuleId", e.target.value)}
+                disabled={!f.itemId}
               >
-                <option value="NORMAL">Normal</option>
-                <option value="HIGH">High (+300)</option>
-                <option value="URGENT">Urgent (+1000)</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Designer Required?
-              </div>
-              <select
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-                value={f.designerRequired ? "yes" : "no"}
-                onChange={(e) =>
-                  update("designerRequired", e.target.value === "yes")
-                }
-              >
-                <option value="no">no</option>
-                <option value="yes">yes</option>
+                <option value="">Select Price</option>
+                {priceOptions.map((r) => {
+                  const noVatTotal = qtyNum ? r.unitPrice * qtyNum : 0;
+                  const vatTotal = qtyNum ? r.unitPrice * qtyNum * 1.15 : 0;
+                  return (
+                    <option key={r.id} value={r.id}>
+                      {`${r.machine?.name} — Unit: ${Math.round(r.unitPrice).toLocaleString()} | No-VAT Total: ${
+                        qtyNum ? Math.round(noVatTotal).toLocaleString() : "-"
+                      } | VAT Total: ${qtyNum ? Math.round(vatTotal).toLocaleString() : "-"}`}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
         </div>
 
-        {/* Delivery restrictions */}
-        <div className="mt-6">
-          <div className="font-extrabold text-zinc-900">Delivery Details</div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        {/* DELIVERY DETAILS */}
+        <div className="mt-8">
+          <div className="font-extrabold text-zinc-900 border-b border-zinc-200 pb-2">
+            Delivery Details
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">Date</div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">
+                Delivery Date
+              </div>
               <input
                 type="date"
                 min={minDate}
@@ -462,8 +649,11 @@ Note:
                 onChange={(e) => update("deliveryDate", e.target.value)}
               />
             </div>
+
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">Time</div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">
+                Delivery time
+              </div>
               <input
                 type="time"
                 min={f.deliveryDate === minDate ? minTimeToday : undefined}
@@ -472,8 +662,11 @@ Note:
                 onChange={(e) => update("deliveryTime", e.target.value)}
               />
             </div>
+
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">Type</div>
+              <div className="text-sm font-bold text-zinc-700 mb-1">
+                Pickup / Delivery
+              </div>
               <select
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
                 value={f.deliveryType}
@@ -486,15 +679,105 @@ Note:
           </div>
         </div>
 
-        {/* Totals */}
-        <div className="mt-6 text-sm font-bold text-zinc-700">
-          Total:{" "}
-          <span className="text-primary font-extrabold">
-            {Math.round(total).toLocaleString()}
-          </span>
-          <span className="ml-2 text-zinc-400">
-            (VAT {f.vatEnabled ? "Yes" : "No"})
-          </span>
+        {/* PRICING */}
+        <div className="mt-8">
+          <div className="font-extrabold text-zinc-900 border-b border-zinc-200 pb-2">
+            Pricing
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-4">
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Unit Price
+                </div>
+                <input
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
+                  value={Math.round(unitPriceNum || 0).toLocaleString()}
+                  disabled
+                />
+              </div>
+
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 font-bold text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={f.vatEnabled}
+                    onChange={(e) => update("vatEnabled", e.target.checked)}
+                  />
+                  {f.vatEnabled ? "VAT?" : "Non-VAT?"}
+                </label>
+              </div>
+
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Total Price
+                </div>
+                <input
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
+                  value={Math.round(total).toLocaleString()}
+                  disabled
+                />
+              </div>
+
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Payment Status
+                </div>
+                <select
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                  value={f.paymentStatus}
+                  onChange={(e) => update("paymentStatus", e.target.value)}
+                >
+                  {PAYMENT_STATUS_OPTIONS.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 font-bold text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={f.depositPaid || f.paymentStatus === "PAID"}
+                    onChange={(e) => update("depositPaid", e.target.checked)}
+                    disabled={f.paymentStatus === "PAID"}
+                  />
+                  Deposit Paid?
+                </label>
+              </div>
+
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Deposit Amount
+                </div>
+                <input
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                  value={f.depositAmount}
+                  onChange={(e) =>
+                    update("depositAmount", onlyNumberLike(e.target.value))
+                  }
+                  disabled={!f.depositPaid && f.paymentStatus !== "PAID"}
+                  placeholder="0"
+                />
+              </div>
+
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Remaining Balance
+                </div>
+                <input
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
+                  value={Math.round(remainingBalance).toLocaleString()}
+                  disabled
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -505,17 +788,20 @@ Note:
           Fill details - Review summary - Save
         </div>
 
-        <div className="mt-5 text-sm grid gap-2">
+        {/* EXACT summary layout */}
+        <div className="mt-5 text-sm grid gap-3">
+          <div className="font-extrabold text-zinc-900">Customer Info</div>
           <div>
             <span className="font-extrabold">Customer name:</span>{" "}
-            {customer?.name || "..."}
+            {f.customerName || "..."}
           </div>
           <div>
             <span className="font-extrabold">Phone number:</span>{" "}
-            {customer?.phone || "..."}
+            {f.customerPhone || "..."}
           </div>
 
-          <div className="mt-2">
+          <div className="font-extrabold text-zinc-900 mt-2">Job Details</div>
+          <div>
             <span className="font-extrabold">Machine:</span>{" "}
             {machine?.name || "..."}
           </div>
@@ -528,14 +814,24 @@ Note:
             {f.description || "..."}
           </div>
           <div>
-            <span className="font-extrabold">Quantity:</span> {f.qty || "..."}{" "}
-            {f.unitType}
+            <span className="font-extrabold">Quantity:</span> {f.qty || "..."}
           </div>
           <div>
-            <span className="font-extrabold">Urgency:</span> {f.urgency}
+            <span className="font-extrabold">Unit Type:</span>{" "}
+            {f.unitType || "..."}
+          </div>
+          <div>
+            <span className="font-extrabold">Designer Required?</span>{" "}
+            {f.designerRequired ? "Yes" : "No"}
+          </div>
+          <div>
+            <span className="font-extrabold">Urgency Level:</span> {f.urgency}
           </div>
 
-          <div className="mt-2">
+          <div className="font-extrabold text-zinc-900 mt-2">
+            Delivery Details
+          </div>
+          <div>
             <span className="font-extrabold">Delivery Date:</span>{" "}
             {f.deliveryDate || "..."}
           </div>
@@ -543,22 +839,35 @@ Note:
             <span className="font-extrabold">Delivery Time:</span>{" "}
             {f.deliveryTime || "..."}
           </div>
-          <div>
-            <span className="font-extrabold">Delivery Type:</span>{" "}
-            {f.deliveryType}
-          </div>
 
-          <div className="mt-2">
-            <span className="font-extrabold">Unit Price:</span>{" "}
+          <div className="font-extrabold text-zinc-900 mt-2">Pricing</div>
+          <div>
+            <span className="font-extrabold">Unit Price</span>{" "}
             {Math.round(unitPriceNum || 0).toLocaleString()}
           </div>
           <div>
-            <span className="font-extrabold">VAT:</span>{" "}
+            <span className="font-extrabold">VAT ?</span>{" "}
             {f.vatEnabled ? "Yes" : "No"}
           </div>
           <div>
-            <span className="font-extrabold">Total price:</span>{" "}
+            <span className="font-extrabold">Total price</span>{" "}
             {Math.round(total).toLocaleString()}
+          </div>
+          <div>
+            <span className="font-extrabold">Payment Status</span>{" "}
+            {f.paymentStatus}
+          </div>
+          <div>
+            <span className="font-extrabold">Deposit Paid?</span>{" "}
+            {f.depositPaid || f.paymentStatus === "PAID" ? "Yes" : "No"}
+          </div>
+          <div>
+            <span className="font-extrabold">Deposit Amount</span>{" "}
+            {Math.round(Number(f.depositAmount || 0)).toLocaleString()}
+          </div>
+          <div>
+            <span className="font-extrabold">Remaining Balance</span>{" "}
+            {Math.round(remainingBalance || 0).toLocaleString()}
           </div>
         </div>
 
@@ -571,10 +880,10 @@ Note:
           </button>
 
           <button
-            onClick={submitCreate}
+            onClick={approveQuotation}
             className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-extrabold hover:opacity-90 transition"
           >
-            Sent quotation
+            Approve quotation
           </button>
         </div>
 
@@ -616,18 +925,24 @@ Note:
                 <>
                   <input
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                    placeholder="Name"
+                    placeholder="Name (alphabets only)"
                     value={tmp.name || ""}
                     onChange={(e) =>
-                      setTmp((p) => ({ ...p, name: e.target.value }))
+                      setTmp((p) => ({
+                        ...p,
+                        name: onlyLettersSpaces(e.target.value),
+                      }))
                     }
                   />
                   <input
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                    placeholder="Phone"
+                    placeholder="Phone (10 digits optional)"
                     value={tmp.phone || ""}
                     onChange={(e) =>
-                      setTmp((p) => ({ ...p, phone: e.target.value }))
+                      setTmp((p) => ({
+                        ...p,
+                        phone: onlyDigitsMax10(e.target.value),
+                      }))
                     }
                   />
                 </>
@@ -702,7 +1017,10 @@ Note:
                     placeholder="Unit price"
                     value={tmp.unitPrice || ""}
                     onChange={(e) =>
-                      setTmp((p) => ({ ...p, unitPrice: e.target.value }))
+                      setTmp((p) => ({
+                        ...p,
+                        unitPrice: onlyNumberLike(e.target.value),
+                      }))
                     }
                   />
 
@@ -714,7 +1032,7 @@ Note:
                         setTmp((p) => ({ ...p, vatEnabled: e.target.checked }))
                       }
                     />
-                    VAT enabled
+                    VAT enabled (for this price rule)
                   </label>
                 </>
               )}
