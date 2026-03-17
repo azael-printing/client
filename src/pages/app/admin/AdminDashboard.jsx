@@ -159,7 +159,7 @@ export default function AdminDashboard() {
       {/* MACHINE OVERVIEW (REAL DATA from AdminLayout) */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm">
         <div>
-          <div className="text-primary font-semibold text-lg sm:text-xl">
+          <div className="text-primary font-bold text-lg sm:text-xl">
             Machine overview
           </div>
           <div className="text-zinc-400 font-medium text-xs sm:text-sm">
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
               className="w-full text-left rounded-2xl border border-zinc-200 p-4 hover:shadow-md transition bg-white"
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="font-semibold text-zinc-900 text-sm sm:text-base">
+                <div className="font-bold text-zinc-900 text-sm sm:text-base">
                   {m.machine}
                 </div>
                 <span
