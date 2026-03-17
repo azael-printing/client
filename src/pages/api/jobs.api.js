@@ -15,7 +15,10 @@ export async function listJobs(status) {
   const res = await http.get(url);
   return res.data.jobs;
 }
-
+export async function cancelJob(id, reason, note = " ") {
+  const res = await http.patch(`/api/job/${id}/cancel`, { reason, note });
+  return res.data.job;
+}
 export async function workflowAction(jobId, action) {
   const res = await http.post(`/api/jobs/${jobId}/workflow`, { action });
   return res.data.job;

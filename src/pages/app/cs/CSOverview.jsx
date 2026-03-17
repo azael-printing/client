@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { listJobsByStatus } from "../../api/cs.api";
+import CSJobControlPanel from "./CSJobControlPanel";
 
 function Card({ title, value, sub }) {
   return (
     <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm min-w-[240px]">
       <div className="text-zinc-400 font-bold">{title}</div>
-      <div className="mt-2 text-primary text-3xl font-extrabold">{value}</div>
+      <div className="mt-2 text-primary text-3xl font-bold">{value}</div>
       <div className="mt-1 text-zinc-400">{sub}</div>
     </div>
   );
@@ -46,7 +47,7 @@ export default function CSOverview() {
   }, [all]);
 
   return (
-    <div>
+    <div className=" grid gap-4 ]">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Total Jobs" value={stats.total} sub="All CS jobs" />
         <Card
@@ -60,6 +61,10 @@ export default function CSOverview() {
           value={stats.inProduction}
           sub="Production pipeline"
         />
+      </div>
+
+      <div className="grid grid-cols-1">
+        <CSJobControlPanel />
       </div>
     </div>
   );

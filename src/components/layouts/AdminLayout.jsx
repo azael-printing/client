@@ -11,7 +11,7 @@ function cn(...xs) {
 
 const navClass = ({ isActive }) =>
   cn(
-    "flex items-center gap-3 px-3 py-3 rounded-2xl font-extrabold transition",
+    "flex items-center gap-3 px-3 py-3 rounded-2xl font-bold transition",
     isActive ? "bg-bgLight text-primary" : "text-zinc-900 hover:bg-bgLight",
   );
 
@@ -167,7 +167,7 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        <div className="text-primary font-extrabold tracking-wide text-lg sm:text-xl">
+        <div className="text-primary font-bold tracking-wide text-lg sm:text-xl">
           ADMIN DASHBOARD
         </div>
 
@@ -179,14 +179,14 @@ export default function AdminLayout() {
           >
             <Icon name="bell" />
             {unread > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-extrabold rounded-full px-2 py-0.5">
+              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full px-2 py-0.5">
                 {unread}
               </span>
             )}
           </button>
 
           <div className="text-right leading-tight">
-            <div className="font-extrabold text-zinc-900">
+            <div className="font-bold text-zinc-900">
               {user?.username || "admin"}
               <span className="ml-2 text-zinc-400 font-bold">
                 {user?.role ? `· ${user.role}` : ""}
@@ -275,7 +275,7 @@ export default function AdminLayout() {
               <button
                 onClick={() => setFinanceOpen((v) => !v)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-3 rounded-2xl font-extrabold transition text-left",
+                  "w-full flex items-center gap-3 px-3 py-3 rounded-2xl font-bold transition text-left",
                   location.pathname.startsWith("/app/admin/finance")
                     ? "bg-bgLight text-primary"
                     : "text-zinc-900 hover:bg-bgLight",
@@ -356,7 +356,7 @@ export default function AdminLayout() {
 
               <button
                 onClick={handleLogout}
-                className="mt-6 w-full flex items-center gap-3 px-3 py-3 rounded-2xl font-extrabold text-red-600 hover:bg-red-50 transition"
+                className="mt-6 w-full flex items-center gap-3 px-3 py-3 rounded-2xl font-bold text-red-600 hover:bg-red-50 transition"
               >
                 <Icon name="logout" className="w-5 h-5" />
                 <span className="hidden md:inline">Logout</span>
@@ -377,7 +377,7 @@ export default function AdminLayout() {
           {showTop && (
             <button
               onClick={backToTop}
-              className="fixed bottom-6 right-6 z-40 bg-primary text-white font-extrabold px-4 py-3 rounded-2xl shadow-lg hover:opacity-90 transition"
+              className="fixed bottom-6 right-6 z-40 bg-primary text-white font-bold px-4 py-3 rounded-2xl shadow-lg hover:opacity-90 transition"
             >
               Back to top ↑
             </button>
@@ -394,7 +394,7 @@ export default function AdminLayout() {
           />
           <div className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-white border-l border-zinc-200 p-4 overflow-auto">
             <div className="flex items-center justify-between">
-              <div className="font-extrabold text-primary text-xl">
+              <div className="font-bold text-primary text-xl">
                 Notifications
               </div>
               <button

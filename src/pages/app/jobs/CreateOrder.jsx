@@ -1,12 +1,14 @@
+// ========================
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../app/providers/AuthProvider";
 import { createJob } from "../../api/jobs.api";
 import {
   getCustomers,
-  addCustomer,
   getMachines,
-  addMachine,
   getItems,
+  addCustomer,
+  addMachine,
   addItem,
   addPrice,
   lookupPricesByItem,
@@ -54,9 +56,7 @@ function onlyDigitsMax10(s) {
     .slice(0, 10);
 }
 function onlyNumberLike(s) {
-  // allows decimals
   const cleaned = String(s || "").replace(/[^0-9.]/g, "");
-  // prevent multiple dots
   const parts = cleaned.split(".");
   if (parts.length <= 2) return cleaned;
   return parts[0] + "." + parts.slice(1).join("");
@@ -65,43 +65,40 @@ function onlyNumberLike(s) {
 export default function CreateOrder() {
   const navigate = useNavigate();
 
+  const { user } = useAuth();
+  const role = user?.role;
+
   const [customers, setCustomers] = useState([]);
   const [machines, setMachines] = useState([]);
   const [items, setItems] = useState([]);
   const [priceOptions, setPriceOptions] = useState([]);
 
-  const [modal, setModal] = useState(null); // customer | machine | item | price | null
+  const [modal, setModal] = useState(null); // customer | machine | item | price
   const [tmp, setTmp] = useState({});
 
   const minDate = todayMinDate();
   const minTimeToday = nowMinTime();
 
   const [f, setF] = useState({
-    // Customer selection OR manual entry (as your UI requires fields)
-    customerId: "",
     customerName: "",
     customerPhone: "",
 
-    // Job refs
     itemId: "",
     priceRuleId: "",
     machineId: "",
 
-    // Job details
     description: "",
     qty: "",
     unitType: "pcs",
     designerRequired: false,
     urgency: "NORMAL",
 
-    // Delivery
     deliveryDate: "",
     deliveryTime: "",
     deliveryType: "PICKUP",
 
-    // Pricing
     unitPrice: 0,
-    vatEnabled: true,
+    vatEnabled: true, // this controls invoice VAT calc AND default price variant selection
     paymentStatus: "UNPAID",
     depositPaid: false,
     depositAmount: "",
@@ -128,19 +125,23 @@ export default function CreateOrder() {
     );
   }, []);
 
-  // When a customer is selected, auto-fill name/phone fields
+  // Customer suggestion: if name matches existing, auto-fill phone
   useEffect(() => {
-    if (!f.customerId) return;
-    const c = customers.find((x) => x.id === f.customerId);
-    if (!c) return;
-    setF((p) => ({
-      ...p,
-      customerName: c.name || "",
-      customerPhone: c.phone || "",
-    }));
-  }, [f.customerId, customers]);
+    const name = f.customerName.trim().toLowerCase();
+    if (!name) return;
+    const match = customers.find(
+      (c) =>
+        String(c.name || "")
+          .trim()
+          .toLowerCase() === name,
+    );
+    if (match && match.phone) {
+      setF((p) => ({ ...p, customerPhone: onlyDigitsMax10(match.phone) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.customerName]);
 
-  // Load price rules when item selected, auto-fill defaults
+  // Load prices on item change
   useEffect(() => {
     (async () => {
       if (!f.itemId) {
@@ -157,35 +158,48 @@ export default function CreateOrder() {
 
       const rules = await lookupPricesByItem(f.itemId);
       setPriceOptions(rules || []);
-
-      if (rules?.length) {
-        const r0 = rules[0];
-        update("priceRuleId", r0.id);
-        update("machineId", r0.machineId);
-        update("unitPrice", r0.unitPrice);
-        update("vatEnabled", r0.vatEnabled);
-      }
     })().catch((e) =>
       alert(e?.response?.data?.message || "Failed to load price rules"),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [f.itemId]);
 
-  // When price changes, auto-fill machine/unitPrice/vat
+  // When VAT checkbox changes: auto-pick matching variant if available (VAT vs NON_VAT)
+  useEffect(() => {
+    if (!priceOptions.length) return;
+    const desired = f.vatEnabled ? "VAT" : "NON_VAT";
+    const found = priceOptions.find(
+      (r) => String(r.variant || "").toUpperCase() === desired,
+    );
+    if (found) {
+      update("priceRuleId", found.id);
+      update("machineId", found.machineId);
+      update("unitPrice", found.unitPrice);
+      // keep vatEnabled as user chose
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.vatEnabled, priceOptions]);
+
+  // When price rule changes, update machine/unit price; and sync VAT checkbox to rule.vatEnabled (optional)
   useEffect(() => {
     if (!f.priceRuleId) return;
     const rule = priceOptions.find((r) => r.id === f.priceRuleId);
     if (!rule) return;
     update("machineId", rule.machineId);
     update("unitPrice", rule.unitPrice);
-    update("vatEnabled", rule.vatEnabled);
+
+    // Keep invoice VAT behavior aligned with selected rule variant if user chooses manually
+    if (String(rule.variant || "").toUpperCase() === "NON_VAT")
+      update("vatEnabled", false);
+    if (String(rule.variant || "").toUpperCase() === "VAT")
+      update("vatEnabled", true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [f.priceRuleId]);
 
   const qtyNum = Number(f.qty || 0);
   const unitPriceNum = Number(f.unitPrice || 0);
 
-  const deliveryFee = f.deliveryType === "DELIVERY" ? 500 : 0; // hidden in unit price
+  const deliveryFee = f.deliveryType === "DELIVERY" ? 500 : 0;
   const urgencyFee = URGENCY_FEES[f.urgency] || 0;
 
   const subtotal = useMemo(() => {
@@ -200,7 +214,7 @@ export default function CreateOrder() {
   );
   const total = useMemo(() => subtotal + vatAmount, [subtotal, vatAmount]);
 
-  // Auto behavior: if PAID -> depositPaid=true and depositAmount=total
+  // PAID => deposit paid full
   useEffect(() => {
     if (f.paymentStatus === "PAID") {
       setF((p) => ({
@@ -209,7 +223,6 @@ export default function CreateOrder() {
         depositAmount: String(Math.round(total)),
       }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [f.paymentStatus, total]);
 
   const depositAmountNum = Number(f.depositAmount || 0);
@@ -275,9 +288,10 @@ Note:
   }
 
   async function approveQuotation() {
-    // Validation (as requested)
-    if (!f.customerName.trim()) return alert("Fail: Customer name required");
-    if (!/^[A-Za-z\s]+$/.test(f.customerName.trim()))
+    // validations
+    const name = f.customerName.trim();
+    if (!name) return alert("Fail: Customer name required");
+    if (!/^[A-Za-z\s]+$/.test(name))
       return alert("Fail: Customer name must be alphabets only");
 
     if (f.customerPhone && !/^\d{10}$/.test(f.customerPhone))
@@ -286,7 +300,6 @@ Note:
     if (!f.itemId) return alert("Fail: Select Work Type");
     if (!f.priceRuleId) return alert("Fail: Select Price");
     if (!qtyNum || qtyNum <= 0) return alert("Fail: Quantity must be a number");
-
     if (!validateDateTime())
       return alert("Fail: Delivery date/time must be current or future only");
 
@@ -299,28 +312,23 @@ Note:
 
     try {
       const payload = {
-        customerName: f.customerName.trim(),
+        customerName: name,
         customerPhone: f.customerPhone ? f.customerPhone : null,
-
         machine: machine?.name,
         workType: item?.name,
-
         description: f.description,
         qty: qtyNum,
         unitType: f.unitType,
         designerRequired: !!f.designerRequired,
         urgency: f.urgency,
-
         deliveryType: f.deliveryType,
         deliveryDate: f.deliveryDate
           ? new Date(f.deliveryDate).toISOString()
           : null,
         deliveryTime: f.deliveryTime || null,
-
         unitPrice: unitPriceNum,
         vatEnabled: !!f.vatEnabled,
 
-        // extra pricing fields (backend may ignore for now)
         paymentStatus: f.paymentStatus,
         depositAmount:
           f.paymentStatus === "PAID"
@@ -333,9 +341,10 @@ Note:
 
       const job = await createJob(payload);
       alert(`Success: Job created AZ-${job.jobNo}`);
-      navigate("/app/admin/jobs");
+      navigate(role === "CS" ? "/app/cs/overview" : "/app/admin/jobs");
     } catch (e) {
       alert(e?.response?.data?.message || "Fail: Failed to create job");
+      navigate("/login");
     }
   }
 
@@ -344,13 +353,10 @@ Note:
       if (modal === "customer") {
         const name = onlyLettersSpaces(tmp.name).trim();
         const phone = onlyDigitsMax10(tmp.phone).trim();
-
         if (!name) return alert("Fail: Name required");
-        // phone not required, but if provided must be 10 digits
         if (phone && phone.length !== 10)
           return alert("Fail: Phone must be exactly 10 digits");
-
-        await addCustomer(name, phone || ""); // backend will enforce digits if given
+        await addCustomer(name, phone || "");
       }
 
       if (modal === "machine") {
@@ -370,11 +376,20 @@ Note:
         if (!tmp.machineId) return alert("Fail: Select machine");
         if (!tmp.unitPrice || Number(tmp.unitPrice) <= 0)
           return alert("Fail: Enter unit price");
+
+        // variant support
+        const variant = String(
+          tmp.variant || (tmp.vatEnabled === false ? "NON_VAT" : "VAT"),
+        ).trim();
+        const label = tmp.variantLabel ? String(tmp.variantLabel).trim() : null;
+
         await addPrice(
           tmp.itemId,
           tmp.machineId,
           Number(tmp.unitPrice),
           tmp.vatEnabled !== false,
+          variant,
+          label,
         );
       }
 
@@ -439,6 +454,8 @@ Note:
                   machineId: "",
                   unitPrice: "",
                   vatEnabled: true,
+                  variant: "VAT",
+                  variantLabel: "",
                 });
               }}
               className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
@@ -460,13 +477,19 @@ Note:
                 Customer name
               </div>
               <input
+                list="customerNames"
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200"
                 value={f.customerName}
                 onChange={(e) =>
                   update("customerName", onlyLettersSpaces(e.target.value))
                 }
-                placeholder="Abel Mekonen"
+                placeholder="Start typing..."
               />
+              <datalist id="customerNames">
+                {customers.map((c) => (
+                  <option key={c.id} value={c.name} />
+                ))}
+              </datalist>
             </div>
 
             <div>
@@ -490,39 +513,35 @@ Note:
           </div>
 
           <div className="mt-4 grid gap-3">
-            <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Work type
+            {/* ONE LINE: Work type + Machine + Unit Type */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <div className="text-sm font-bold text-zinc-700 mb-1">
+                  Work type
+                </div>
+                <select
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                  value={f.itemId}
+                  onChange={(e) => update("itemId", e.target.value)}
+                >
+                  <option value="">Select Work Type</option>
+                  {items.map((it) => (
+                    <option key={it.id} value={it.id}>
+                      {it.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <select
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-                value={f.itemId}
-                onChange={(e) => update("itemId", e.target.value)}
-              >
-                <option value="">Select Work Type</option>
-                {items.map((it) => (
-                  <option key={it.id} value={it.id}>
-                    {it.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <div className="text-sm font-bold text-zinc-700 mb-1">
                   Machine
                 </div>
-                <select
+                <input
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
-                  value={f.machineId}
-                  onChange={(e) => update("machineId", e.target.value)}
+                  value={machine?.name || "Auto selected by price"}
                   disabled
-                >
-                  <option value="">
-                    {machine?.name || "Auto selected by price"}
-                  </option>
-                </select>
+                />
               </div>
 
               <div>
@@ -549,7 +568,6 @@ Note:
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[90px]"
                 value={f.description}
                 onChange={(e) => update("description", e.target.value)}
-                placeholder="Important notes for designer/operator"
               />
             </div>
 
@@ -602,11 +620,13 @@ Note:
               </div>
             </div>
 
-            {/* PRICE RULE */}
+            {/* PRICE LIST (variant-based) */}
+            {/* PRICE LIST (show only unit price in options; details shown below) */}
             <div>
               <div className="text-sm font-bold text-zinc-700 mb-1">
                 Price list
               </div>
+
               <select
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
                 value={f.priceRuleId}
@@ -614,18 +634,62 @@ Note:
                 disabled={!f.itemId}
               >
                 <option value="">Select Price</option>
-                {priceOptions.map((r) => {
-                  const noVatTotal = qtyNum ? r.unitPrice * qtyNum : 0;
-                  const vatTotal = qtyNum ? r.unitPrice * qtyNum * 1.15 : 0;
-                  return (
-                    <option key={r.id} value={r.id}>
-                      {`${r.machine?.name} — Unit: ${Math.round(r.unitPrice).toLocaleString()} | No-VAT Total: ${
-                        qtyNum ? Math.round(noVatTotal).toLocaleString() : "-"
-                      } | VAT Total: ${qtyNum ? Math.round(vatTotal).toLocaleString() : "-"}`}
-                    </option>
-                  );
-                })}
+
+                {priceOptions.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {Math.round(r.unitPrice).toLocaleString()}
+                  </option>
+                ))}
               </select>
+
+              {/* Details below dropdown (small font) */}
+              {(() => {
+                const rule = priceOptions.find((x) => x.id === f.priceRuleId);
+                if (!rule) return null;
+
+                const ruleVariant = String(
+                  rule.variant || (rule.vatEnabled ? "VAT" : "NON_VAT"),
+                ).toUpperCase();
+                const variantLabel = rule.variantLabel
+                  ? rule.variantLabel
+                  : "-";
+
+                const noVatTotal = qtyNum ? rule.unitPrice * qtyNum : 0;
+                const vatTotal = qtyNum ? rule.unitPrice * qtyNum * 1.15 : 0;
+
+                return (
+                  <div className="mt-2 text-xs font-bold text-zinc-500 leading-5">
+                    <div>
+                      <span className="text-zinc-400">Machine:</span>{" "}
+                      <span className="text-zinc-800">
+                        {rule.machine?.name || machine?.name || "-"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400">Variant:</span>{" "}
+                      <span className="text-zinc-800">{ruleVariant}</span>{" "}
+                      <span className="text-zinc-400">Label:</span>{" "}
+                      <span className="text-zinc-800">{variantLabel}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <div>
+                        <span className="text-zinc-400">No-VAT Total:</span>{" "}
+                        <span className="text-zinc-800">
+                          {qtyNum
+                            ? Math.round(noVatTotal).toLocaleString()
+                            : "-"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-zinc-400">VAT Total:</span>{" "}
+                        <span className="text-zinc-800">
+                          {qtyNum ? Math.round(vatTotal).toLocaleString() : "-"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -783,91 +847,145 @@ Note:
 
       {/* RIGHT: Summary + Quotation */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-        <h2 className="text-2xl font-extrabold text-primary">Summary</h2>
-        <div className="text-xs text-zinc-400 font-bold mt-1">
+        <h2 className="ml-7 text-2xl font-extrabold text-primary">Summary</h2>
+        <div className="ml-7 text-xs text-zinc-400 font-bold mt-1">
           Fill details - Review summary - Save
         </div>
 
-        {/* EXACT summary layout */}
-        <div className="mt-5 text-sm grid gap-3">
-          <div className="font-extrabold text-zinc-900">Customer Info</div>
-          <div>
-            <span className="font-extrabold">Customer name:</span>{" "}
-            {f.customerName || "..."}
-          </div>
-          <div>
-            <span className="font-extrabold">Phone number:</span>{" "}
-            {f.customerPhone || "..."}
+        {/* COMPACT SUMMARY (labels left, values right) */}
+        <div className="mt-4 text-[13px] grid gap-2">
+          <div className="text-center font-extrabold text-zinc-900">
+            Customer Info
           </div>
 
-          <div className="font-extrabold text-zinc-900 mt-2">Job Details</div>
-          <div>
-            <span className="font-extrabold">Machine:</span>{" "}
-            {machine?.name || "..."}
-          </div>
-          <div>
-            <span className="font-extrabold">Work Type:</span>{" "}
-            {item?.name || "..."}
-          </div>
-          <div>
-            <span className="font-extrabold">Description:</span>{" "}
-            {f.description || "..."}
-          </div>
-          <div>
-            <span className="font-extrabold">Quantity:</span> {f.qty || "..."}
-          </div>
-          <div>
-            <span className="font-extrabold">Unit Type:</span>{" "}
-            {f.unitType || "..."}
-          </div>
-          <div>
-            <span className="font-extrabold">Designer Required?</span>{" "}
-            {f.designerRequired ? "Yes" : "No"}
-          </div>
-          <div>
-            <span className="font-extrabold">Urgency Level:</span> {f.urgency}
+          <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+            <div className="text-right font-bold text-zinc-600">
+              Customer name:
+            </div>
+            <div className=" font-extrabold text-zinc-900 truncate">
+              {f.customerName || "..."}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">
+              Phone number:
+            </div>
+            <div className=" font-extrabold text-zinc-900 truncate">
+              {f.customerPhone || "..."}
+            </div>
           </div>
 
-          <div className="font-extrabold text-zinc-900 mt-2">
+          <div className="text-center font-extrabold text-zinc-900 mt-2">
+            Job Details
+          </div>
+          <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+            <div className="text-right font-bold text-zinc-600">Machine:</div>
+            <div className=" font-extrabold text-zinc-900 truncate">
+              {machine?.name || "..."}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">Work Type:</div>
+            <div className=" font-extrabold text-zinc-900 truncate">
+              {item?.name || "..."}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">
+              Description:
+            </div>
+            <div className=" font-extrabold text-zinc-900 truncate">
+              {f.description || "..."}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">Quantity:</div>
+            <div className=" font-extrabold text-zinc-900">
+              {f.qty || "..."}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">Unit Type:</div>
+            <div className=" font-extrabold text-zinc-900">
+              {f.unitType || "..."}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">
+              Designer Required?:
+            </div>
+            <div className=" font-extrabold text-zinc-900">
+              {f.designerRequired ? "Yes" : "No"}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">
+              Urgency Level:
+            </div>
+            <div className=" font-extrabold text-zinc-900">{f.urgency}</div>
+          </div>
+
+          <div className="text-center font-extrabold text-zinc-900 mt-2">
             Delivery Details
           </div>
-          <div>
-            <span className="font-extrabold">Delivery Date:</span>{" "}
-            {f.deliveryDate || "..."}
-          </div>
-          <div>
-            <span className="font-extrabold">Delivery Time:</span>{" "}
-            {f.deliveryTime || "..."}
+          <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+            <div className="text-right font-bold text-zinc-600">
+              Delivery Date:
+            </div>
+            <div className=" font-extrabold text-zinc-900">
+              {f.deliveryDate || "..."}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">
+              Delivery Time:
+            </div>
+            <div className=" font-extrabold text-zinc-900">
+              {f.deliveryTime || "..."}
+            </div>
           </div>
 
-          <div className="font-extrabold text-zinc-900 mt-2">Pricing</div>
-          <div>
-            <span className="font-extrabold">Unit Price</span>{" "}
-            {Math.round(unitPriceNum || 0).toLocaleString()}
+          <div className=" text-center font-extrabold text-zinc-900 mt-2">
+            Pricing
           </div>
-          <div>
-            <span className="font-extrabold">VAT ?</span>{" "}
-            {f.vatEnabled ? "Yes" : "No"}
-          </div>
-          <div>
-            <span className="font-extrabold">Total price</span>{" "}
-            {Math.round(total).toLocaleString()}
-          </div>
-          <div>
-            <span className="font-extrabold">Payment Status</span>{" "}
-            {f.paymentStatus}
-          </div>
-          <div>
-            <span className="font-extrabold">Deposit Paid?</span>{" "}
-            {f.depositPaid || f.paymentStatus === "PAID" ? "Yes" : "No"}
-          </div>
-          <div>
-            <span className="font-extrabold">Deposit Amount</span>{" "}
-            {Math.round(Number(f.depositAmount || 0)).toLocaleString()}
-          </div>
-          <div>
-            <span className="font-extrabold">Remaining Balance</span>{" "}
-            {Math.round(remainingBalance || 0).toLocaleString()}
+          <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+            <div className="text-right font-bold text-zinc-600">
+              Unit Price:
+            </div>
+            <div className=" font-extrabold text-zinc-900">
+              {Math.round(unitPriceNum || 0).toLocaleString()}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">VAT ?:</div>
+            <div className=" font-extrabold text-zinc-900">
+              {f.vatEnabled ? "Yes" : "No"}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">
+              Total price:
+            </div>
+            <div className=" font-extrabold text-zinc-900">
+              {Math.round(total).toLocaleString()}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">
+              Payment Status:{" "}
+            </div>
+            <div className=" font-extrabold text-zinc-900">
+              {f.paymentStatus}
+            </div>
+
+            <div className="text-right font-bold text-zinc-600">
+              Deposit Paid? :
+            </div>
+            <div className=" font-extrabold text-zinc-900">
+              {f.depositPaid || f.paymentStatus === "PAID" ? "Yes" : "No"}
+            </div>
+
+            <div className="text-right  font-bold text-zinc-600">
+              Deposit Amount:
+            </div>
+            <div className="font-extrabold text-zinc-900">
+              {Math.round(Number(f.depositAmount || 0)).toLocaleString()}
+            </div>
+            <div className="text-right last:font-bold text-zinc-600">
+              Remaining Balance:
+            </div>
+            <div className=" font-extrabold text-zinc-900">
+              {Math.round(remainingBalance || 0).toLocaleString()}
+            </div>
           </div>
         </div>
 
@@ -878,7 +996,6 @@ Note:
           >
             Copy quotation
           </button>
-
           <button
             onClick={approveQuotation}
             className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-extrabold hover:opacity-90 transition"
@@ -895,158 +1012,182 @@ Note:
             {quotationText}
           </pre>
         </div>
-      </div>
 
-      {/* MODAL */}
-      {modal && (
-        <div className="fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setModal(null)}
-          />
-          <div className="absolute left-1/2 top-1/2 w-[95%] max-w-[520px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-5 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div className="font-extrabold text-primary text-xl">
-                {modal === "customer" && "Register Customer"}
-                {modal === "machine" && "Add Machine"}
-                {modal === "item" && "Add Item"}
-                {modal === "price" && "Add Price"}
+        {/* MODAL */}
+        {modal && (
+          <div className="fixed inset-0 z-50">
+            <div
+              className="absolute inset-0 bg-black/30"
+              onClick={() => setModal(null)}
+            />
+            <div className="absolute left-1/2 top-1/2 w-[95%] max-w-[520px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-5 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="font-extrabold text-primary text-xl">
+                  {modal === "customer" && "Register Customer"}
+                  {modal === "machine" && "Add Machine"}
+                  {modal === "item" && "Add Item"}
+                  {modal === "price" && "Add Price"}
+                </div>
+                <button
+                  onClick={() => setModal(null)}
+                  className="px-3 py-2 rounded-xl border border-zinc-200 font-bold hover:bg-bgLight"
+                >
+                  Close
+                </button>
               </div>
-              <button
-                onClick={() => setModal(null)}
-                className="px-3 py-2 rounded-xl border border-zinc-200 font-bold hover:bg-bgLight"
-              >
-                Close
-              </button>
-            </div>
 
-            <div className="mt-4 grid gap-3">
-              {modal === "customer" && (
-                <>
+              <div className="mt-4 grid gap-3">
+                {modal === "customer" && (
+                  <>
+                    <input
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      placeholder="Name (alphabets only)"
+                      value={tmp.name || ""}
+                      onChange={(e) =>
+                        setTmp((p) => ({
+                          ...p,
+                          name: onlyLettersSpaces(e.target.value),
+                        }))
+                      }
+                    />
+                    <input
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      placeholder="Phone (10 digits optional)"
+                      value={tmp.phone || ""}
+                      onChange={(e) =>
+                        setTmp((p) => ({
+                          ...p,
+                          phone: onlyDigitsMax10(e.target.value),
+                        }))
+                      }
+                    />
+                  </>
+                )}
+
+                {modal === "machine" && (
                   <input
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                    placeholder="Name (alphabets only)"
-                    value={tmp.name || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({
-                        ...p,
-                        name: onlyLettersSpaces(e.target.value),
-                      }))
-                    }
-                  />
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                    placeholder="Phone (10 digits optional)"
-                    value={tmp.phone || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({
-                        ...p,
-                        phone: onlyDigitsMax10(e.target.value),
-                      }))
-                    }
-                  />
-                </>
-              )}
-
-              {modal === "machine" && (
-                <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                  placeholder="Machine name"
-                  value={tmp.name || ""}
-                  onChange={(e) =>
-                    setTmp((p) => ({ ...p, name: e.target.value }))
-                  }
-                />
-              )}
-
-              {modal === "item" && (
-                <>
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                    placeholder="Work type name"
+                    placeholder="Machine name"
                     value={tmp.name || ""}
                     onChange={(e) =>
                       setTmp((p) => ({ ...p, name: e.target.value }))
                     }
                   />
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                    placeholder="Default unit (pcs/sqm/meter)"
-                    value={tmp.defaultUnit || "pcs"}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, defaultUnit: e.target.value }))
-                    }
-                  />
-                </>
-              )}
+                )}
 
-              {modal === "price" && (
-                <>
-                  <select
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-                    value={tmp.itemId || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, itemId: e.target.value }))
-                    }
-                  >
-                    <option value="">Select item</option>
-                    {items.map((it) => (
-                      <option key={it.id} value={it.id}>
-                        {it.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
-                    value={tmp.machineId || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, machineId: e.target.value }))
-                    }
-                  >
-                    <option value="">Select machine</option>
-                    {machines.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
-                    placeholder="Unit price"
-                    value={tmp.unitPrice || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({
-                        ...p,
-                        unitPrice: onlyNumberLike(e.target.value),
-                      }))
-                    }
-                  />
-
-                  <label className="flex items-center gap-2 font-bold text-zinc-700">
+                {modal === "item" && (
+                  <>
                     <input
-                      type="checkbox"
-                      checked={tmp.vatEnabled !== false}
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      placeholder="Work type name"
+                      value={tmp.name || ""}
                       onChange={(e) =>
-                        setTmp((p) => ({ ...p, vatEnabled: e.target.checked }))
+                        setTmp((p) => ({ ...p, name: e.target.value }))
                       }
                     />
-                    VAT enabled (for this price rule)
-                  </label>
-                </>
-              )}
+                    <input
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      placeholder="Default unit (pcs/sqm/meter)"
+                      value={tmp.defaultUnit || "pcs"}
+                      onChange={(e) =>
+                        setTmp((p) => ({ ...p, defaultUnit: e.target.value }))
+                      }
+                    />
+                  </>
+                )}
 
-              <button
-                onClick={handleCreateModal}
-                className="mt-2 px-4 py-3 rounded-xl bg-success text-white font-extrabold hover:opacity-90 transition"
-              >
-                Save
-              </button>
+                {modal === "price" && (
+                  <>
+                    <select
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                      value={tmp.itemId || ""}
+                      onChange={(e) =>
+                        setTmp((p) => ({ ...p, itemId: e.target.value }))
+                      }
+                    >
+                      <option value="">Select item</option>
+                      {items.map((it) => (
+                        <option key={it.id} value={it.id}>
+                          {it.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                      value={tmp.machineId || ""}
+                      onChange={(e) =>
+                        setTmp((p) => ({ ...p, machineId: e.target.value }))
+                      }
+                    >
+                      <option value="">Select machine</option>
+                      {machines.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                      value={tmp.variant || "VAT"}
+                      onChange={(e) =>
+                        setTmp((p) => ({ ...p, variant: e.target.value }))
+                      }
+                    >
+                      <option value="VAT">VAT</option>
+                      <option value="NON_VAT">NON_VAT</option>
+                      <option value="CUSTOM">CUSTOM</option>
+                    </select>
+
+                    <input
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      placeholder="Variant label (optional) e.g. Corporate / Walk-in / Promo"
+                      value={tmp.variantLabel || ""}
+                      onChange={(e) =>
+                        setTmp((p) => ({ ...p, variantLabel: e.target.value }))
+                      }
+                    />
+
+                    <input
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      placeholder="Unit price"
+                      value={tmp.unitPrice || ""}
+                      onChange={(e) =>
+                        setTmp((p) => ({
+                          ...p,
+                          unitPrice: onlyNumberLike(e.target.value),
+                        }))
+                      }
+                    />
+
+                    <label className="flex items-center gap-2 font-bold text-zinc-700">
+                      <input
+                        type="checkbox"
+                        checked={tmp.vatEnabled !== false}
+                        onChange={(e) =>
+                          setTmp((p) => ({
+                            ...p,
+                            vatEnabled: e.target.checked,
+                          }))
+                        }
+                      />
+                      VAT enabled (for this rule)
+                    </label>
+                  </>
+                )}
+
+                <button
+                  onClick={handleCreateModal}
+                  className="mt-2 px-4 py-3 rounded-xl bg-success text-white font-extrabold hover:opacity-90 transition"
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

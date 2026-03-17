@@ -23,7 +23,7 @@ export default function CSAudit() {
   return (
     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-extrabold text-primary">Audit Log</h2>
+        <h2 className="text-2xl font-bold text-primary">Audit Log</h2>
         <button
           onClick={load}
           className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold hover:opacity-90"

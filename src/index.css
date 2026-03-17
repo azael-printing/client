@@ -4,5 +4,6 @@
 
 html,
 body {
-  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  font-family:
+    "Segoe UI Variable", "Segoe UI", system-ui, sans-serif, Regular !important;
 }
