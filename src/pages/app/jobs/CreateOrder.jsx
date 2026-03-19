@@ -413,7 +413,7 @@ Note:
       {/* LEFT */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h2 className="text-2xl font-extrabold text-primary">Create Order</h2>
+          <h2 className="text-2xl font-semibold text-primary">Create Order</h2>
 
           <div className="flex gap-2 flex-wrap">
             <button
@@ -421,7 +421,7 @@ Note:
                 setModal("customer");
                 setTmp({ name: "", phone: "" });
               }}
-              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold hover:opacity-90"
             >
               Register Customer
             </button>
@@ -431,7 +431,7 @@ Note:
                 setModal("item");
                 setTmp({ name: "", defaultUnit: "pcs" });
               }}
-              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold hover:opacity-90"
             >
               Add Item
             </button>
@@ -441,7 +441,7 @@ Note:
                 setModal("machine");
                 setTmp({ name: "" });
               }}
-              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold hover:opacity-90"
             >
               Add Machine
             </button>
@@ -458,7 +458,7 @@ Note:
                   variantLabel: "",
                 });
               }}
-              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-extrabold hover:opacity-90"
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold hover:opacity-90"
             >
               Add Price
             </button>
@@ -467,13 +467,13 @@ Note:
 
         {/* CUSTOMER INFORMATION */}
         <div className="mt-6">
-          <div className="font-extrabold text-zinc-900 border-b border-zinc-200 pb-2">
+          <div className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
             Customer Information
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
+              <div className="text-sm font-semibold text-zinc-700 mb-1">
                 Customer name
               </div>
               <input
@@ -493,7 +493,9 @@ Note:
             </div>
 
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">Phone</div>
+              <div className="text-sm font-semibold text-zinc-700 mb-1">
+                Phone
+              </div>
               <input
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200"
                 value={f.customerPhone}
@@ -508,7 +510,7 @@ Note:
 
         {/* JOB DETAILS */}
         <div className="mt-8">
-          <div className="font-extrabold text-zinc-900 border-b border-zinc-200 pb-2">
+          <div className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
             Job Details
           </div>
 
@@ -516,7 +518,7 @@ Note:
             {/* ONE LINE: Work type + Machine + Unit Type */}
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Work type
                 </div>
                 <select
@@ -534,7 +536,7 @@ Note:
               </div>
 
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Machine
                 </div>
                 <input
@@ -545,7 +547,7 @@ Note:
               </div>
 
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Unit Type
                 </div>
                 <select
@@ -561,11 +563,12 @@ Note:
             </div>
 
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
-                Description (very important for Designer / Operator)
+              <div className="text-sm font-semibold text-zinc-700 mb-1">
+                Description
               </div>
               <textarea
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[90px]"
+                placeholder="Very important for Designer / Operator"
                 value={f.description}
                 onChange={(e) => update("description", e.target.value)}
               />
@@ -573,7 +576,7 @@ Note:
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Quantity
                 </div>
                 <input
@@ -588,7 +591,7 @@ Note:
 
               <div className="grid gap-3 grid-cols-2">
                 <div>
-                  <div className="text-sm font-bold text-zinc-700 mb-1">
+                  <div className="text-sm font-semibold text-zinc-700 mb-1">
                     Designer Required?
                   </div>
                   <select
@@ -604,7 +607,7 @@ Note:
                 </div>
 
                 <div>
-                  <div className="text-sm font-bold text-zinc-700 mb-1">
+                  <div className="text-sm font-semibold text-zinc-700 mb-1">
                     Urgency Level
                   </div>
                   <select
@@ -623,7 +626,7 @@ Note:
             {/* PRICE LIST (variant-based) */}
             {/* PRICE LIST (show only unit price in options; details shown below) */}
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
+              <div className="text-sm font-semibold text-zinc-700 mb-1">
                 Price list
               </div>
 
@@ -658,7 +661,7 @@ Note:
                 const vatTotal = qtyNum ? rule.unitPrice * qtyNum * 1.15 : 0;
 
                 return (
-                  <div className="mt-2 text-xs font-bold text-zinc-500 leading-5">
+                  <div className="mt-2 text-xs font-semibold text-zinc-500 leading-5">
                     <div>
                       <span className="text-zinc-400">Machine:</span>{" "}
                       <span className="text-zinc-800">
@@ -696,13 +699,13 @@ Note:
 
         {/* DELIVERY DETAILS */}
         <div className="mt-8">
-          <div className="font-extrabold text-zinc-900 border-b border-zinc-200 pb-2">
+          <div className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
             Delivery Details
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
+              <div className="text-sm font-semibold text-zinc-700 mb-1">
                 Delivery Date
               </div>
               <input
@@ -715,7 +718,7 @@ Note:
             </div>
 
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
+              <div className="text-sm font-semibold text-zinc-700 mb-1">
                 Delivery time
               </div>
               <input
@@ -728,7 +731,7 @@ Note:
             </div>
 
             <div>
-              <div className="text-sm font-bold text-zinc-700 mb-1">
+              <div className="text-sm font-semibold text-zinc-700 mb-1">
                 Pickup / Delivery
               </div>
               <select
@@ -745,14 +748,14 @@ Note:
 
         {/* PRICING */}
         <div className="mt-8">
-          <div className="font-extrabold text-zinc-900 border-b border-zinc-200 pb-2">
+          <div className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
             Pricing
           </div>
 
           <div className="mt-4 grid gap-3">
             <div className="grid gap-3 sm:grid-cols-4">
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Unit Price
                 </div>
                 <input
@@ -763,7 +766,7 @@ Note:
               </div>
 
               <div className="flex items-end">
-                <label className="flex items-center gap-2 font-bold text-zinc-700">
+                <label className="flex items-center gap-2 font-semibold text-zinc-700">
                   <input
                     type="checkbox"
                     checked={f.vatEnabled}
@@ -774,7 +777,7 @@ Note:
               </div>
 
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Total Price
                 </div>
                 <input
@@ -785,7 +788,7 @@ Note:
               </div>
 
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Payment Status
                 </div>
                 <select
@@ -804,7 +807,7 @@ Note:
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="flex items-end">
-                <label className="flex items-center gap-2 font-bold text-zinc-700">
+                <label className="flex items-center gap-2 font-semibold text-zinc-700">
                   <input
                     type="checkbox"
                     checked={f.depositPaid || f.paymentStatus === "PAID"}
@@ -816,7 +819,7 @@ Note:
               </div>
 
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Deposit Amount
                 </div>
                 <input
@@ -831,7 +834,7 @@ Note:
               </div>
 
               <div>
-                <div className="text-sm font-bold text-zinc-700 mb-1">
+                <div className="text-sm font-semibold text-zinc-700 mb-1">
                   Remaining Balance
                 </div>
                 <input
@@ -847,143 +850,149 @@ Note:
 
       {/* RIGHT: Summary + Quotation */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-        <h2 className="ml-7 text-2xl font-extrabold text-primary">Summary</h2>
-        <div className="ml-7 text-xs text-zinc-400 font-bold mt-1">
+        <h2 className="ml-7 text-2xl font-semibold text-primary">Summary</h2>
+        <div className="ml-7 text-xs text-zinc-400 font-semibold mt-1">
           Fill details - Review summary - Save
         </div>
 
         {/* COMPACT SUMMARY (labels left, values right) */}
         <div className="mt-4 text-[13px] grid gap-2">
-          <div className="text-center font-extrabold text-zinc-900">
+          <div className="text-center font-semibold text-zinc-900">
             Customer Info
           </div>
 
           <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-semibold text-zinc-600">
               Customer name:
             </div>
-            <div className=" font-extrabold text-zinc-900 truncate">
+            <div className=" font-semibold text-zinc-900 truncate">
               {f.customerName || "..."}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-semibold text-zinc-600">
               Phone number:
             </div>
-            <div className=" font-extrabold text-zinc-900 truncate">
+            <div className=" font-semibold text-zinc-900 truncate">
               {f.customerPhone || "..."}
             </div>
           </div>
 
-          <div className="text-center font-extrabold text-zinc-900 mt-2">
+          <div className="text-center font-semibold text-zinc-900 mt-2">
             Job Details
           </div>
           <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-            <div className="text-right font-bold text-zinc-600">Machine:</div>
-            <div className=" font-extrabold text-zinc-900 truncate">
+            <div className="text-right font-bolsemiboldd text-zinc-600">
+              Machine:
+            </div>
+            <div className=" font-semibold text-zinc-900 truncate">
               {machine?.name || "..."}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">Work Type:</div>
-            <div className=" font-extrabold text-zinc-900 truncate">
+            <div className="text-right font-semibold text-zinc-600">
+              Work Type:
+            </div>
+            <div className=" font-semibold text-zinc-900 truncate">
               {item?.name || "..."}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-semibold text-zinc-600">
               Description:
             </div>
-            <div className=" font-extrabold text-zinc-900 truncate">
+            <div className=" font-semibold text-zinc-900 truncate">
               {f.description || "..."}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">Quantity:</div>
-            <div className=" font-extrabold text-zinc-900">
-              {f.qty || "..."}
+            <div className="text-right font-semibold text-zinc-600">
+              Quantity:
             </div>
+            <div className=" font-semibold text-zinc-900">{f.qty || "..."}</div>
 
-            <div className="text-right font-bold text-zinc-600">Unit Type:</div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className="text-right font-semibold text-zinc-600">
+              Unit Type:
+            </div>
+            <div className=" font-semibold text-zinc-900">
               {f.unitType || "..."}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-medium text-zinc-600">
               Designer Required?:
             </div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className=" font-semibold text-zinc-900">
               {f.designerRequired ? "Yes" : "No"}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-medium text-zinc-600">
               Urgency Level:
             </div>
-            <div className=" font-extrabold text-zinc-900">{f.urgency}</div>
+            <div className=" font-semibold text-zinc-900">{f.urgency}</div>
           </div>
 
-          <div className="text-center font-extrabold text-zinc-900 mt-2">
+          <div className="text-center font-semibold text-zinc-900 mt-2">
             Delivery Details
           </div>
           <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-semibold text-zinc-600">
               Delivery Date:
             </div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className=" font-semibold text-zinc-900">
               {f.deliveryDate || "..."}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-medium text-zinc-600">
               Delivery Time:
             </div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className=" font-semibold text-zinc-900">
               {f.deliveryTime || "..."}
             </div>
           </div>
 
-          <div className=" text-center font-extrabold text-zinc-900 mt-2">
+          <div className=" text-center font-semibold text-zinc-900 mt-2">
             Pricing
           </div>
           <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-medium text-zinc-600">
               Unit Price:
             </div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className=" font-semibold text-zinc-900">
               {Math.round(unitPriceNum || 0).toLocaleString()}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">VAT ?:</div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className="text-right font-medium text-zinc-600">VAT ?:</div>
+            <div className=" font-semibold text-zinc-900">
               {f.vatEnabled ? "Yes" : "No"}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-medium text-zinc-600">
               Total price:
             </div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className=" font-semibold text-zinc-900">
               {Math.round(total).toLocaleString()}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-medium text-zinc-600">
               Payment Status:{" "}
             </div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className=" font-semibold text-zinc-900">
               {f.paymentStatus}
             </div>
 
-            <div className="text-right font-bold text-zinc-600">
+            <div className="text-right font-medium text-zinc-600">
               Deposit Paid? :
             </div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className=" font-semibold text-zinc-900">
               {f.depositPaid || f.paymentStatus === "PAID" ? "Yes" : "No"}
             </div>
 
-            <div className="text-right  font-bold text-zinc-600">
+            <div className="text-right  font-medium  text-zinc-600">
               Deposit Amount:
             </div>
-            <div className="font-extrabold text-zinc-900">
+            <div className="font-semibold text-zinc-900">
               {Math.round(Number(f.depositAmount || 0)).toLocaleString()}
             </div>
-            <div className="text-right last:font-bold text-zinc-600">
+            <div className="text-right last:font-meium text-zinc-600">
               Remaining Balance:
             </div>
-            <div className=" font-extrabold text-zinc-900">
+            <div className=" font-semibold text-zinc-900">
               {Math.round(remainingBalance || 0).toLocaleString()}
             </div>
           </div>
@@ -992,20 +1001,20 @@ Note:
         <div className="mt-5 flex gap-2">
           <button
             onClick={copyQuotation}
-            className="px-4 py-2 rounded-xl border border-zinc-200 font-extrabold text-primary hover:bg-bgLight transition"
+            className="px-4 py-2 rounded-xl border border-zinc-200 font-semibold text-primary hover:bg-bgLight transition"
           >
             Copy quotation
           </button>
           <button
             onClick={approveQuotation}
-            className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-extrabold hover:opacity-90 transition"
+            className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-semibold hover:opacity-90 transition"
           >
             Approve quotation
           </button>
         </div>
 
         <div className="mt-4">
-          <div className="text-zinc-500 font-extrabold text-sm">
+          <div className="text-zinc-500 font-semibold text-sm">
             Quotation Preview
           </div>
           <pre className="mt-2 p-3 rounded-xl bg-bgLight border border-zinc-200 text-xs whitespace-pre-wrap">
@@ -1022,7 +1031,7 @@ Note:
             />
             <div className="absolute left-1/2 top-1/2 w-[95%] max-w-[520px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-5 shadow-lg">
               <div className="flex items-center justify-between">
-                <div className="font-extrabold text-primary text-xl">
+                <div className="font-semibold text-primary text-xl">
                   {modal === "customer" && "Register Customer"}
                   {modal === "machine" && "Add Machine"}
                   {modal === "item" && "Add Item"}
@@ -1030,7 +1039,7 @@ Note:
                 </div>
                 <button
                   onClick={() => setModal(null)}
-                  className="px-3 py-2 rounded-xl border border-zinc-200 font-bold hover:bg-bgLight"
+                  className="px-3 py-2 rounded-xl border border-zinc-200 font-semibold hover:bg-bgLight"
                 >
                   Close
                 </button>
@@ -1161,7 +1170,7 @@ Note:
                       }
                     />
 
-                    <label className="flex items-center gap-2 font-bold text-zinc-700">
+                    <label className="flex items-center gap-2 font-semibold text-zinc-700">
                       <input
                         type="checkbox"
                         checked={tmp.vatEnabled !== false}
@@ -1179,7 +1188,7 @@ Note:
 
                 <button
                   onClick={handleCreateModal}
-                  className="mt-2 px-4 py-3 rounded-xl bg-success text-white font-extrabold hover:opacity-90 transition"
+                  className="mt-2 px-4 py-3 rounded-xl bg-success text-white font-semibold hover:opacity-90 transition"
                 >
                   Save
                 </button>

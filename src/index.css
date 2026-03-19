@@ -2,8 +2,368 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
+/* html,
 body {
   font-family:
     "Segoe UI Variable", "Segoe UI", system-ui, sans-serif, Regular !important;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities; 
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* GLOBAL */
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    "Segoe UI Variable", "Segoe UI", system-ui, sans-serif !important;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+video {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.writing-mode-vertical {
+  writing-mode: vertical-rl;
+}
+
+/* ABOUT */
+.about-pill-modern {
+  width: 84px;
+  height: 84px;
+  background: rgba(255, 255, 255, 0.94);
+  border-top-left-radius: 999px;
+  border-top-right-radius: 999px;
+  border-bottom-left-radius: 999px;
+  border-bottom-right-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(99, 161, 205, 0.22);
+  box-shadow: 0 10px 24px rgba(31, 120, 184, 0.08);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    background 0.3s ease;
+}
+
+.about-pill-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(31, 120, 184, 0.14);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.about-pill-modern span {
+  color: #3f8fc9;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.about-pill-modern-center {
+  background: rgba(168, 207, 229, 0.35);
+  border-color: transparent;
+}
+
+.about-pill-modern-center span {
+  color: #ffffff;
+}
+
+/* SERVICES */
+.modern-service-card {
+  min-height: 360px;
+  background: rgba(235, 244, 246, 0.96);
+  border: 1.5px solid #73add9;
+  border-radius: 3rem;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 14px 34px rgba(21, 94, 137, 0.08);
+  backdrop-filter: blur(2px);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.modern-service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 22px 44px rgba(21, 94, 137, 0.16);
+  background: rgba(243, 249, 251, 0.99);
+  border-color: #5b9fd4;
+}
+
+.modern-service-title {
+  color: #3f8fc9;
+  font-size: 1.85rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  transition:
+    transform 0.3s ease,
+    color 0.3s ease;
+}
+
+.modern-service-card:hover .modern-service-title {
+  transform: translateY(-2px);
+  color: #1f78b8;
+}
+
+.modern-service-text {
+  margin-top: 1.2rem;
+  color: #0f172a;
+  font-size: 1rem;
+  line-height: 1.75;
+  font-weight: 400;
+}
+
+/* TEAM + COLLEAGUES */
+.modern-team-card {
+  min-height: 360px;
+  background: rgba(235, 244, 246, 0.96);
+  border: 1.5px solid #73add9;
+  border-radius: 2rem 2rem 3.5rem 3.5rem;
+  padding: 2rem 1.5rem 1.75rem;
+  box-shadow: 0 14px 34px rgba(21, 94, 137, 0.08);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.modern-team-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 22px 44px rgba(21, 94, 137, 0.16);
+  background: rgba(243, 249, 251, 0.99);
+  border-color: #5b9fd4;
+}
+
+.modern-team-card-featured {
+  background: linear-gradient(180deg, #2380c5 0%, #1b74b5 100%);
+  border-color: rgba(255, 255, 255, 0.72);
+}
+
+.modern-team-card-featured:hover {
+  background: linear-gradient(180deg, #2387cf 0%, #166daa 100%);
+}
+
+.modern-team-photo {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: #f7f7f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f78b8;
+  font-size: 1.05rem;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.modern-team-card:hover .modern-team-photo {
+  transform: scale(1.04);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+}
+
+.modern-team-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.modern-team-role {
+  margin-top: 0.4rem;
+  font-size: 0.96rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* DOTS */
+.modern-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #1780c7;
+  opacity: 0.78;
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.modern-dot-active {
+  width: 18px;
+  height: 18px;
+  opacity: 1;
+  box-shadow: 0 0 0 4px #d7eaf7 inset;
+}
+
+/* FOOTER BUTTON POLISH */
+footer ul button {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+footer ul button:hover {
+  opacity: 0.85;
+  transform: translateX(2px);
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .modern-service-card {
+    min-height: 320px;
+    padding: 1.7rem 1.25rem;
+    border-radius: 2.5rem;
+  }
+
+  .modern-service-title {
+    font-size: 1.55rem;
+  }
+
+  .modern-service-text {
+    font-size: 0.96rem;
+    line-height: 1.65;
+  }
+
+  .modern-team-card {
+    min-height: 320px;
+    padding: 1.7rem 1.25rem 1.5rem;
+  }
+
+  .modern-team-photo {
+    width: 132px;
+    height: 132px;
+    font-size: 0.95rem;
+  }
+
+  .modern-team-name {
+    font-size: 1.05rem;
+  }
+
+  .modern-team-role {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-pill-modern {
+    width: 72px;
+    height: 72px;
+  }
+
+  .about-pill-modern span {
+    font-size: 12px;
+  }
+
+  .modern-service-card {
+    min-height: auto;
+    padding: 1.5rem 1.15rem;
+    border-radius: 2.2rem;
+  }
+
+  .modern-service-title {
+    font-size: 1.4rem;
+  }
+
+  .modern-service-text {
+    font-size: 0.94rem;
+    line-height: 1.65;
+  }
+
+  .modern-team-card {
+    min-height: auto;
+    padding: 1.5rem 1.15rem;
+    border-radius: 1.8rem 1.8rem 2.6rem 2.6rem;
+  }
+
+  .modern-team-photo {
+    width: 118px;
+    height: 118px;
+    font-size: 0.92rem;
+  }
+
+  .modern-team-name {
+    font-size: 1rem;
+  }
+
+  .modern-team-role {
+    font-size: 0.88rem;
+  }
+
+  .modern-dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  .modern-dot-active {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+@media (max-width: 640px) {
+  .about-pill-modern {
+    width: 64px;
+    height: 64px;
+  }
+
+  .about-pill-modern span {
+    font-size: 11px;
+  }
+
+  .modern-service-title {
+    font-size: 1.28rem;
+  }
+
+  .modern-service-text {
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .modern-team-photo {
+    width: 108px;
+    height: 108px;
+  }
+
+  .modern-team-name {
+    font-size: 0.96rem;
+  }
+
+  .modern-team-role {
+    font-size: 0.84rem;
+  }
 }
