@@ -49,8 +49,8 @@ import FinanceLayout from "./components/layouts/FinanceLayout";
 import FinanceJobs from "./pages/app/finance/FinanceJobs";
 import FinanceAudit from "./pages/app/finance/FinanceAudit";
 // Wireing routes in /app jobs
-// import CreateOrder from "./pages/app/jobs/CreateOrder";
-// import JobsList from "./pages/app/jobs/JobsList";
+import CreateOrder from "./pages/app/jobs/CreateOrder";
+import JobsList from "./pages/app/jobs/JobsList";
 //
 // import FinanceDashboard
 import FinanceExpensesDashboard from "./pages/app/finance/FinanceExpensesDashboard";
