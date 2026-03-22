@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import getExpenseDashboard from "../../api/finance.api";
+import { getExpenseDashboard } from "../../api/finance.api";
 
 function money(v) {
   return `ETB ${Number(v || 0).toLocaleString()}`;

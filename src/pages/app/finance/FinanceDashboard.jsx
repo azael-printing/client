@@ -37,7 +37,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import NotificationsPanel from "../../../components/app/NotificationsPanel";
-import getFinanceDashboard from "../../api/finance.api";
+import { getFinanceDashboard } from "../../api/finance.api";
 
 function FinanceStatCard({ title, value, subtitle }) {
   return (
