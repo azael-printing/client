@@ -1,43 +1,11 @@
-// import { Link } from "react-router-dom";
-// import NotificationsPanel from "../../../components/app/NotificationsPanel";
-
-// export default function FinanceDashboard() {
-//   return (
-//     <div className="grid gap-4">
-//       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-//         <h2 className="text-2xl font-extrabold text-primary">
-//           Finance Dashboard
-//         </h2>
-//         <p className="mt-2 text-zinc-700">
-//           Review new jobs, set waiting/approve, and track completed jobs sent by
-//           CS.
-//         </p>
-
-//         <div className="mt-5 flex gap-3 flex-wrap">
-//           <Link
-//             to="/app/finance-waiting"
-//             className="px-5 py-3 rounded-2xl bg-primary text-white font-extrabold hover:opacity-90 transition"
-//           >
-//             Waiting Approval
-//           </Link>
-
-//           <Link
-//             to="/app/finance-done"
-//             className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-bgLight transition"
-//           >
-//             Done Tracking
-//           </Link>
-//         </div>
-//       </div>
-
-//       <NotificationsPanel />
-//     </div>
-//   );
-// }
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import NotificationsPanel from "../../../components/app/NotificationsPanel";
-import { getFinanceDashboard } from "../../api/finance.api";
+import { listFinanceJobs } from "../../api/finance.api";
+
+function money(v) {
+  return `ETB ${Number(v || 0).toLocaleString()}`;
+}
 
 function FinanceStatCard({ title, value, subtitle }) {
   return (
@@ -71,9 +39,13 @@ function StatusBadge({ status }) {
   const normalized = String(status || "").toLowerCase();
 
   let cls = "bg-zinc-100 text-zinc-700";
-  if (normalized === "paid") cls = "bg-green-100 text-green-700";
-  if (normalized === "partial") cls = "bg-yellow-100 text-yellow-700";
-  if (normalized === "unpaid") cls = "bg-red-100 text-red-700";
+  if (normalized.includes("paid") || normalized === "delivered") {
+    cls = "bg-green-100 text-green-700";
+  } else if (normalized.includes("waiting") || normalized.includes("partial")) {
+    cls = "bg-yellow-100 text-yellow-700";
+  } else if (normalized.includes("new") || normalized.includes("unpaid")) {
+    cls = "bg-red-100 text-red-700";
+  }
 
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-bold ${cls}`}>
@@ -82,12 +54,17 @@ function StatusBadge({ status }) {
   );
 }
 
-function money(v) {
-  return `ETB ${Number(v || 0).toLocaleString()}`;
+function getAmount(row, keys, fallback = 0) {
+  for (const key of keys) {
+    const val = row?.[key];
+    if (val !== undefined && val !== null && val !== "")
+      return Number(val || 0);
+  }
+  return fallback;
 }
 
 export default function FinanceDashboard() {
-  const [data, setData] = useState(null);
+  const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -102,8 +79,29 @@ export default function FinanceDashboard() {
     try {
       setErr("");
       setLoading(true);
-      const res = await getFinanceDashboard();
-      setData(res);
+
+      const [newReq, waiting, approved, readyForDelivery, delivered] =
+        await Promise.all([
+          listFinanceJobs("NEW_REQUEST").catch(() => []),
+          listFinanceJobs("FINANCE_WAITING_APPROVAL").catch(() => []),
+          listFinanceJobs("FINANCE_APPROVED").catch(() => []),
+          listFinanceJobs("READY_FOR_DELIVERY").catch(() => []),
+          listFinanceJobs("DELIVERED").catch(() => []),
+        ]);
+
+      const merged = [
+        ...newReq,
+        ...waiting,
+        ...approved,
+        ...readyForDelivery,
+        ...delivered,
+      ];
+
+      const unique = Array.from(
+        new Map(merged.map((item) => [item.id, item])).values(),
+      ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      setJobs(unique);
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load finance dashboard");
     } finally {
@@ -143,17 +141,68 @@ export default function FinanceDashboard() {
       ro.disconnect();
       window.removeEventListener("resize", updateScale);
     };
-  }, [data, loading, err]);
+  }, [jobs, loading, err]);
 
-  const summary = data?.summary || {
-    monthRevenue: 0,
-    monthExpenses: 0,
-    customerCredit: 0,
-    monthNetIncome: 0,
-    paidThisMonth: 0,
-  };
+  const summary = useMemo(() => {
+    const deliveredLike = jobs.filter(
+      (j) => j.status === "READY_FOR_DELIVERY" || j.status === "DELIVERED",
+    );
 
-  const invoices = Array.isArray(data?.invoices) ? data.invoices : [];
+    const monthRevenue = deliveredLike.reduce((sum, j) => {
+      const paid = getAmount(j, ["paid", "paidAmount", "amountPaid"], 0);
+      const total = getAmount(j, ["total", "totalAmount", "grandTotal"], 0);
+      return sum + (paid || total || 0);
+    }, 0);
+
+    const monthExpenses = jobs.reduce((sum, j) => {
+      const expense = getAmount(j, ["expense", "expenseTotal", "cost"], 0);
+      return sum + expense;
+    }, 0);
+
+    const customerCredit = jobs.reduce((sum, j) => {
+      const total = getAmount(j, ["total", "totalAmount", "grandTotal"], 0);
+      const paid = getAmount(j, ["paid", "paidAmount", "amountPaid"], 0);
+      const balance =
+        j.balance !== undefined && j.balance !== null
+          ? Number(j.balance || 0)
+          : Math.max(total - paid, 0);
+
+      return sum + balance;
+    }, 0);
+
+    const paidThisMonth = monthRevenue;
+    const monthNetIncome = monthRevenue - monthExpenses;
+
+    return {
+      monthRevenue,
+      monthExpenses,
+      customerCredit,
+      monthNetIncome,
+      paidThisMonth,
+    };
+  }, [jobs]);
+
+  const invoiceRows = useMemo(() => {
+    return jobs.slice(0, 8).map((j) => {
+      const total = getAmount(j, ["total", "totalAmount", "grandTotal"], 0);
+      const paid = getAmount(j, ["paid", "paidAmount", "amountPaid"], 0);
+      const balance =
+        j.balance !== undefined && j.balance !== null
+          ? Number(j.balance || 0)
+          : Math.max(total - paid, 0);
+
+      return {
+        id: j.id,
+        invoiceNo: j.invoiceNo || j.invoiceNumber || `INV-${j.jobNo || j.id}`,
+        jobId: j.jobNo || j.jobId || j.id,
+        customerName: j.customerName || "-",
+        total,
+        paid,
+        balance,
+        status: j.paymentStatus || j.status || "-",
+      };
+    });
+  }, [jobs]);
 
   return (
     <div ref={viewportRef} className="w-full overflow-x-hidden">
@@ -183,17 +232,17 @@ export default function FinanceDashboard() {
               <FinanceStatCard
                 title="Monthly Expenses"
                 value={money(summary.monthExpenses)}
-                subtitle="Invoiced, not settled"
+                subtitle="tracked from job costs"
               />
               <FinanceStatCard
                 title="Customer credit"
                 value={money(summary.customerCredit)}
-                subtitle="> 30 days"
+                subtitle="unpaid balance"
               />
               <FinanceStatCard
                 title="Monthly Net income"
                 value={money(summary.monthNetIncome)}
-                subtitle="Credit holdings"
+                subtitle="revenue minus cost"
               />
             </div>
 
@@ -231,7 +280,7 @@ export default function FinanceDashboard() {
                               Loading finance data...
                             </td>
                           </tr>
-                        ) : invoices.length === 0 ? (
+                        ) : invoiceRows.length === 0 ? (
                           <tr>
                             <td
                               colSpan="7"
@@ -241,19 +290,19 @@ export default function FinanceDashboard() {
                             </td>
                           </tr>
                         ) : (
-                          invoices.map((row, idx) => (
+                          invoiceRows.map((row) => (
                             <tr
-                              key={row.id || row.invoiceNo || idx}
+                              key={row.id}
                               className="border-t border-zinc-100 hover:bg-zinc-50/70 transition-colors"
                             >
                               <td className="px-4 py-3 font-medium text-zinc-800">
-                                {row.invoiceNo || "-"}
+                                {row.invoiceNo}
                               </td>
                               <td className="px-4 py-3 font-medium text-zinc-800">
-                                {row.jobId || "-"}
+                                {row.jobId}
                               </td>
                               <td className="px-4 py-3 font-medium text-zinc-800">
-                                {row.customerName || "-"}
+                                {row.customerName}
                               </td>
                               <td className="px-4 py-3 font-medium text-zinc-800">
                                 {Number(row.total || 0).toLocaleString()}
@@ -276,14 +325,14 @@ export default function FinanceDashboard() {
 
                   <div className="mt-5 flex gap-3">
                     <Link
-                      to="/app/finance-waiting"
+                      to="/app/finance/waiting"
                       className="px-5 py-3 rounded-2xl bg-primary text-white font-extrabold hover:opacity-90 transition"
                     >
                       Waiting Approval
                     </Link>
 
                     <Link
-                      to="/app/finance-done"
+                      to="/app/finance/done"
                       className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-zinc-50 transition"
                     >
                       Done Tracking
@@ -308,7 +357,7 @@ export default function FinanceDashboard() {
               </div>
             </div>
 
-            <NotificationsPanel />
+            {/* <NotificationsPanel /> */}
           </div>
         </div>
       </div>
