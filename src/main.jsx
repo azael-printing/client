@@ -54,7 +54,7 @@ import JobsList from "./pages/app/jobs/JobsList";
 //
 // import FinanceDashboard
 import FinanceExpensesDashboard from "./pages/app/finance/FinanceExpensesDashboard";
-
+// import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 //
 import AdminProforma from "./pages/app/admin/AdminProforma";
 import AdminInvoice from "./pages/app/admin/AdminInvoice";
@@ -120,17 +120,18 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 {/* Admin finance inside AdminLayout */}
                 <Route path="finance">
                   <Route index element={<Navigate to="overview" replace />} />
-                  <Route path="overview" element={<FinanceOverview />} />
+                  {/* <Route path="overview" element={<FinanceOverview />} /> */}
                   <Route path="jobs" element={<FinanceJobs />} />
                   <Route path="audit" element={<FinanceAudit />} />
-                  <Route
+                  {/* <Route
                     path="revenue"
                     element={
                       <div className="p-6 font-bold text-zinc-600">
                         Revenue (next)
                       </div>
                     }
-                  />
+                  /> */}
+                  <Route path="overview" element={<FinanceDashboard />} />
                   {/* <Route
                     path="expenses"
                     element={
@@ -140,7 +141,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                     }
                   /> */}
                   <Route
-                    path="/app/finance/expenses"
+                    path="expenses"
                     element={<FinanceExpensesDashboard />}
                   />
                 </Route>
@@ -153,6 +154,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   path="in-production"
                   element={<OperatorInProduction />}
                 />
+
                 <Route path="completed" element={<OperatorCompleted />} />
                 <Route path="audit" element={<OperatorAudit />} />
                 <Route index element={<OperatorOverview />} />
