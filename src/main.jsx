@@ -116,6 +116,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="finance">
                   <Route index element={<Navigate to="overview" replace />} />
                   <Route path="overview" element={<FinanceDashboard />} />
+                  <Route path="revenue" element={<FinanceRevenue />} />
                   <Route path="waiting" element={<FinanceWaiting />} />
                   <Route path="done" element={<FinanceDoneTracking />} />
                   <Route path="jobs" element={<FinanceJobs />} />
@@ -164,6 +165,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="finance" element={<FinanceLayout />}>
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<FinanceDashboard />} />
+                <Route path="revenue" element={<FinanceRevenue />} />
                 <Route path="waiting" element={<FinanceWaiting />} />
                 <Route path="done" element={<FinanceDoneTracking />} />
                 <Route path="jobs" element={<FinanceJobs />} />

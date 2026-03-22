@@ -417,6 +417,7 @@ export default function FinanceLayout() {
   const navItems = useMemo(
     () => [
       { to: "/app/finance/overview", label: "Overview", icon: "grid" },
+      { to: "/app/finance/revenue", label: "Revenue", icon: "dollar" },
       { to: "/app/finance/waiting", label: "Waiting Approval", icon: "clock" },
       { to: "/app/finance/done", label: "Done Tracking", icon: "check" },
       { to: "/app/finance/expenses", label: "Expenses", icon: "receipt" },
