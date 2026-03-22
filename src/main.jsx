@@ -51,7 +51,7 @@ import FinanceAudit from "./pages/app/finance/FinanceAudit";
 import CreateOrder from "./pages/app/jobs/CreateOrder";
 import JobsList from "./pages/app/jobs/JobsList";
 //
-// import FinanceDashboard
+import FinanceRevenue from "./pages/app/finance/FinanceRevenue";
 import FinanceExpensesDashboard from "./pages/app/finance/FinanceExpensesDashboard";
 // import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 //
