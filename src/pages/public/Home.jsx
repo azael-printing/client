@@ -686,7 +686,7 @@ export default function Home() {
       >
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -left-[8%] -top-[16rem] w-[92rem] h-[92rem] rounded-full border-[36px] border-[#d9e9ee]" />
-          <div className="absolute left-1/2 -translate-x-1/2 top-28 w-[72rem] h-[72rem] rounded-full bg-black" />
+          <div className="absolute left-1/2 -translate-x-1/2 top-28 w-[72rem] h-[72rem] rounded-full bg-white" />
           <div className="absolute left-1/2 -translate-x-1/2 top-[25rem] w-[20rem] md:w-[34rem] h-[20rem] md:h-[34rem] rounded-full bg-[#d8e6ea]" />
         </div>
 

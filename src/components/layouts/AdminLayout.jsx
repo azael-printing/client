@@ -11,8 +11,10 @@ function cn(...xs) {
 
 const navClass = ({ isActive }) =>
   cn(
-    "flex items-center gap-3 px-3 py-3 rounded-2xl font-bold transition",
-    isActive ? "bg-bgLight text-primary" : "text-zinc-900 hover:bg-bgLight",
+    "group flex items-center gap-3 px-3 py-2.5 rounded-2xl font-bold text-sm transition-all duration-300",
+    isActive
+      ? "bg-bgLight text-primary shadow-sm"
+      : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
   );
 
 function Icon({ name, className = "w-5 h-5" }) {
@@ -24,6 +26,7 @@ function Icon({ name, className = "w-5 h-5" }) {
     strokeLinecap: "round",
     strokeLinejoin: "round",
   };
+
   switch (name) {
     case "menu":
       return (
@@ -86,18 +89,26 @@ export default function AdminLayout() {
   const [unread, setUnread] = useState(0);
 
   const [financeOpen, setFinanceOpen] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(true);
 
-  // main scroll container ref
+  // desktop sidebar
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+
+  // mobile sidebar
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   const mainRef = useRef(null);
   const [showTop, setShowTop] = useState(false);
 
-  // machine overview data
   const [machines, setMachines] = useState([]);
 
   useEffect(() => {
-    if (location.pathname.startsWith("/app/admin/finance"))
+    if (location.pathname.startsWith("/app/admin/finance")) {
       setFinanceOpen(true);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
   }, [location.pathname]);
 
   async function loadUnread() {
@@ -115,7 +126,7 @@ export default function AdminLayout() {
       const res = await http.get("/api/admin/machine-overview");
       setMachines(res.data.machines || []);
     } catch {
-      // keep last good state; do not wipe
+      // keep last good state
     }
   }
 
@@ -149,44 +160,193 @@ export default function AdminLayout() {
     el.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function toggleSidebar() {
+    if (window.innerWidth < 1024) {
+      setMobileSidebarOpen((v) => !v);
+    } else {
+      setDesktopSidebarOpen((v) => !v);
+    }
+  }
+
+  const sidebarContent = (
+    <nav className="space-y-2">
+      <NavLink to="/app/admin" className={navClass} end>
+        <span className="text-primary shrink-0">
+          <Icon name="dash" />
+        </span>
+        <span>Dashboard</span>
+      </NavLink>
+
+      <NavLink to="/app/admin/create-order" className={navClass}>
+        <span className="text-primary shrink-0">
+          <Icon name="create" />
+        </span>
+        <span>Create Order</span>
+      </NavLink>
+
+      <NavLink to="/app/admin/jobs" className={navClass}>
+        <span className="text-primary shrink-0">
+          <Icon name="jobs" />
+        </span>
+        <span>Jobs Dashboard</span>
+      </NavLink>
+
+      <NavLink to="/app/admin/proforma" className={navClass}>
+        <span className="text-primary shrink-0">
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M6 2h12v20l-2-1-2 1-2-1-2 1-2-1-2 1z" />
+            <path d="M9 7h6M9 11h6M9 15h6" />
+          </svg>
+        </span>
+        <span>Generate Proforma</span>
+      </NavLink>
+
+      <NavLink to="/app/admin/invoice" className={navClass}>
+        <span className="text-primary shrink-0">
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M6 2h12v20l-2-1-2 1-2-1-2 1-2-1-2 1z" />
+            <path d="M9 7h6M9 11h6M9 15h6" />
+            <path d="M8 19h8" />
+          </svg>
+        </span>
+        <span>Generate Invoice</span>
+      </NavLink>
+
+      <button
+        onClick={() => setFinanceOpen((v) => !v)}
+        className={cn(
+          "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl font-bold text-sm transition-all duration-300 text-left",
+          location.pathname.startsWith("/app/admin/finance")
+            ? "bg-bgLight text-primary shadow-sm"
+            : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
+        )}
+      >
+        <span className="text-primary shrink-0">
+          <Icon name="money" />
+        </span>
+        <span className="flex-1">Finance Report</span>
+        <span className="ml-auto text-zinc-400 text-xs">
+          {financeOpen ? "▾" : "▸"}
+        </span>
+      </button>
+
+      {financeOpen && (
+        <div className="ml-6 mt-1 space-y-1">
+          <NavLink to="/app/admin/finance/overview" className={navClass} end>
+            <span className="text-primary shrink-0">
+              <Icon name="dash" />
+            </span>
+            <span>Overview</span>
+          </NavLink>
+
+          <NavLink to="/app/admin/finance/revenue" className={navClass}>
+            <span className="text-primary shrink-0">
+              <svg
+                viewBox="0 0 24 24"
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M3 17l6-6 4 4 7-7" />
+                <path d="M14 8h6v6" />
+              </svg>
+            </span>
+            <span>Revenue</span>
+          </NavLink>
+
+          <NavLink to="/app/admin/finance/expenses" className={navClass}>
+            <span className="text-primary shrink-0">
+              <svg
+                viewBox="0 0 24 24"
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M6 2h12v20l-2-1-2 1-2-1-2 1-2-1-2 1z" />
+                <path d="M9 7h6M9 11h6M9 15h6" />
+              </svg>
+            </span>
+            <span>Expenses</span>
+          </NavLink>
+
+          <NavLink to="/app/admin/finance/audit" className={navClass}>
+            <span className="text-primary shrink-0">
+              <Icon name="jobs" />
+            </span>
+            <span>Audit Log</span>
+          </NavLink>
+
+          <NavLink to="/app/admin/finance/jobs" className={navClass}>
+            <span className="text-primary shrink-0">
+              <Icon name="jobs" />
+            </span>
+            <span>Jobs</span>
+          </NavLink>
+        </div>
+      )}
+
+      <button
+        onClick={handleLogout}
+        className="mt-5 w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl font-bold text-sm text-red-600 transition-all duration-300 hover:bg-red-50 hover:-translate-y-0.5 hover:shadow-sm text-left"
+      >
+        <Icon name="logout" className="w-5 h-5" />
+        <span>Logout</span>
+      </button>
+    </nav>
+  );
+
   return (
     <div className="h-screen bg-bgLight overflow-hidden">
-      {/* SINGLE STICKY TOP BAR */}
-      <div className="sticky top-0 z-40 h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-3 sm:px-6 shadow-sm">
-        <div className="flex items-center gap-3">
+      {/* TOP BAR */}
+      <div className="sticky top-0 z-40 h-14 sm:h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-3 sm:px-5 shadow-sm">
+        <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => setSidebarVisible((v) => !v)}
-            className="w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center hover:bg-bgLight transition"
+            onClick={toggleSidebar}
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center transition-all duration-300 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm"
             aria-label="Toggle sidebar"
           >
             <Icon name="menu" />
           </button>
 
           <button onClick={confirmLeaveHome} className="flex items-center">
-            <img src="/logo.png" alt="Azael" className="h-10 w-auto" />
+            <img src="/logo.png" alt="Azael" className="h-8 sm:h-10 w-auto" />
           </button>
         </div>
 
-        <div className="text-primary font-bold tracking-wide text-lg sm:text-xl">
+        <div className="hidden sm:block text-primary font-bold tracking-wide text-sm sm:text-lg lg:text-xl truncate">
           ADMIN DASHBOARD
         </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={() => setNotifOpen(true)}
-            className="relative w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center hover:bg-bgLight transition"
+            className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center transition-all duration-300 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm"
             aria-label="Notifications"
           >
             <Icon name="bell" />
             {unread > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full px-2 py-0.5">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1.5 flex items-center justify-center bg-primary text-white text-[10px] font-bold rounded-full">
                 {unread}
               </span>
             )}
           </button>
 
-          <div className="text-right leading-tight">
-            <div className="font-bold text-zinc-900">
+          <div className="text-right leading-tight hidden sm:block">
+            <div className="font-bold text-zinc-900 text-sm">
               {user?.username || "admin"}
               <span className="ml-2 text-zinc-400 font-bold">
                 {user?.role ? `· ${user.role}` : ""}
@@ -194,7 +354,7 @@ export default function AdminLayout() {
             </div>
             <button
               onClick={handleLogout}
-              className="text-red-600 font-bold hover:underline"
+              className="text-red-600 text-xs font-bold hover:underline"
             >
               Logout
             </button>
@@ -202,187 +362,59 @@ export default function AdminLayout() {
         </div>
       </div>
 
-      {/* BODY: sidebar sticky, main scroll only */}
-      <div className="flex h-[calc(100vh-64px)]">
-        {/* SIDEBAR */}
+      <div className="flex h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)]">
+        {/* DESKTOP SIDEBAR */}
         <aside
           className={cn(
-            "bg-white border-r border-zinc-200 p-3 sticky top-16 h-[calc(100vh-64px)]",
-            "transition-all duration-200",
-            sidebarVisible
-              ? "w-20 md:w-72"
-              : "w-0 md:w-0 p-0 border-r-0 overflow-hidden",
+            "hidden lg:block bg-white border-r border-zinc-200 h-full overflow-hidden transition-all duration-300",
+            desktopSidebarOpen ? "w-[270px] p-3" : "w-0 p-0 border-r-0",
           )}
         >
-          {sidebarVisible && (
-            <nav className="space-y-2">
-              <NavLink to="/app/admin" className={navClass} end>
-                <span className="text-primary">
-                  <Icon name="dash" />
-                </span>
-                <span className="hidden md:inline">Dashboard</span>
-              </NavLink>
-
-              <NavLink to="/app/admin/create-order" className={navClass}>
-                <span className="text-primary">
-                  <Icon name="create" />
-                </span>
-                <span className="hidden md:inline">Create Order</span>
-              </NavLink>
-
-              {/* ✅ ADMIN JOBS (inside admin main content) */}
-              <NavLink to="/app/admin/jobs" className={navClass}>
-                <span className="text-primary">
-                  <Icon name="jobs" />
-                </span>
-                <span className="hidden md:inline">Jobs Dashboard</span>
-              </NavLink>
-
-              <NavLink to="/app/admin/proforma" className={navClass}>
-                <span className="text-primary">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M6 2h12v20l-2-1-2 1-2-1-2 1-2-1-2 1z" />
-                    <path d="M9 7h6M9 11h6M9 15h6" />
-                  </svg>
-                </span>
-                <span className="hidden md:inline">Generate Proforma</span>
-              </NavLink>
-
-              <NavLink to="/app/admin/invoice" className={navClass}>
-                <span className="text-primary">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M6 2h12v20l-2-1-2 1-2-1-2 1-2-1-2 1z" />
-                    <path d="M9 7h6M9 11h6M9 15h6" />
-                    <path d="M8 19h8" />
-                  </svg>
-                </span>
-                <span className="hidden md:inline">Generate Invoice</span>
-              </NavLink>
-
-              {/* FINANCE SUBMENU */}
-              <button
-                onClick={() => setFinanceOpen((v) => !v)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-3 rounded-2xl font-bold transition text-left",
-                  location.pathname.startsWith("/app/admin/finance")
-                    ? "bg-bgLight text-primary"
-                    : "text-zinc-900 hover:bg-bgLight",
-                )}
-              >
-                <span className="text-primary">
-                  <Icon name="money" />
-                </span>
-                <span className="hidden md:inline flex-1">Finance Report</span>
-                <span className="ml-auto hidden md:inline text-zinc-400">
-                  {financeOpen ? "▾" : "▸"}
-                </span>
-              </button>
-
-              {financeOpen && (
-                <div className="ml-2 md:ml-8 mt-1 space-y-1">
-                  <NavLink
-                    to="/app/admin/finance/overview"
-                    className={navClass}
-                    end
-                  >
-                    <span className="text-primary">
-                      <Icon name="dash" />
-                    </span>
-                    <span className="hidden md:inline">Overview</span>
-                  </NavLink>
-
-                  <NavLink to="/app/admin/finance/revenue" className={navClass}>
-                    <span className="text-primary">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M3 17l6-6 4 4 7-7" />
-                        <path d="M14 8h6v6" />
-                      </svg>
-                    </span>
-                    <span className="hidden md:inline">Revenue</span>
-                  </NavLink>
-
-                  <NavLink
-                    to="/app/admin/finance/expenses"
-                    className={navClass}
-                  >
-                    <span className="text-primary">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M6 2h12v20l-2-1-2 1-2-1-2 1-2-1-2 1z" />
-                        <path d="M9 7h6M9 11h6M9 15h6" />
-                      </svg>
-                    </span>
-                    <span className="hidden md:inline">Expenses</span>
-                  </NavLink>
-
-                  <NavLink to="/app/admin/finance/audit" className={navClass}>
-                    <span className="text-primary">
-                      <Icon name="jobs" />
-                    </span>
-                    <span className="hidden md:inline">Audit Log</span>
-                  </NavLink>
-
-                  <NavLink to="/app/admin/finance/jobs" className={navClass}>
-                    <span className="text-primary">
-                      <Icon name="jobs" />
-                    </span>
-                    <span className="hidden md:inline">Jobs</span>
-                  </NavLink>
-                </div>
-              )}
-
-              <button
-                onClick={handleLogout}
-                className="mt-6 w-full flex items-center gap-3 px-3 py-3 rounded-2xl font-bold text-red-600 hover:bg-red-50 transition"
-              >
-                <Icon name="logout" className="w-5 h-5" />
-                <span className="hidden md:inline">Logout</span>
-              </button>
-            </nav>
-          )}
+          {desktopSidebarOpen && sidebarContent}
         </aside>
 
-        {/* MAIN SCROLL AREA ONLY */}
+        {/* MAIN */}
         <main
           ref={mainRef}
           onScroll={onMainScroll}
-          className="flex-1 overflow-y-auto p-4 sm:p-6"
+          className="flex-1 overflow-auto p-2 sm:p-3 md:p-4"
         >
           <Outlet context={{ machines }} />
 
-          {/* back to top */}
           {showTop && (
             <button
               onClick={backToTop}
-              className="fixed bottom-6 right-6 z-40 bg-primary text-white font-bold px-4 py-3 rounded-2xl shadow-lg hover:opacity-90 transition"
+              className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 bg-primary text-white text-xs sm:text-sm font-bold px-3.5 py-2.5 rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:opacity-95"
             >
               Back to top ↑
             </button>
           )}
         </main>
+      </div>
+
+      {/* MOBILE SIDEBAR */}
+      <div
+        className={cn(
+          "lg:hidden fixed inset-0 z-50 transition-all duration-300",
+          mobileSidebarOpen ? "pointer-events-auto" : "pointer-events-none",
+        )}
+      >
+        <div
+          className={cn(
+            "absolute inset-0 bg-black/30 transition-opacity duration-300",
+            mobileSidebarOpen ? "opacity-100" : "opacity-0",
+          )}
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+
+        <aside
+          className={cn(
+            "absolute left-0 top-0 h-full w-[280px] bg-white border-r border-zinc-200 p-3 shadow-2xl transition-transform duration-300",
+            mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
+          )}
+        >
+          {sidebarContent}
+        </aside>
       </div>
 
       {/* NOTIFICATIONS DRAWER */}
@@ -392,9 +424,9 @@ export default function AdminLayout() {
             className="absolute inset-0 bg-black/30"
             onClick={() => setNotifOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-white border-l border-zinc-200 p-4 overflow-auto">
+          <div className="absolute right-0 top-0 h-full w-full sm:w-[460px] bg-white border-l border-zinc-200 p-4 overflow-auto">
             <div className="flex items-center justify-between">
-              <div className="font-bold text-primary text-xl">
+              <div className="font-bold text-primary text-lg sm:text-xl">
                 Notifications
               </div>
               <button
