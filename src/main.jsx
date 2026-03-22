@@ -41,7 +41,7 @@ import DesignerCompleted from "./pages/app/designer/DesignerCompleted";
 import DesignerAudit from "./pages/app/designer/DesignerAudit";
 
 // import OperatorDashboard from "./pages/app/operator/OperatorDashboard";
-// import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
+import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 
 //
 import FinanceOverview from "./pages/app/finance/FinanceOverview";
@@ -49,12 +49,16 @@ import FinanceLayout from "./components/layouts/FinanceLayout";
 import FinanceJobs from "./pages/app/finance/FinanceJobs";
 import FinanceAudit from "./pages/app/finance/FinanceAudit";
 // Wireing routes in /app jobs
-import CreateOrder from "./pages/app/jobs/CreateOrder";
-import JobsList from "./pages/app/jobs/JobsList";
+// import CreateOrder from "./pages/app/jobs/CreateOrder";
+// import JobsList from "./pages/app/jobs/JobsList";
+//
+// import FinanceDashboard
+import FinanceExpensesDashboard from "./pages/app/finance/FinanceExpensesDashboard";
+
 //
 import AdminProforma from "./pages/app/admin/AdminProforma";
 import AdminInvoice from "./pages/app/admin/AdminInvoice";
-
+//
 import AdminLayout from "./components/layouts/AdminLayout";
 //
 import OperatorLayout from "./components/layouts/OperatorLayout";
@@ -175,7 +179,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="overview" element={<FinanceOverview />} />
                 <Route path="jobs" element={<FinanceJobs />} />
                 <Route path="audit" element={<FinanceAudit />} />
-                <Route
+                {/* <Route
                   path="revenue"
                   element={
                     <div className="p-6 font-bold text-zinc-600">
@@ -190,8 +194,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                       Expenses (next)
                     </div>
                   }
+                /> */}
+                // inside routes
+                <Route path="/app/finance" element={<FinanceDashboard />} />
+                <Route
+                  path="/app/finance/expenses"
+                  element={<FinanceExpensesDashboard />}
                 />
-
                 <Route index element={<FinanceOverview />} />
               </Route>
               {/* ✅ jobs MUST be inside /app */}
