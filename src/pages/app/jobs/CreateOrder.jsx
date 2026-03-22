@@ -409,43 +409,45 @@ Note:
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
+    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_390px]">
       {/* LEFT */}
-      <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h2 className="text-2xl font-semibold text-primary">Create Order</h2>
-
+          <h2 className="text-lg sm:text-xl font-semibold text-primary">
+            Create Order
+          </h2>
+  
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => {
                 setModal("customer");
                 setTmp({ name: "", phone: "" });
               }}
-              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold hover:opacity-90"
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
             >
               Register Customer
             </button>
-
+  
             <button
               onClick={() => {
                 setModal("item");
                 setTmp({ name: "", defaultUnit: "pcs" });
               }}
-              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold hover:opacity-90"
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
             >
               Add Item
             </button>
-
+  
             <button
               onClick={() => {
                 setModal("machine");
                 setTmp({ name: "" });
               }}
-              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold hover:opacity-90"
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
             >
               Add Machine
             </button>
-
+  
             <button
               onClick={() => {
                 setModal("price");
@@ -458,27 +460,27 @@ Note:
                   variantLabel: "",
                 });
               }}
-              className="px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold hover:opacity-90"
+              className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
             >
               Add Price
             </button>
           </div>
         </div>
-
+  
         {/* CUSTOMER INFORMATION */}
-        <div className="mt-6">
-          <div className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
+        <div className="mt-5">
+          <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
             Customer Information
           </div>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+  
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div>
-              <div className="text-sm font-semibold text-zinc-700 mb-1">
+              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Customer name
               </div>
               <input
                 list="customerNames"
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 value={f.customerName}
                 onChange={(e) =>
                   update("customerName", onlyLettersSpaces(e.target.value))
@@ -491,13 +493,13 @@ Note:
                 ))}
               </datalist>
             </div>
-
+  
             <div>
-              <div className="text-sm font-semibold text-zinc-700 mb-1">
+              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Phone
               </div>
               <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 value={f.customerPhone}
                 onChange={(e) =>
                   update("customerPhone", onlyDigitsMax10(e.target.value))
@@ -507,22 +509,21 @@ Note:
             </div>
           </div>
         </div>
-
+  
         {/* JOB DETAILS */}
-        <div className="mt-8">
-          <div className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
+        <div className="mt-6">
+          <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
             Job Details
           </div>
-
-          <div className="mt-4 grid gap-3">
-            {/* ONE LINE: Work type + Machine + Unit Type */}
+  
+          <div className="mt-3 grid gap-3">
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Work type
                 </div>
                 <select
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                   value={f.itemId}
                   onChange={(e) => update("itemId", e.target.value)}
                 >
@@ -534,24 +535,24 @@ Note:
                   ))}
                 </select>
               </div>
-
+  
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Machine
                 </div>
                 <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
                   value={machine?.name || "Auto selected by price"}
                   disabled
                 />
               </div>
-
+  
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Unit Type
                 </div>
                 <select
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                   value={f.unitType}
                   onChange={(e) => update("unitType", e.target.value)}
                 >
@@ -561,41 +562,39 @@ Note:
                 </select>
               </div>
             </div>
-
+  
             <div>
-              <div className="text-sm font-semibold text-zinc-700 mb-1">
+              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Description
               </div>
               <textarea
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[90px]"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[84px] text-sm"
                 placeholder="Very important for Designer / Operator"
                 value={f.description}
                 onChange={(e) => update("description", e.target.value)}
               />
             </div>
-
+  
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Quantity
                 </div>
                 <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                   value={f.qty}
-                  onChange={(e) =>
-                    update("qty", onlyNumberLike(e.target.value))
-                  }
+                  onChange={(e) => update("qty", onlyNumberLike(e.target.value))}
                   placeholder="numbers only"
                 />
               </div>
-
+  
               <div className="grid gap-3 grid-cols-2">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-700 mb-1">
+                  <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                     Designer Required?
                   </div>
                   <select
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                     value={f.designerRequired ? "YES" : "NO"}
                     onChange={(e) =>
                       update("designerRequired", e.target.value === "YES")
@@ -605,13 +604,13 @@ Note:
                     <option value="YES">Yes</option>
                   </select>
                 </div>
-
+  
                 <div>
-                  <div className="text-sm font-semibold text-zinc-700 mb-1">
+                  <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                     Urgency Level
                   </div>
                   <select
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                     value={f.urgency}
                     onChange={(e) => update("urgency", e.target.value)}
                   >
@@ -622,46 +621,43 @@ Note:
                 </div>
               </div>
             </div>
-
-            {/* PRICE LIST (variant-based) */}
-            {/* PRICE LIST (show only unit price in options; details shown below) */}
+  
             <div>
-              <div className="text-sm font-semibold text-zinc-700 mb-1">
+              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Price list
               </div>
-
+  
               <select
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                 value={f.priceRuleId}
                 onChange={(e) => update("priceRuleId", e.target.value)}
                 disabled={!f.itemId}
               >
                 <option value="">Select Price</option>
-
+  
                 {priceOptions.map((r) => (
                   <option key={r.id} value={r.id}>
                     {Math.round(r.unitPrice).toLocaleString()}
                   </option>
                 ))}
               </select>
-
-              {/* Details below dropdown (small font) */}
+  
               {(() => {
                 const rule = priceOptions.find((x) => x.id === f.priceRuleId);
                 if (!rule) return null;
-
+  
                 const ruleVariant = String(
                   rule.variant || (rule.vatEnabled ? "VAT" : "NON_VAT"),
                 ).toUpperCase();
                 const variantLabel = rule.variantLabel
                   ? rule.variantLabel
                   : "-";
-
+  
                 const noVatTotal = qtyNum ? rule.unitPrice * qtyNum : 0;
                 const vatTotal = qtyNum ? rule.unitPrice * qtyNum * 1.15 : 0;
-
+  
                 return (
-                  <div className="mt-2 text-xs font-semibold text-zinc-500 leading-5">
+                  <div className="mt-2 text-[11px] sm:text-xs font-semibold text-zinc-500 leading-5">
                     <div>
                       <span className="text-zinc-400">Machine:</span>{" "}
                       <span className="text-zinc-800">
@@ -678,9 +674,7 @@ Note:
                       <div>
                         <span className="text-zinc-400">No-VAT Total:</span>{" "}
                         <span className="text-zinc-800">
-                          {qtyNum
-                            ? Math.round(noVatTotal).toLocaleString()
-                            : "-"}
+                          {qtyNum ? Math.round(noVatTotal).toLocaleString() : "-"}
                         </span>
                       </div>
                       <div>
@@ -696,46 +690,46 @@ Note:
             </div>
           </div>
         </div>
-
+  
         {/* DELIVERY DETAILS */}
-        <div className="mt-8">
-          <div className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
+        <div className="mt-6">
+          <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
             Delivery Details
           </div>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+  
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <div>
-              <div className="text-sm font-semibold text-zinc-700 mb-1">
+              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Delivery Date
               </div>
               <input
                 type="date"
                 min={minDate}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                 value={f.deliveryDate}
                 onChange={(e) => update("deliveryDate", e.target.value)}
               />
             </div>
-
+  
             <div>
-              <div className="text-sm font-semibold text-zinc-700 mb-1">
+              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Delivery time
               </div>
               <input
                 type="time"
                 min={f.deliveryDate === minDate ? minTimeToday : undefined}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                 value={f.deliveryTime}
                 onChange={(e) => update("deliveryTime", e.target.value)}
               />
             </div>
-
+  
             <div>
-              <div className="text-sm font-semibold text-zinc-700 mb-1">
+              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Pickup / Delivery
               </div>
               <select
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                 value={f.deliveryType}
                 onChange={(e) => update("deliveryType", e.target.value)}
               >
@@ -745,28 +739,28 @@ Note:
             </div>
           </div>
         </div>
-
+  
         {/* PRICING */}
-        <div className="mt-8">
-          <div className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
+        <div className="mt-6">
+          <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
             Pricing
           </div>
-
-          <div className="mt-4 grid gap-3">
+  
+          <div className="mt-3 grid gap-3">
             <div className="grid gap-3 sm:grid-cols-4">
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Unit Price
                 </div>
                 <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
                   value={Math.round(unitPriceNum || 0).toLocaleString()}
                   disabled
                 />
               </div>
-
+  
               <div className="flex items-end">
-                <label className="flex items-center gap-2 font-semibold text-zinc-700">
+                <label className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-zinc-700">
                   <input
                     type="checkbox"
                     checked={f.vatEnabled}
@@ -775,24 +769,24 @@ Note:
                   {f.vatEnabled ? "VAT?" : "Non-VAT?"}
                 </label>
               </div>
-
+  
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Total Price
                 </div>
                 <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
                   value={Math.round(total).toLocaleString()}
                   disabled
                 />
               </div>
-
+  
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Payment Status
                 </div>
                 <select
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                   value={f.paymentStatus}
                   onChange={(e) => update("paymentStatus", e.target.value)}
                 >
@@ -804,10 +798,10 @@ Note:
                 </select>
               </div>
             </div>
-
+  
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="flex items-end">
-                <label className="flex items-center gap-2 font-semibold text-zinc-700">
+                <label className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-zinc-700">
                   <input
                     type="checkbox"
                     checked={f.depositPaid || f.paymentStatus === "PAID"}
@@ -817,13 +811,13 @@ Note:
                   Deposit Paid?
                 </label>
               </div>
-
+  
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Deposit Amount
                 </div>
                 <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                   value={f.depositAmount}
                   onChange={(e) =>
                     update("depositAmount", onlyNumberLike(e.target.value))
@@ -832,13 +826,13 @@ Note:
                   placeholder="0"
                 />
               </div>
-
+  
               <div>
-                <div className="text-sm font-semibold text-zinc-700 mb-1">
+                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Remaining Balance
                 </div>
                 <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
                   value={Math.round(remainingBalance).toLocaleString()}
                   disabled
                 />
@@ -847,181 +841,147 @@ Note:
           </div>
         </div>
       </div>
-
-      {/* RIGHT: Summary + Quotation */}
-      <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-        <h2 className="ml-7 text-2xl font-semibold text-primary">Summary</h2>
-        <div className="ml-7 text-xs text-zinc-400 font-semibold mt-1">
+  
+      {/* RIGHT */}
+      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm">
+        <h2 className="text-lg sm:text-xl font-semibold text-primary">Summary</h2>
+        <div className="text-[11px] sm:text-xs text-zinc-400 font-semibold mt-1">
           Fill details - Review summary - Save
         </div>
-
-        {/* COMPACT SUMMARY (labels left, values right) */}
-        <div className="mt-4 text-[13px] grid gap-2">
+  
+        <div className="mt-4 text-[12px] sm:text-[13px] grid gap-2">
           <div className="text-center font-semibold text-zinc-900">
             Customer Info
           </div>
-
-          <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+  
+          <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
             <div className="text-right font-semibold text-zinc-600">
               Customer name:
             </div>
-            <div className=" font-semibold text-zinc-900 truncate">
+            <div className="font-semibold text-zinc-900 truncate">
               {f.customerName || "..."}
             </div>
-
+  
             <div className="text-right font-semibold text-zinc-600">
               Phone number:
             </div>
-            <div className=" font-semibold text-zinc-900 truncate">
+            <div className="font-semibold text-zinc-900 truncate">
               {f.customerPhone || "..."}
             </div>
           </div>
-
+  
           <div className="text-center font-semibold text-zinc-900 mt-2">
             Job Details
           </div>
-          <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-            <div className="text-right font-bolsemiboldd text-zinc-600">
-              Machine:
-            </div>
-            <div className=" font-semibold text-zinc-900 truncate">
+          <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
+            <div className="text-right font-semibold text-zinc-600">Machine:</div>
+            <div className="font-semibold text-zinc-900 truncate">
               {machine?.name || "..."}
             </div>
-
-            <div className="text-right font-semibold text-zinc-600">
-              Work Type:
-            </div>
-            <div className=" font-semibold text-zinc-900 truncate">
+  
+            <div className="text-right font-semibold text-zinc-600">Work Type:</div>
+            <div className="font-semibold text-zinc-900 truncate">
               {item?.name || "..."}
             </div>
-
-            <div className="text-right font-semibold text-zinc-600">
-              Description:
-            </div>
-            <div className=" font-semibold text-zinc-900 truncate">
+  
+            <div className="text-right font-semibold text-zinc-600">Description:</div>
+            <div className="font-semibold text-zinc-900 truncate">
               {f.description || "..."}
             </div>
-
-            <div className="text-right font-semibold text-zinc-600">
-              Quantity:
-            </div>
-            <div className=" font-semibold text-zinc-900">{f.qty || "..."}</div>
-
-            <div className="text-right font-semibold text-zinc-600">
-              Unit Type:
-            </div>
-            <div className=" font-semibold text-zinc-900">
-              {f.unitType || "..."}
-            </div>
-
-            <div className="text-right font-medium text-zinc-600">
-              Designer Required?:
-            </div>
-            <div className=" font-semibold text-zinc-900">
+  
+            <div className="text-right font-semibold text-zinc-600">Quantity:</div>
+            <div className="font-semibold text-zinc-900">{f.qty || "..."}</div>
+  
+            <div className="text-right font-semibold text-zinc-600">Unit Type:</div>
+            <div className="font-semibold text-zinc-900">{f.unitType || "..."}</div>
+  
+            <div className="text-right font-medium text-zinc-600">Designer Required?:</div>
+            <div className="font-semibold text-zinc-900">
               {f.designerRequired ? "Yes" : "No"}
             </div>
-
-            <div className="text-right font-medium text-zinc-600">
-              Urgency Level:
-            </div>
-            <div className=" font-semibold text-zinc-900">{f.urgency}</div>
+  
+            <div className="text-right font-medium text-zinc-600">Urgency Level:</div>
+            <div className="font-semibold text-zinc-900">{f.urgency}</div>
           </div>
-
+  
           <div className="text-center font-semibold text-zinc-900 mt-2">
             Delivery Details
           </div>
-          <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-            <div className="text-right font-semibold text-zinc-600">
-              Delivery Date:
-            </div>
-            <div className=" font-semibold text-zinc-900">
+          <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
+            <div className="text-right font-semibold text-zinc-600">Delivery Date:</div>
+            <div className="font-semibold text-zinc-900">
               {f.deliveryDate || "..."}
             </div>
-
-            <div className="text-right font-medium text-zinc-600">
-              Delivery Time:
-            </div>
-            <div className=" font-semibold text-zinc-900">
+  
+            <div className="text-right font-medium text-zinc-600">Delivery Time:</div>
+            <div className="font-semibold text-zinc-900">
               {f.deliveryTime || "..."}
             </div>
           </div>
-
-          <div className=" text-center font-semibold text-zinc-900 mt-2">
+  
+          <div className="text-center font-semibold text-zinc-900 mt-2">
             Pricing
           </div>
-          <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-            <div className="text-right font-medium text-zinc-600">
-              Unit Price:
-            </div>
-            <div className=" font-semibold text-zinc-900">
+          <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
+            <div className="text-right font-medium text-zinc-600">Unit Price:</div>
+            <div className="font-semibold text-zinc-900">
               {Math.round(unitPriceNum || 0).toLocaleString()}
             </div>
-
+  
             <div className="text-right font-medium text-zinc-600">VAT ?:</div>
-            <div className=" font-semibold text-zinc-900">
+            <div className="font-semibold text-zinc-900">
               {f.vatEnabled ? "Yes" : "No"}
             </div>
-
-            <div className="text-right font-medium text-zinc-600">
-              Total price:
-            </div>
-            <div className=" font-semibold text-zinc-900">
+  
+            <div className="text-right font-medium text-zinc-600">Total price:</div>
+            <div className="font-semibold text-zinc-900">
               {Math.round(total).toLocaleString()}
             </div>
-
-            <div className="text-right font-medium text-zinc-600">
-              Payment Status:{" "}
-            </div>
-            <div className=" font-semibold text-zinc-900">
-              {f.paymentStatus}
-            </div>
-
-            <div className="text-right font-medium text-zinc-600">
-              Deposit Paid? :
-            </div>
-            <div className=" font-semibold text-zinc-900">
+  
+            <div className="text-right font-medium text-zinc-600">Payment Status:</div>
+            <div className="font-semibold text-zinc-900">{f.paymentStatus}</div>
+  
+            <div className="text-right font-medium text-zinc-600">Deposit Paid? :</div>
+            <div className="font-semibold text-zinc-900">
               {f.depositPaid || f.paymentStatus === "PAID" ? "Yes" : "No"}
             </div>
-
-            <div className="text-right  font-medium  text-zinc-600">
-              Deposit Amount:
-            </div>
+  
+            <div className="text-right font-medium text-zinc-600">Deposit Amount:</div>
             <div className="font-semibold text-zinc-900">
               {Math.round(Number(f.depositAmount || 0)).toLocaleString()}
             </div>
-            <div className="text-right last:font-meium text-zinc-600">
-              Remaining Balance:
-            </div>
-            <div className=" font-semibold text-zinc-900">
+  
+            <div className="text-right text-zinc-600">Remaining Balance:</div>
+            <div className="font-semibold text-zinc-900">
               {Math.round(remainingBalance || 0).toLocaleString()}
             </div>
           </div>
         </div>
-
+  
         <div className="mt-5 flex gap-2">
           <button
             onClick={copyQuotation}
-            className="px-4 py-2 rounded-xl border border-zinc-200 font-semibold text-primary hover:bg-bgLight transition"
+            className="px-4 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold text-primary hover:bg-bgLight transition"
           >
             Copy quotation
           </button>
           <button
             onClick={approveQuotation}
-            className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-semibold hover:opacity-90 transition"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold hover:opacity-90 transition"
           >
             Approve quotation
           </button>
         </div>
-
+  
         <div className="mt-4">
-          <div className="text-zinc-500 font-semibold text-sm">
+          <div className="text-zinc-500 font-semibold text-xs sm:text-sm">
             Quotation Preview
           </div>
-          <pre className="mt-2 p-3 rounded-xl bg-bgLight border border-zinc-200 text-xs whitespace-pre-wrap">
+          <pre className="mt-2 p-3 rounded-xl bg-bgLight border border-zinc-200 text-[11px] sm:text-xs whitespace-pre-wrap">
             {quotationText}
           </pre>
         </div>
-
+  
         {/* MODAL */}
         {modal && (
           <div className="fixed inset-0 z-50">
@@ -1029,9 +989,9 @@ Note:
               className="absolute inset-0 bg-black/30"
               onClick={() => setModal(null)}
             />
-            <div className="absolute left-1/2 top-1/2 w-[95%] max-w-[520px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-5 shadow-lg">
-              <div className="flex items-center justify-between">
-                <div className="font-semibold text-primary text-xl">
+            <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-lg">
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-semibold text-primary text-base sm:text-lg">
                   {modal === "customer" && "Register Customer"}
                   {modal === "machine" && "Add Machine"}
                   {modal === "item" && "Add Item"}
@@ -1039,17 +999,17 @@ Note:
                 </div>
                 <button
                   onClick={() => setModal(null)}
-                  className="px-3 py-2 rounded-xl border border-zinc-200 font-semibold hover:bg-bgLight"
+                  className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight"
                 >
                   Close
                 </button>
               </div>
-
+  
               <div className="mt-4 grid gap-3">
                 {modal === "customer" && (
                   <>
                     <input
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                       placeholder="Name (alphabets only)"
                       value={tmp.name || ""}
                       onChange={(e) =>
@@ -1060,7 +1020,7 @@ Note:
                       }
                     />
                     <input
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                       placeholder="Phone (10 digits optional)"
                       value={tmp.phone || ""}
                       onChange={(e) =>
@@ -1072,10 +1032,10 @@ Note:
                     />
                   </>
                 )}
-
+  
                 {modal === "machine" && (
                   <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                     placeholder="Machine name"
                     value={tmp.name || ""}
                     onChange={(e) =>
@@ -1083,11 +1043,11 @@ Note:
                     }
                   />
                 )}
-
+  
                 {modal === "item" && (
                   <>
                     <input
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                       placeholder="Work type name"
                       value={tmp.name || ""}
                       onChange={(e) =>
@@ -1095,7 +1055,7 @@ Note:
                       }
                     />
                     <input
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                       placeholder="Default unit (pcs/sqm/meter)"
                       value={tmp.defaultUnit || "pcs"}
                       onChange={(e) =>
@@ -1104,11 +1064,11 @@ Note:
                     />
                   </>
                 )}
-
+  
                 {modal === "price" && (
                   <>
                     <select
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                       value={tmp.itemId || ""}
                       onChange={(e) =>
                         setTmp((p) => ({ ...p, itemId: e.target.value }))
@@ -1121,9 +1081,9 @@ Note:
                         </option>
                       ))}
                     </select>
-
+  
                     <select
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                       value={tmp.machineId || ""}
                       onChange={(e) =>
                         setTmp((p) => ({ ...p, machineId: e.target.value }))
@@ -1136,9 +1096,9 @@ Note:
                         </option>
                       ))}
                     </select>
-
+  
                     <select
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                       value={tmp.variant || "VAT"}
                       onChange={(e) =>
                         setTmp((p) => ({ ...p, variant: e.target.value }))
@@ -1148,18 +1108,18 @@ Note:
                       <option value="NON_VAT">NON_VAT</option>
                       <option value="CUSTOM">CUSTOM</option>
                     </select>
-
+  
                     <input
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                       placeholder="Variant label (optional) e.g. Corporate / Walk-in / Promo"
                       value={tmp.variantLabel || ""}
                       onChange={(e) =>
                         setTmp((p) => ({ ...p, variantLabel: e.target.value }))
                       }
                     />
-
+  
                     <input
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                       placeholder="Unit price"
                       value={tmp.unitPrice || ""}
                       onChange={(e) =>
@@ -1169,8 +1129,8 @@ Note:
                         }))
                       }
                     />
-
-                    <label className="flex items-center gap-2 font-semibold text-zinc-700">
+  
+                    <label className="flex items-center gap-2 font-semibold text-sm text-zinc-700">
                       <input
                         type="checkbox"
                         checked={tmp.vatEnabled !== false}
@@ -1185,10 +1145,10 @@ Note:
                     </label>
                   </>
                 )}
-
+  
                 <button
                   onClick={handleCreateModal}
-                  className="mt-2 px-4 py-3 rounded-xl bg-success text-white font-semibold hover:opacity-90 transition"
+                  className="mt-2 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold hover:opacity-90 transition"
                 >
                   Save
                 </button>
@@ -1199,781 +1159,3 @@ Note:
       </div>
     </div>
   );
-}
-return (
-  <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_390px]">
-    {/* LEFT */}
-    <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2 className="text-lg sm:text-xl font-semibold text-primary">
-          Create Order
-        </h2>
-
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => {
-              setModal("customer");
-              setTmp({ name: "", phone: "" });
-            }}
-            className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
-          >
-            Register Customer
-          </button>
-
-          <button
-            onClick={() => {
-              setModal("item");
-              setTmp({ name: "", defaultUnit: "pcs" });
-            }}
-            className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
-          >
-            Add Item
-          </button>
-
-          <button
-            onClick={() => {
-              setModal("machine");
-              setTmp({ name: "" });
-            }}
-            className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
-          >
-            Add Machine
-          </button>
-
-          <button
-            onClick={() => {
-              setModal("price");
-              setTmp({
-                itemId: "",
-                machineId: "",
-                unitPrice: "",
-                vatEnabled: true,
-                variant: "VAT",
-                variantLabel: "",
-              });
-            }}
-            className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
-          >
-            Add Price
-          </button>
-        </div>
-      </div>
-
-      {/* CUSTOMER INFORMATION */}
-      <div className="mt-5">
-        <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
-          Customer Information
-        </div>
-
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div>
-            <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-              Customer name
-            </div>
-            <input
-              list="customerNames"
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              value={f.customerName}
-              onChange={(e) =>
-                update("customerName", onlyLettersSpaces(e.target.value))
-              }
-              placeholder="Start typing..."
-            />
-            <datalist id="customerNames">
-              {customers.map((c) => (
-                <option key={c.id} value={c.name} />
-              ))}
-            </datalist>
-          </div>
-
-          <div>
-            <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-              Phone
-            </div>
-            <input
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              value={f.customerPhone}
-              onChange={(e) =>
-                update("customerPhone", onlyDigitsMax10(e.target.value))
-              }
-              placeholder="10 digits (optional)"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* JOB DETAILS */}
-      <div className="mt-6">
-        <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
-          Job Details
-        </div>
-
-        <div className="mt-3 grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Work type
-              </div>
-              <select
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                value={f.itemId}
-                onChange={(e) => update("itemId", e.target.value)}
-              >
-                <option value="">Select Work Type</option>
-                {items.map((it) => (
-                  <option key={it.id} value={it.id}>
-                    {it.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Machine
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
-                value={machine?.name || "Auto selected by price"}
-                disabled
-              />
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Unit Type
-              </div>
-              <select
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                value={f.unitType}
-                onChange={(e) => update("unitType", e.target.value)}
-              >
-                <option value="pcs">pcs</option>
-                <option value="sqm">sqm</option>
-                <option value="meter">meter</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-              Description
-            </div>
-            <textarea
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[84px] text-sm"
-              placeholder="Very important for Designer / Operator"
-              value={f.description}
-              onChange={(e) => update("description", e.target.value)}
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Quantity
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                value={f.qty}
-                onChange={(e) => update("qty", onlyNumberLike(e.target.value))}
-                placeholder="numbers only"
-              />
-            </div>
-
-            <div className="grid gap-3 grid-cols-2">
-              <div>
-                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                  Designer Required?
-                </div>
-                <select
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                  value={f.designerRequired ? "YES" : "NO"}
-                  onChange={(e) =>
-                    update("designerRequired", e.target.value === "YES")
-                  }
-                >
-                  <option value="NO">No</option>
-                  <option value="YES">Yes</option>
-                </select>
-              </div>
-
-              <div>
-                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                  Urgency Level
-                </div>
-                <select
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                  value={f.urgency}
-                  onChange={(e) => update("urgency", e.target.value)}
-                >
-                  <option value="URGENT">Urgent</option>
-                  <option value="HIGH">High</option>
-                  <option value="NORMAL">Normal</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-              Price list
-            </div>
-
-            <select
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-              value={f.priceRuleId}
-              onChange={(e) => update("priceRuleId", e.target.value)}
-              disabled={!f.itemId}
-            >
-              <option value="">Select Price</option>
-
-              {priceOptions.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {Math.round(r.unitPrice).toLocaleString()}
-                </option>
-              ))}
-            </select>
-
-            {(() => {
-              const rule = priceOptions.find((x) => x.id === f.priceRuleId);
-              if (!rule) return null;
-
-              const ruleVariant = String(
-                rule.variant || (rule.vatEnabled ? "VAT" : "NON_VAT"),
-              ).toUpperCase();
-              const variantLabel = rule.variantLabel ? rule.variantLabel : "-";
-
-              const noVatTotal = qtyNum ? rule.unitPrice * qtyNum : 0;
-              const vatTotal = qtyNum ? rule.unitPrice * qtyNum * 1.15 : 0;
-
-              return (
-                <div className="mt-2 text-[11px] sm:text-xs font-semibold text-zinc-500 leading-5">
-                  <div>
-                    <span className="text-zinc-400">Machine:</span>{" "}
-                    <span className="text-zinc-800">
-                      {rule.machine?.name || machine?.name || "-"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-zinc-400">Variant:</span>{" "}
-                    <span className="text-zinc-800">{ruleVariant}</span>{" "}
-                    <span className="text-zinc-400">Label:</span>{" "}
-                    <span className="text-zinc-800">{variantLabel}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    <div>
-                      <span className="text-zinc-400">No-VAT Total:</span>{" "}
-                      <span className="text-zinc-800">
-                        {qtyNum ? Math.round(noVatTotal).toLocaleString() : "-"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-400">VAT Total:</span>{" "}
-                      <span className="text-zinc-800">
-                        {qtyNum ? Math.round(vatTotal).toLocaleString() : "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-      </div>
-
-      {/* DELIVERY DETAILS */}
-      <div className="mt-6">
-        <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
-          Delivery Details
-        </div>
-
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <div>
-            <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-              Delivery Date
-            </div>
-            <input
-              type="date"
-              min={minDate}
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-              value={f.deliveryDate}
-              onChange={(e) => update("deliveryDate", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-              Delivery time
-            </div>
-            <input
-              type="time"
-              min={f.deliveryDate === minDate ? minTimeToday : undefined}
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-              value={f.deliveryTime}
-              onChange={(e) => update("deliveryTime", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-              Pickup / Delivery
-            </div>
-            <select
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-              value={f.deliveryType}
-              onChange={(e) => update("deliveryType", e.target.value)}
-            >
-              <option value="PICKUP">Pickup</option>
-              <option value="DELIVERY">Delivery</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* PRICING */}
-      <div className="mt-6">
-        <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
-          Pricing
-        </div>
-
-        <div className="mt-3 grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-4">
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Unit Price
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
-                value={Math.round(unitPriceNum || 0).toLocaleString()}
-                disabled
-              />
-            </div>
-
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={f.vatEnabled}
-                  onChange={(e) => update("vatEnabled", e.target.checked)}
-                />
-                {f.vatEnabled ? "VAT?" : "Non-VAT?"}
-              </label>
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Total Price
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
-                value={Math.round(total).toLocaleString()}
-                disabled
-              />
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Payment Status
-              </div>
-              <select
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                value={f.paymentStatus}
-                onChange={(e) => update("paymentStatus", e.target.value)}
-              >
-                {PAYMENT_STATUS_OPTIONS.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={f.depositPaid || f.paymentStatus === "PAID"}
-                  onChange={(e) => update("depositPaid", e.target.checked)}
-                  disabled={f.paymentStatus === "PAID"}
-                />
-                Deposit Paid?
-              </label>
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Deposit Amount
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                value={f.depositAmount}
-                onChange={(e) =>
-                  update("depositAmount", onlyNumberLike(e.target.value))
-                }
-                disabled={!f.depositPaid && f.paymentStatus !== "PAID"}
-                placeholder="0"
-              />
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                Remaining Balance
-              </div>
-              <input
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
-                value={Math.round(remainingBalance).toLocaleString()}
-                disabled
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* RIGHT */}
-    <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm">
-      <h2 className="text-lg sm:text-xl font-semibold text-primary">Summary</h2>
-      <div className="text-[11px] sm:text-xs text-zinc-400 font-semibold mt-1">
-        Fill details - Review summary - Save
-      </div>
-
-      <div className="mt-4 text-[12px] sm:text-[13px] grid gap-2">
-        <div className="text-center font-semibold text-zinc-900">
-          Customer Info
-        </div>
-
-        <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
-          <div className="text-right font-semibold text-zinc-600">
-            Customer name:
-          </div>
-          <div className="font-semibold text-zinc-900 truncate">
-            {f.customerName || "..."}
-          </div>
-
-          <div className="text-right font-semibold text-zinc-600">
-            Phone number:
-          </div>
-          <div className="font-semibold text-zinc-900 truncate">
-            {f.customerPhone || "..."}
-          </div>
-        </div>
-
-        <div className="text-center font-semibold text-zinc-900 mt-2">
-          Job Details
-        </div>
-        <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
-          <div className="text-right font-semibold text-zinc-600">Machine:</div>
-          <div className="font-semibold text-zinc-900 truncate">
-            {machine?.name || "..."}
-          </div>
-
-          <div className="text-right font-semibold text-zinc-600">
-            Work Type:
-          </div>
-          <div className="font-semibold text-zinc-900 truncate">
-            {item?.name || "..."}
-          </div>
-
-          <div className="text-right font-semibold text-zinc-600">
-            Description:
-          </div>
-          <div className="font-semibold text-zinc-900 truncate">
-            {f.description || "..."}
-          </div>
-
-          <div className="text-right font-semibold text-zinc-600">
-            Quantity:
-          </div>
-          <div className="font-semibold text-zinc-900">{f.qty || "..."}</div>
-
-          <div className="text-right font-semibold text-zinc-600">
-            Unit Type:
-          </div>
-          <div className="font-semibold text-zinc-900">
-            {f.unitType || "..."}
-          </div>
-
-          <div className="text-right font-medium text-zinc-600">
-            Designer Required?:
-          </div>
-          <div className="font-semibold text-zinc-900">
-            {f.designerRequired ? "Yes" : "No"}
-          </div>
-
-          <div className="text-right font-medium text-zinc-600">
-            Urgency Level:
-          </div>
-          <div className="font-semibold text-zinc-900">{f.urgency}</div>
-        </div>
-
-        <div className="text-center font-semibold text-zinc-900 mt-2">
-          Delivery Details
-        </div>
-        <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
-          <div className="text-right font-semibold text-zinc-600">
-            Delivery Date:
-          </div>
-          <div className="font-semibold text-zinc-900">
-            {f.deliveryDate || "..."}
-          </div>
-
-          <div className="text-right font-medium text-zinc-600">
-            Delivery Time:
-          </div>
-          <div className="font-semibold text-zinc-900">
-            {f.deliveryTime || "..."}
-          </div>
-        </div>
-
-        <div className="text-center font-semibold text-zinc-900 mt-2">
-          Pricing
-        </div>
-        <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
-          <div className="text-right font-medium text-zinc-600">
-            Unit Price:
-          </div>
-          <div className="font-semibold text-zinc-900">
-            {Math.round(unitPriceNum || 0).toLocaleString()}
-          </div>
-
-          <div className="text-right font-medium text-zinc-600">VAT ?:</div>
-          <div className="font-semibold text-zinc-900">
-            {f.vatEnabled ? "Yes" : "No"}
-          </div>
-
-          <div className="text-right font-medium text-zinc-600">
-            Total price:
-          </div>
-          <div className="font-semibold text-zinc-900">
-            {Math.round(total).toLocaleString()}
-          </div>
-
-          <div className="text-right font-medium text-zinc-600">
-            Payment Status:
-          </div>
-          <div className="font-semibold text-zinc-900">{f.paymentStatus}</div>
-
-          <div className="text-right font-medium text-zinc-600">
-            Deposit Paid? :
-          </div>
-          <div className="font-semibold text-zinc-900">
-            {f.depositPaid || f.paymentStatus === "PAID" ? "Yes" : "No"}
-          </div>
-
-          <div className="text-right font-medium text-zinc-600">
-            Deposit Amount:
-          </div>
-          <div className="font-semibold text-zinc-900">
-            {Math.round(Number(f.depositAmount || 0)).toLocaleString()}
-          </div>
-
-          <div className="text-right text-zinc-600">Remaining Balance:</div>
-          <div className="font-semibold text-zinc-900">
-            {Math.round(remainingBalance || 0).toLocaleString()}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-5 flex gap-2">
-        <button
-          onClick={copyQuotation}
-          className="px-4 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold text-primary hover:bg-bgLight transition"
-        >
-          Copy quotation
-        </button>
-        <button
-          onClick={approveQuotation}
-          className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold hover:opacity-90 transition"
-        >
-          Approve quotation
-        </button>
-      </div>
-
-      <div className="mt-4">
-        <div className="text-zinc-500 font-semibold text-xs sm:text-sm">
-          Quotation Preview
-        </div>
-        <pre className="mt-2 p-3 rounded-xl bg-bgLight border border-zinc-200 text-[11px] sm:text-xs whitespace-pre-wrap">
-          {quotationText}
-        </pre>
-      </div>
-
-      {/* MODAL */}
-      {modal && (
-        <div className="fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setModal(null)}
-          />
-          <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-lg">
-            <div className="flex items-center justify-between gap-3">
-              <div className="font-semibold text-primary text-base sm:text-lg">
-                {modal === "customer" && "Register Customer"}
-                {modal === "machine" && "Add Machine"}
-                {modal === "item" && "Add Item"}
-                {modal === "price" && "Add Price"}
-              </div>
-              <button
-                onClick={() => setModal(null)}
-                className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-3">
-              {modal === "customer" && (
-                <>
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                    placeholder="Name (alphabets only)"
-                    value={tmp.name || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({
-                        ...p,
-                        name: onlyLettersSpaces(e.target.value),
-                      }))
-                    }
-                  />
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                    placeholder="Phone (10 digits optional)"
-                    value={tmp.phone || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({
-                        ...p,
-                        phone: onlyDigitsMax10(e.target.value),
-                      }))
-                    }
-                  />
-                </>
-              )}
-
-              {modal === "machine" && (
-                <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                  placeholder="Machine name"
-                  value={tmp.name || ""}
-                  onChange={(e) =>
-                    setTmp((p) => ({ ...p, name: e.target.value }))
-                  }
-                />
-              )}
-
-              {modal === "item" && (
-                <>
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                    placeholder="Work type name"
-                    value={tmp.name || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, name: e.target.value }))
-                    }
-                  />
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                    placeholder="Default unit (pcs/sqm/meter)"
-                    value={tmp.defaultUnit || "pcs"}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, defaultUnit: e.target.value }))
-                    }
-                  />
-                </>
-              )}
-
-              {modal === "price" && (
-                <>
-                  <select
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                    value={tmp.itemId || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, itemId: e.target.value }))
-                    }
-                  >
-                    <option value="">Select item</option>
-                    {items.map((it) => (
-                      <option key={it.id} value={it.id}>
-                        {it.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                    value={tmp.machineId || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, machineId: e.target.value }))
-                    }
-                  >
-                    <option value="">Select machine</option>
-                    {machines.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                    value={tmp.variant || "VAT"}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, variant: e.target.value }))
-                    }
-                  >
-                    <option value="VAT">VAT</option>
-                    <option value="NON_VAT">NON_VAT</option>
-                    <option value="CUSTOM">CUSTOM</option>
-                  </select>
-
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                    placeholder="Variant label (optional) e.g. Corporate / Walk-in / Promo"
-                    value={tmp.variantLabel || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({ ...p, variantLabel: e.target.value }))
-                    }
-                  />
-
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                    placeholder="Unit price"
-                    value={tmp.unitPrice || ""}
-                    onChange={(e) =>
-                      setTmp((p) => ({
-                        ...p,
-                        unitPrice: onlyNumberLike(e.target.value),
-                      }))
-                    }
-                  />
-
-                  <label className="flex items-center gap-2 font-semibold text-sm text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={tmp.vatEnabled !== false}
-                      onChange={(e) =>
-                        setTmp((p) => ({
-                          ...p,
-                          vatEnabled: e.target.checked,
-                        }))
-                      }
-                    />
-                    VAT enabled (for this rule)
-                  </label>
-                </>
-              )}
-
-              <button
-                onClick={handleCreateModal}
-                className="mt-2 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold hover:opacity-90 transition"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-);
