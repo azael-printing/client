@@ -52,7 +52,7 @@ import FinanceAudit from "./pages/app/finance/FinanceAudit";
 import CreateOrder from "./pages/app/jobs/CreateOrder";
 import JobsList from "./pages/app/jobs/JobsList";
 //
-
+import AdminProforma from "./pages/app/admin/AdminProforma";
 import AdminLayout from "./components/layouts/AdminLayout";
 //
 import OperatorLayout from "./components/layouts/OperatorLayout";
@@ -107,6 +107,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 {/* Admin internal pages (render inside AdminLayout main content) */}
                 <Route path="jobs" element={<JobsList />} />
                 <Route path="create-order" element={<CreateOrder />} />
+                {/* <Route path="create-order" element={<CreateOrder />} /> */}
+                <Route path="proforma" element={<AdminProforma />} />
 
                 {/* Admin finance inside AdminLayout */}
                 <Route path="finance">
