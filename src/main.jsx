@@ -53,6 +53,8 @@ import CreateOrder from "./pages/app/jobs/CreateOrder";
 import JobsList from "./pages/app/jobs/JobsList";
 //
 import AdminProforma from "./pages/app/admin/AdminProforma";
+import AdminInvoice from "./pages/app/admin/AdminInvoice";
+
 import AdminLayout from "./components/layouts/AdminLayout";
 //
 import OperatorLayout from "./components/layouts/OperatorLayout";
@@ -107,8 +109,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 {/* Admin internal pages (render inside AdminLayout main content) */}
                 <Route path="jobs" element={<JobsList />} />
                 <Route path="create-order" element={<CreateOrder />} />
-                {/* <Route path="create-order" element={<CreateOrder />} /> */}
+                {/* proforma and invoice */}
                 <Route path="proforma" element={<AdminProforma />} />
+                <Route path="invoice" element={<AdminInvoice />} />
 
                 {/* Admin finance inside AdminLayout */}
                 <Route path="finance">
