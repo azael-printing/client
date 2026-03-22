@@ -110,39 +110,27 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
 
-                {/* Admin internal pages (render inside AdminLayout main content) */}
                 <Route path="jobs" element={<JobsList />} />
                 <Route path="create-order" element={<CreateOrder />} />
-                {/* proforma and invoice */}
                 <Route path="proforma" element={<AdminProforma />} />
                 <Route path="invoice" element={<AdminInvoice />} />
 
-                {/* Admin finance inside AdminLayout */}
                 <Route path="finance">
                   <Route index element={<Navigate to="overview" replace />} />
-                  {/* <Route path="overview" element={<FinanceOverview />} /> */}
+                  <Route path="overview" element={<FinanceDashboard />} />
                   <Route path="jobs" element={<FinanceJobs />} />
                   <Route path="audit" element={<FinanceAudit />} />
-                  {/* <Route
-                    path="revenue"
-                    element={
-                      <div className="p-6 font-bold text-zinc-600">
-                        Revenue (next)
-                      </div>
-                    }
-                  /> */}
-                  <Route path="overview" element={<FinanceDashboard />} />
-                  {/* <Route
-                    path="expenses"
-                    element={
-                      <div className="p-6 font-bold text-zinc-600">
-                        Expenses (next)
-                      </div>
-                    }
-                  /> */}
                   <Route
                     path="expenses"
                     element={<FinanceExpensesDashboard />}
+                  />
+                  <Route
+                    path="revenue"
+                    element={
+                      <div className="p-6 font-bold text-zinc-600">
+                        Revenue page coming next
+                      </div>
+                    }
                   />
                 </Route>
               </Route>
@@ -182,32 +170,19 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               </Route>
 
               <Route path="finance" element={<FinanceLayout />}>
-                <Route path="overview" element={<FinanceOverview />} />
+                <Route index element={<Navigate to="overview" replace />} />
+                <Route path="overview" element={<FinanceDashboard />} />
                 <Route path="jobs" element={<FinanceJobs />} />
                 <Route path="audit" element={<FinanceAudit />} />
-                {/* <Route
+                <Route path="expenses" element={<FinanceExpensesDashboard />} />
+                <Route
                   path="revenue"
                   element={
                     <div className="p-6 font-bold text-zinc-600">
-                      Revenue (next)
+                      Revenue page coming next
                     </div>
                   }
                 />
-                <Route
-                  path="expenses"
-                  element={
-                    <div className="p-6 font-bold text-zinc-600">
-                      Expenses (next)
-                    </div>
-                  }
-                /> */}
-
-                <Route path="/app/finance" element={<FinanceDashboard />} />
-                <Route
-                  path="/app/finance/expenses"
-                  element={<FinanceExpensesDashboard />}
-                />
-                <Route index element={<FinanceOverview />} />
               </Route>
               {/* ✅ jobs MUST be inside /app */}
               <Route path="create-order" element={<CreateOrder />} />
