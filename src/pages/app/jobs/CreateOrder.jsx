@@ -416,7 +416,7 @@ Note:
           <h2 className="text-lg sm:text-xl font-semibold text-primary">
             Create Order
           </h2>
-  
+
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => {
@@ -427,7 +427,7 @@ Note:
             >
               Register Customer
             </button>
-  
+
             <button
               onClick={() => {
                 setModal("item");
@@ -437,7 +437,7 @@ Note:
             >
               Add Item
             </button>
-  
+
             <button
               onClick={() => {
                 setModal("machine");
@@ -447,7 +447,7 @@ Note:
             >
               Add Machine
             </button>
-  
+
             <button
               onClick={() => {
                 setModal("price");
@@ -466,13 +466,13 @@ Note:
             </button>
           </div>
         </div>
-  
+
         {/* CUSTOMER INFORMATION */}
         <div className="mt-5">
           <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
             Customer Information
           </div>
-  
+
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
@@ -493,7 +493,7 @@ Note:
                 ))}
               </datalist>
             </div>
-  
+
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Phone
@@ -509,13 +509,13 @@ Note:
             </div>
           </div>
         </div>
-  
+
         {/* JOB DETAILS */}
         <div className="mt-6">
           <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
             Job Details
           </div>
-  
+
           <div className="mt-3 grid gap-3">
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
@@ -535,7 +535,7 @@ Note:
                   ))}
                 </select>
               </div>
-  
+
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Machine
@@ -546,7 +546,7 @@ Note:
                   disabled
                 />
               </div>
-  
+
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Unit Type
@@ -562,7 +562,7 @@ Note:
                 </select>
               </div>
             </div>
-  
+
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Description
@@ -574,7 +574,7 @@ Note:
                 onChange={(e) => update("description", e.target.value)}
               />
             </div>
-  
+
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
@@ -583,11 +583,13 @@ Note:
                 <input
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                   value={f.qty}
-                  onChange={(e) => update("qty", onlyNumberLike(e.target.value))}
+                  onChange={(e) =>
+                    update("qty", onlyNumberLike(e.target.value))
+                  }
                   placeholder="numbers only"
                 />
               </div>
-  
+
               <div className="grid gap-3 grid-cols-2">
                 <div>
                   <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
@@ -604,7 +606,7 @@ Note:
                     <option value="YES">Yes</option>
                   </select>
                 </div>
-  
+
                 <div>
                   <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                     Urgency Level
@@ -621,12 +623,12 @@ Note:
                 </div>
               </div>
             </div>
-  
+
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Price list
               </div>
-  
+
               <select
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                 value={f.priceRuleId}
@@ -634,28 +636,28 @@ Note:
                 disabled={!f.itemId}
               >
                 <option value="">Select Price</option>
-  
+
                 {priceOptions.map((r) => (
                   <option key={r.id} value={r.id}>
                     {Math.round(r.unitPrice).toLocaleString()}
                   </option>
                 ))}
               </select>
-  
+
               {(() => {
                 const rule = priceOptions.find((x) => x.id === f.priceRuleId);
                 if (!rule) return null;
-  
+
                 const ruleVariant = String(
                   rule.variant || (rule.vatEnabled ? "VAT" : "NON_VAT"),
                 ).toUpperCase();
                 const variantLabel = rule.variantLabel
                   ? rule.variantLabel
                   : "-";
-  
+
                 const noVatTotal = qtyNum ? rule.unitPrice * qtyNum : 0;
                 const vatTotal = qtyNum ? rule.unitPrice * qtyNum * 1.15 : 0;
-  
+
                 return (
                   <div className="mt-2 text-[11px] sm:text-xs font-semibold text-zinc-500 leading-5">
                     <div>
@@ -674,7 +676,9 @@ Note:
                       <div>
                         <span className="text-zinc-400">No-VAT Total:</span>{" "}
                         <span className="text-zinc-800">
-                          {qtyNum ? Math.round(noVatTotal).toLocaleString() : "-"}
+                          {qtyNum
+                            ? Math.round(noVatTotal).toLocaleString()
+                            : "-"}
                         </span>
                       </div>
                       <div>
@@ -690,13 +694,13 @@ Note:
             </div>
           </div>
         </div>
-  
+
         {/* DELIVERY DETAILS */}
         <div className="mt-6">
           <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
             Delivery Details
           </div>
-  
+
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
@@ -710,7 +714,7 @@ Note:
                 onChange={(e) => update("deliveryDate", e.target.value)}
               />
             </div>
-  
+
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Delivery time
@@ -723,7 +727,7 @@ Note:
                 onChange={(e) => update("deliveryTime", e.target.value)}
               />
             </div>
-  
+
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                 Pickup / Delivery
@@ -739,13 +743,13 @@ Note:
             </div>
           </div>
         </div>
-  
+
         {/* PRICING */}
         <div className="mt-6">
           <div className="font-semibold text-sm sm:text-base text-zinc-900 border-b border-zinc-200 pb-2">
             Pricing
           </div>
-  
+
           <div className="mt-3 grid gap-3">
             <div className="grid gap-3 sm:grid-cols-4">
               <div>
@@ -758,7 +762,7 @@ Note:
                   disabled
                 />
               </div>
-  
+
               <div className="flex items-end">
                 <label className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-zinc-700">
                   <input
@@ -769,7 +773,7 @@ Note:
                   {f.vatEnabled ? "VAT?" : "Non-VAT?"}
                 </label>
               </div>
-  
+
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Total Price
@@ -780,7 +784,7 @@ Note:
                   disabled
                 />
               </div>
-  
+
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Payment Status
@@ -798,7 +802,7 @@ Note:
                 </select>
               </div>
             </div>
-  
+
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="flex items-end">
                 <label className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-zinc-700">
@@ -811,7 +815,7 @@ Note:
                   Deposit Paid?
                 </label>
               </div>
-  
+
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Deposit Amount
@@ -826,7 +830,7 @@ Note:
                   placeholder="0"
                 />
               </div>
-  
+
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
                   Remaining Balance
@@ -841,19 +845,21 @@ Note:
           </div>
         </div>
       </div>
-  
+
       {/* RIGHT */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm">
-        <h2 className="text-lg sm:text-xl font-semibold text-primary">Summary</h2>
+        <h2 className="text-lg sm:text-xl font-semibold text-primary">
+          Summary
+        </h2>
         <div className="text-[11px] sm:text-xs text-zinc-400 font-semibold mt-1">
           Fill details - Review summary - Save
         </div>
-  
+
         <div className="mt-4 text-[12px] sm:text-[13px] grid gap-2">
           <div className="text-center font-semibold text-zinc-900">
             Customer Info
           </div>
-  
+
           <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
             <div className="text-right font-semibold text-zinc-600">
               Customer name:
@@ -861,7 +867,7 @@ Note:
             <div className="font-semibold text-zinc-900 truncate">
               {f.customerName || "..."}
             </div>
-  
+
             <div className="text-right font-semibold text-zinc-600">
               Phone number:
             </div>
@@ -869,95 +875,125 @@ Note:
               {f.customerPhone || "..."}
             </div>
           </div>
-  
+
           <div className="text-center font-semibold text-zinc-900 mt-2">
             Job Details
           </div>
           <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
-            <div className="text-right font-semibold text-zinc-600">Machine:</div>
+            <div className="text-right font-semibold text-zinc-600">
+              Machine:
+            </div>
             <div className="font-semibold text-zinc-900 truncate">
               {machine?.name || "..."}
             </div>
-  
-            <div className="text-right font-semibold text-zinc-600">Work Type:</div>
+
+            <div className="text-right font-semibold text-zinc-600">
+              Work Type:
+            </div>
             <div className="font-semibold text-zinc-900 truncate">
               {item?.name || "..."}
             </div>
-  
-            <div className="text-right font-semibold text-zinc-600">Description:</div>
+
+            <div className="text-right font-semibold text-zinc-600">
+              Description:
+            </div>
             <div className="font-semibold text-zinc-900 truncate">
               {f.description || "..."}
             </div>
-  
-            <div className="text-right font-semibold text-zinc-600">Quantity:</div>
+
+            <div className="text-right font-semibold text-zinc-600">
+              Quantity:
+            </div>
             <div className="font-semibold text-zinc-900">{f.qty || "..."}</div>
-  
-            <div className="text-right font-semibold text-zinc-600">Unit Type:</div>
-            <div className="font-semibold text-zinc-900">{f.unitType || "..."}</div>
-  
-            <div className="text-right font-medium text-zinc-600">Designer Required?:</div>
+
+            <div className="text-right font-semibold text-zinc-600">
+              Unit Type:
+            </div>
+            <div className="font-semibold text-zinc-900">
+              {f.unitType || "..."}
+            </div>
+
+            <div className="text-right font-medium text-zinc-600">
+              Designer Required?:
+            </div>
             <div className="font-semibold text-zinc-900">
               {f.designerRequired ? "Yes" : "No"}
             </div>
-  
-            <div className="text-right font-medium text-zinc-600">Urgency Level:</div>
+
+            <div className="text-right font-medium text-zinc-600">
+              Urgency Level:
+            </div>
             <div className="font-semibold text-zinc-900">{f.urgency}</div>
           </div>
-  
+
           <div className="text-center font-semibold text-zinc-900 mt-2">
             Delivery Details
           </div>
           <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
-            <div className="text-right font-semibold text-zinc-600">Delivery Date:</div>
+            <div className="text-right font-semibold text-zinc-600">
+              Delivery Date:
+            </div>
             <div className="font-semibold text-zinc-900">
               {f.deliveryDate || "..."}
             </div>
-  
-            <div className="text-right font-medium text-zinc-600">Delivery Time:</div>
+
+            <div className="text-right font-medium text-zinc-600">
+              Delivery Time:
+            </div>
             <div className="font-semibold text-zinc-900">
               {f.deliveryTime || "..."}
             </div>
           </div>
-  
+
           <div className="text-center font-semibold text-zinc-900 mt-2">
             Pricing
           </div>
           <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-2 items-center">
-            <div className="text-right font-medium text-zinc-600">Unit Price:</div>
+            <div className="text-right font-medium text-zinc-600">
+              Unit Price:
+            </div>
             <div className="font-semibold text-zinc-900">
               {Math.round(unitPriceNum || 0).toLocaleString()}
             </div>
-  
+
             <div className="text-right font-medium text-zinc-600">VAT ?:</div>
             <div className="font-semibold text-zinc-900">
               {f.vatEnabled ? "Yes" : "No"}
             </div>
-  
-            <div className="text-right font-medium text-zinc-600">Total price:</div>
+
+            <div className="text-right font-medium text-zinc-600">
+              Total price:
+            </div>
             <div className="font-semibold text-zinc-900">
               {Math.round(total).toLocaleString()}
             </div>
-  
-            <div className="text-right font-medium text-zinc-600">Payment Status:</div>
+
+            <div className="text-right font-medium text-zinc-600">
+              Payment Status:
+            </div>
             <div className="font-semibold text-zinc-900">{f.paymentStatus}</div>
-  
-            <div className="text-right font-medium text-zinc-600">Deposit Paid? :</div>
+
+            <div className="text-right font-medium text-zinc-600">
+              Deposit Paid? :
+            </div>
             <div className="font-semibold text-zinc-900">
               {f.depositPaid || f.paymentStatus === "PAID" ? "Yes" : "No"}
             </div>
-  
-            <div className="text-right font-medium text-zinc-600">Deposit Amount:</div>
+
+            <div className="text-right font-medium text-zinc-600">
+              Deposit Amount:
+            </div>
             <div className="font-semibold text-zinc-900">
               {Math.round(Number(f.depositAmount || 0)).toLocaleString()}
             </div>
-  
+
             <div className="text-right text-zinc-600">Remaining Balance:</div>
             <div className="font-semibold text-zinc-900">
               {Math.round(remainingBalance || 0).toLocaleString()}
             </div>
           </div>
         </div>
-  
+
         <div className="mt-5 flex gap-2">
           <button
             onClick={copyQuotation}
@@ -972,7 +1008,7 @@ Note:
             Approve quotation
           </button>
         </div>
-  
+
         <div className="mt-4">
           <div className="text-zinc-500 font-semibold text-xs sm:text-sm">
             Quotation Preview
@@ -981,7 +1017,7 @@ Note:
             {quotationText}
           </pre>
         </div>
-  
+
         {/* MODAL */}
         {modal && (
           <div className="fixed inset-0 z-50">
@@ -1004,7 +1040,7 @@ Note:
                   Close
                 </button>
               </div>
-  
+
               <div className="mt-4 grid gap-3">
                 {modal === "customer" && (
                   <>
@@ -1032,7 +1068,7 @@ Note:
                     />
                   </>
                 )}
-  
+
                 {modal === "machine" && (
                   <input
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
@@ -1043,7 +1079,7 @@ Note:
                     }
                   />
                 )}
-  
+
                 {modal === "item" && (
                   <>
                     <input
@@ -1064,7 +1100,7 @@ Note:
                     />
                   </>
                 )}
-  
+
                 {modal === "price" && (
                   <>
                     <select
@@ -1081,7 +1117,7 @@ Note:
                         </option>
                       ))}
                     </select>
-  
+
                     <select
                       className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                       value={tmp.machineId || ""}
@@ -1096,7 +1132,7 @@ Note:
                         </option>
                       ))}
                     </select>
-  
+
                     <select
                       className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
                       value={tmp.variant || "VAT"}
@@ -1108,7 +1144,7 @@ Note:
                       <option value="NON_VAT">NON_VAT</option>
                       <option value="CUSTOM">CUSTOM</option>
                     </select>
-  
+
                     <input
                       className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                       placeholder="Variant label (optional) e.g. Corporate / Walk-in / Promo"
@@ -1117,7 +1153,7 @@ Note:
                         setTmp((p) => ({ ...p, variantLabel: e.target.value }))
                       }
                     />
-  
+
                     <input
                       className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
                       placeholder="Unit price"
@@ -1129,7 +1165,7 @@ Note:
                         }))
                       }
                     />
-  
+
                     <label className="flex items-center gap-2 font-semibold text-sm text-zinc-700">
                       <input
                         type="checkbox"
@@ -1145,7 +1181,7 @@ Note:
                     </label>
                   </>
                 )}
-  
+
                 <button
                   onClick={handleCreateModal}
                   className="mt-2 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold hover:opacity-90 transition"
@@ -1159,3 +1195,4 @@ Note:
       </div>
     </div>
   );
+}
