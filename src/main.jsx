@@ -131,13 +131,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                       </div>
                     }
                   />
-                  <Route
+                  {/* <Route
                     path="expenses"
                     element={
                       <div className="p-6 font-bold text-zinc-600">
                         Expenses (next)
                       </div>
                     }
+                  /> */}
+                  <Route
+                    path="/app/finance/expenses"
+                    element={<FinanceExpensesDashboard />}
                   />
                 </Route>
               </Route>
@@ -195,7 +199,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                     </div>
                   }
                 /> */}
-                // inside routes
+
                 <Route path="/app/finance" element={<FinanceDashboard />} />
                 <Route
                   path="/app/finance/expenses"
