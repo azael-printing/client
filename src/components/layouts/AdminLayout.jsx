@@ -1125,7 +1125,7 @@ export default function AdminLayout() {
   }
 
   const sidebarContent = (
-    <nav className="space-y-1.5">
+    <nav className="space-y-1.5 max-w-fit">
       <NavLink to="/app/admin" className={navClass} end>
         <span className="text-primary shrink-0">
           <Icon name="dash" />
@@ -1173,7 +1173,7 @@ export default function AdminLayout() {
         <span className="text-primary shrink-0">
           <Icon name="money" />
         </span>
-        <span className="flex-1 truncate">Finance Report</span>
+        <span className="flex-1 truncate">Finance </span>
         <span className="ml-auto text-zinc-400">
           <Icon
             name={financeOpen ? "chevronDown" : "chevronRight"}
@@ -1209,7 +1209,8 @@ export default function AdminLayout() {
             <span className="text-primary shrink-0">
               <Icon name="check" />
             </span>
-            <span className="truncate">Done Tracking</span>
+            {/* Done Tracking */}
+            <span className="truncate">Completed Jobs</span>
           </NavLink>
 
           <NavLink to="/app/admin/finance/expenses" className={navClass}>
@@ -1226,12 +1227,12 @@ export default function AdminLayout() {
             <span className="truncate">Audit Log</span>
           </NavLink>
 
-          <NavLink to="/app/admin/finance/jobs" className={navClass}>
+          {/* <NavLink to="/app/admin/finance/jobs" className={navClass}>
             <span className="text-primary shrink-0">
               <Icon name="jobs" />
             </span>
             <span className="truncate">Jobs</span>
-          </NavLink>
+          </NavLink> */}
         </div>
       )}
 
