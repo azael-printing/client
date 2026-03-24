@@ -614,10 +614,10 @@ export default function Home() {
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
-              to="/management"
-              className="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl bg-[#1683d7] text-white text-sm md:text-base font-medium shadow-[0_12px_30px_rgba(22,131,215,0.35)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(22,131,215,0.45)]"
+              to="#"
+              className="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl bg-[#1683d7] text-white text-sm md:text-base font-bold shadow-[0_12px_30px_rgba(22,131,215,0.35)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(22,131,215,0.45)]"
             >
-              Get Started
+              + Follow Us
             </Link>
 
             <button
