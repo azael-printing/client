@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
-import logo from "../../../assets/logo.png";
-import sealImg from "../../../assets/azaelCompnySeal-01.png";
+import { useEffect, useMemo, useRef, useState } from "react";
+import proformaTemplate from "../../../assets/proforma-template.png";
 
 function onlyNumberLike(v) {
   return String(v || "").replace(/[^\d.]/g, "");
@@ -13,31 +12,35 @@ function safeId() {
   return `${Date.now()}-${Math.random()}`;
 }
 
-function todayParts() {
-  const d = new Date();
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  return {
-    dd,
-    mm,
-    yyyy,
-    iso: `${yyyy}-${mm}-${dd}`,
-    display: `${dd}/${mm}/${yyyy}`,
-  };
-}
-
 function formatMoney(v) {
   return Number(v || 0).toLocaleString();
 }
 
-function autoGrow(e) {
-  e.target.style.height = "auto";
-  e.target.style.height = `${e.target.scrollHeight}px`;
+function todayDisplay() {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function getNextDocNumber(storageKey, prefix) {
+  const raw = Number(localStorage.getItem(storageKey) || "0");
+  const next = raw + 1;
+  localStorage.setItem(storageKey, String(next));
+  return `${prefix}${String(next).padStart(7, "0")}`;
+}
+
+function autoGrow(el) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
 }
 
 export default function AdminProforma() {
-  const t = todayParts();
+  const [docNumber] = useState(() =>
+    getNextDocNumber("azael_proforma_counter", "AZ-PR-"),
+  );
 
   const [f, setF] = useState({
     customerName: "",
@@ -47,39 +50,17 @@ export default function AdminProforma() {
     unitType: "pcs",
     unitPrice: "",
     deliveryDate: "",
-    proformaNo: "AZ-PR-00001",
-    companyTin: "0082555133",
-    vatReg: "19889750816",
-    note1: "The above price are including 15% vat",
-    note2: "A 60% advance payment must be issues before project stated",
-    note3: "Delivery date",
-    note4: "the price is valid for 10 working days",
-    managerName: "Fikadesselassie Ayana",
-    managerTitle: "General manager",
-    phone1: "0941413132",
-    phone2: "0944781211",
-    email: "info@azaelprinting.com",
-    website: "www.azaelprinting.com",
   });
 
   const [items, setItems] = useState([]);
+  const textRef = useRef(null);
 
   function update(key, value) {
     setF((p) => ({ ...p, [key]: value }));
   }
 
-  function addItem() {
-    if (!f.description.trim()) {
-      return alert("Description is required");
-    }
-    if (!f.quantity || Number(f.quantity) <= 0) {
-      return alert("Quantity must be greater than 0");
-    }
-    if (!f.unitPrice || Number(f.unitPrice) < 0) {
-      return alert("Unit price is required");
-    }
-
-    const row = {
+  function buildItem() {
+    return {
       id: safeId(),
       description: f.description,
       quantity: Number(f.quantity || 0),
@@ -87,8 +68,18 @@ export default function AdminProforma() {
       unitPrice: Number(f.unitPrice || 0),
       total: Number(f.quantity || 0) * Number(f.unitPrice || 0),
     };
+  }
 
-    setItems((prev) => [...prev, row]);
+  function addItem() {
+    if (!f.description.trim()) return alert("Description is required");
+    if (!f.quantity || Number(f.quantity) <= 0) {
+      return alert("Quantity must be greater than 0");
+    }
+    if (!f.unitPrice || Number(f.unitPrice) < 0) {
+      return alert("Unit price is required");
+    }
+
+    setItems((prev) => [...prev, buildItem()]);
   }
 
   function addNew() {
@@ -100,11 +91,11 @@ export default function AdminProforma() {
       unitType: "pcs",
       unitPrice: "",
     }));
+    requestAnimationFrame(() => autoGrow(textRef.current));
   }
 
   function clearForm() {
-    setF((p) => ({
-      ...p,
+    setF({
       customerName: "",
       tin: "",
       description: "",
@@ -112,13 +103,18 @@ export default function AdminProforma() {
       unitType: "pcs",
       unitPrice: "",
       deliveryDate: "",
-    }));
+    });
     setItems([]);
+    requestAnimationFrame(() => autoGrow(textRef.current));
   }
 
   function removeRow(id) {
     setItems((prev) => prev.filter((x) => x.id !== id));
   }
+
+  useEffect(() => {
+    autoGrow(textRef.current);
+  }, [f.description]);
 
   const totals = useMemo(() => {
     const subTotal = items.reduce((s, x) => s + Number(x.total || 0), 0);
@@ -128,29 +124,28 @@ export default function AdminProforma() {
   }, [items]);
 
   const previewRows = useMemo(() => {
-    const minimumRows = 8;
+    const minRows = 8;
     const actual = items.map((x, i) => ({
+      id: x.id,
       no: i + 1,
       description: x.description,
-      quantity: `${x.quantity} ${x.unitType || ""}`.trim(),
-      unitPrice: x.unitPrice ? formatMoney(x.unitPrice) : "",
-      total: x.total ? formatMoney(x.total) : "",
-      isEmpty: false,
-      id: x.id,
+      qty: `${x.quantity} ${x.unitType || ""}`.trim(),
+      unitPrice: formatMoney(x.unitPrice),
+      total: formatMoney(x.total),
     }));
 
-    const emptiesNeeded = Math.max(0, minimumRows - actual.length);
-    const empties = Array.from({ length: emptiesNeeded }).map((_, i) => ({
+    const emptyRows = Array.from({
+      length: Math.max(0, minRows - actual.length),
+    }).map((_, i) => ({
+      id: `empty-${i}`,
       no: "",
       description: "",
-      quantity: "",
+      qty: "",
       unitPrice: "",
       total: "",
-      isEmpty: true,
-      id: `empty-${i}`,
     }));
 
-    return [...actual, ...empties];
+    return [...actual, ...emptyRows];
   }, [items]);
 
   function printPdf() {
@@ -182,7 +177,7 @@ export default function AdminProforma() {
             min-height: 297mm;
             margin: 0 !important;
             padding: 0 !important;
-            background: #ffffff;
+            background: white !important;
           }
 
           .no-print {
@@ -190,18 +185,18 @@ export default function AdminProforma() {
           }
 
           .print-page {
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
             width: 210mm !important;
             min-height: 297mm !important;
             margin: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
           }
         }
       `}</style>
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_500px] xl:grid-cols-[minmax(0,1fr)_560px]">
-        {/* LEFT FORM */}
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_430px] xl:grid-cols-[minmax(0,1fr)_470px]">
+        {/* LEFT */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm no-print min-w-0">
           <div>
             <div className="text-primary text-base sm:text-lg font-bold">
@@ -212,7 +207,6 @@ export default function AdminProforma() {
             </div>
           </div>
 
-          {/* CUSTOMER INFO */}
           <div className="mt-5">
             <div className="text-primary text-sm sm:text-base font-bold border-b border-zinc-200 pb-2">
               Customer Info
@@ -245,7 +239,6 @@ export default function AdminProforma() {
             </div>
           </div>
 
-          {/* JOB DESCRIPTION */}
           <div className="mt-6">
             <div className="text-primary text-sm sm:text-base font-bold border-b border-zinc-200 pb-2">
               Job Description
@@ -257,9 +250,10 @@ export default function AdminProforma() {
                   Description
                 </div>
                 <textarea
+                  ref={textRef}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[110px] text-xs sm:text-sm resize-none overflow-hidden"
                   value={f.description}
-                  onInput={autoGrow}
+                  onInput={(e) => autoGrow(e.target)}
                   onChange={(e) => update("description", e.target.value)}
                   placeholder="Long description accepted..."
                 />
@@ -326,7 +320,6 @@ export default function AdminProforma() {
             </div>
           </div>
 
-          {/* ACTIONS */}
           <div className="mt-6 flex flex-wrap gap-2">
             <button
               onClick={addNew}
@@ -357,7 +350,6 @@ export default function AdminProforma() {
             </button>
           </div>
 
-          {/* ADDED LIST */}
           <div className="mt-6">
             <div className="text-primary text-sm font-bold border-b border-zinc-200 pb-2">
               Added Items
@@ -402,7 +394,7 @@ export default function AdminProforma() {
           </div>
         </div>
 
-        {/* RIGHT PREVIEW */}
+        {/* RIGHT */}
         <div className="print-root bg-white border border-zinc-200 rounded-2xl p-2 sm:p-3 shadow-sm min-w-0">
           <div className="no-print mb-3">
             <div className="text-primary text-base sm:text-lg font-bold">
@@ -413,217 +405,192 @@ export default function AdminProforma() {
             </div>
           </div>
 
-          <div className="print-page mx-auto w-full max-w-[210mm] min-h-[297mm] bg-white text-[#1e73be] overflow-hidden rounded-xl border border-zinc-200">
-            {/* TOP HEADER SHAPE */}
-            <div className="relative">
-              <div className="grid grid-cols-[58%_42%] min-h-[170px]">
-                <div className="bg-[#1178be] rounded-br-[90px] pl-[28px] pt-[24px] pr-[24px] pb-[14px]">
-                  <img
-                    src={logo}
-                    alt="Azael Printing"
-                    className="w-[330px] max-w-full object-contain"
-                  />
-                  <div
-                    className="mt-[8px] ml-[64px] text-white font-extrabold tracking-wide uppercase"
-                    style={{
-                      fontSize: "34px",
-                      lineHeight: 1,
-                      WebkitTextStroke: "1.2px white",
-                      color: "transparent",
-                    }}
-                  >
-                    PROFORMA
-                  </div>
-                </div>
+          <div className="mx-auto w-full max-w-[430px] xl:max-w-[470px]">
+            <div className="print-page relative w-full aspect-[1055/1493] overflow-hidden bg-white rounded-xl border border-zinc-200">
+              <img
+                src={proformaTemplate}
+                alt="Proforma template"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
 
-                <div className="relative">
-                  <div className="absolute right-[18px] top-[34px] flex flex-col gap-[18px]">
-                    <div className="w-[130px] h-[12px] rounded-full bg-[#1178be]" />
-                    <div className="w-[96px] h-[12px] rounded-full bg-[#1178be] ml-auto" />
-                  </div>
-
-                  <div className="absolute right-[34px] top-[84px] text-right font-bold leading-[1.45]">
-                    <div className="text-[18px]">
-                      <span>TIN</span>
-                      <span className="ml-3 font-medium text-[#2d5fb3]">
-                        {f.companyTin}
-                      </span>
-                    </div>
-                    <div className="text-[18px]">
-                      <span>VAT REG</span>
-                      <span className="ml-3 font-medium text-[#2d5fb3]">
-                        {f.vatReg}
-                      </span>
-                    </div>
-                    <div className="text-[18px]">
-                      <span>PROFORMA NUMBER</span>
-                      <span className="ml-3 font-medium text-[#111111]">
-                        {f.proformaNo}
-                      </span>
-                    </div>
-                    <div className="text-[18px]">
-                      <span>DATE</span>
-                      <span className="ml-3 font-medium text-[#111111]">
-                        {t.display}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* BODY */}
-            <div className="px-[34px] pt-[28px] pb-[18px]">
-              {/* CUSTOMER LINES */}
-              <div className="text-[18px] leading-[1.4]">
-                <div className="grid grid-cols-[330px_1fr] items-end gap-[10px]">
-                  <div className="text-right uppercase">
-                    PRICING QUATATION TO:
-                  </div>
-                  <div className="border-b-[2px] border-[#3b6bbd] h-[18px]">
-                    <div className="pl-1 text-[16px] font-medium text-[#111111]">
-                      {f.customerName}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-[6px] grid grid-cols-[330px_1fr] items-end gap-[10px]">
-                  <div className="text-right uppercase">TIN:</div>
-                  <div className="border-b-[2px] border-[#3b6bbd] h-[18px]">
-                    <div className="pl-1 text-[16px] font-medium text-[#111111]">
-                      {f.tin}
-                    </div>
-                  </div>
-                </div>
+              {/* number patch */}
+              <div
+                className="absolute bg-white"
+                style={{
+                  left: "77.5%",
+                  top: "20.6%",
+                  width: "16.5%",
+                  height: "3.6%",
+                }}
+              />
+              <div
+                className="absolute text-[#111111] font-medium text-right whitespace-nowrap"
+                style={{
+                  right: "7.4%",
+                  top: "21.0%",
+                  fontSize: "10px",
+                  width: "16%",
+                }}
+              >
+                {docNumber}
               </div>
 
-              {/* TABLE */}
-              <div className="mt-[44px]">
-                <table className="w-full border-collapse text-[#1178be]">
-                  <thead>
-                    <tr className="bg-[#1178be] text-white">
-                      <th className="border-[2px] border-[#1178be] text-left px-[6px] py-[6px] text-[11px] font-bold w-[42px]">
-                        NO
-                      </th>
-                      <th className="border-[2px] border-[#1178be] text-left px-[8px] py-[6px] text-[11px] font-bold">
-                        Description
-                      </th>
-                      <th className="border-[2px] border-[#1178be] text-center px-[6px] py-[6px] text-[11px] font-bold w-[92px]">
-                        QTY
-                      </th>
-                      <th className="border-[2px] border-[#1178be] text-center px-[6px] py-[6px] text-[11px] font-bold w-[120px]">
-                        Unit Price
-                      </th>
-                      <th className="border-[2px] border-[#1178be] text-center px-[6px] py-[6px] text-[11px] font-bold w-[130px]">
-                        Total Price
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {previewRows.map((row) => (
-                      <tr key={row.id}>
-                        <td className="border-[2px] border-[#1178be] px-[6px] py-[8px] text-[10px] h-[39px] align-top">
-                          {row.no}
-                        </td>
-                        <td className="border-[2px] border-[#1178be] px-[8px] py-[8px] text-[10px] h-[39px] align-top whitespace-pre-wrap">
-                          {row.description}
-                        </td>
-                        <td className="border-[2px] border-[#1178be] px-[6px] py-[8px] text-[10px] h-[39px] align-top text-center">
-                          {row.quantity}
-                        </td>
-                        <td className="border-[2px] border-[#1178be] px-[6px] py-[8px] text-[10px] h-[39px] align-top text-right">
-                          {row.unitPrice}
-                        </td>
-                        <td className="border-[2px] border-[#1178be] px-[6px] py-[8px] text-[10px] h-[39px] align-top text-right">
-                          {row.total}
-                        </td>
-                      </tr>
-                    ))}
-
-                    <tr>
-                      <td
-                        colSpan={3}
-                        rowSpan={3}
-                        className="border-none align-top pt-[26px] pr-[18px]"
-                      >
-                        <div className="ml-[52px]">
-                          <div className="text-[20px] font-bold uppercase">
-                            NOTE:
-                          </div>
-                          <div className="mt-[8px] text-[10px] leading-[1.7] text-[#4169b2] font-medium">
-                            <div>{f.note1}</div>
-                            <div>{f.note2}</div>
-                            <div>
-                              {f.note3}{" "}
-                              <span className="inline-block min-w-[90px] border-b border-[#4169b2] align-middle" />{" "}
-                              working days
-                            </div>
-                            <div>{f.note4}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="bg-[#1178be] text-white border-[2px] border-[#1178be] px-[8px] py-[6px] text-[11px] text-right font-bold">
-                        Sub total
-                      </td>
-                      <td className="border-[2px] border-[#4169b2] px-[8px] py-[6px] text-[11px] text-right font-bold text-[#111111]">
-                        {formatMoney(totals.subTotal)}
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td className="bg-[#1178be] text-white border-[2px] border-[#1178be] px-[8px] py-[6px] text-[11px] text-right font-bold">
-                        VAT 15%
-                      </td>
-                      <td className="border-[2px] border-[#4169b2] px-[8px] py-[6px] text-[11px] text-right font-bold text-[#111111]">
-                        {formatMoney(totals.vat15)}
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td className="bg-[#1178be] text-white border-[2px] border-[#1178be] px-[8px] py-[6px] text-[11px] text-right font-bold">
-                        Total
-                      </td>
-                      <td className="border-[2px] border-[#4169b2] px-[8px] py-[6px] text-[11px] text-right font-extrabold text-[#111111]">
-                        {formatMoney(totals.total)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              {/* date patch */}
+              <div
+                className="absolute bg-white"
+                style={{
+                  left: "77.5%",
+                  top: "23.6%",
+                  width: "16.5%",
+                  height: "3.6%",
+                }}
+              />
+              <div
+                className="absolute text-[#111111] font-medium text-right whitespace-nowrap"
+                style={{
+                  right: "7.4%",
+                  top: "24.0%",
+                  fontSize: "10px",
+                  width: "16%",
+                }}
+              >
+                {todayDisplay()}
               </div>
 
-              {/* BOTTOM AREA */}
-              <div className="mt-[8px] grid grid-cols-[1fr_170px_1fr] items-end gap-[8px]">
-                <div />
+              {/* customer name */}
+              <div
+                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                style={{
+                  left: "40.0%",
+                  top: "30.0%",
+                  width: "35.5%",
+                  fontSize: "10px",
+                  lineHeight: 1.1,
+                }}
+              >
+                {f.customerName}
+              </div>
 
-                <div className="flex justify-center">
-                  <img
-                    src={sealImg}
-                    alt="Company Seal"
-                    className="w-[150px] h-[150px] object-contain"
-                  />
-                </div>
+              {/* tin */}
+              <div
+                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                style={{
+                  left: "40.0%",
+                  top: "32.25%",
+                  width: "35.5%",
+                  fontSize: "10px",
+                  lineHeight: 1.1,
+                }}
+              >
+                {f.tin}
+              </div>
 
-                <div className="text-right text-[#4169b2] leading-[1.15] mb-[12px]">
-                  <div className="text-[14px] font-medium">{f.managerName}</div>
-                  <div className="text-[11px] font-medium">
-                    {f.managerTitle}
+              {previewRows.slice(0, 8).map((row, idx) => {
+                const y = 43.4 + idx * 3.56;
+                return (
+                  <div key={row.id}>
+                    <div
+                      className="absolute text-[#1178be]"
+                      style={{
+                        left: "4.1%",
+                        top: `${y}%`,
+                        width: "3%",
+                        fontSize: "8px",
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {row.no}
+                    </div>
+
+                    <div
+                      className="absolute text-[#1178be] whitespace-pre-wrap break-words"
+                      style={{
+                        left: "9.2%",
+                        top: `${y}%`,
+                        width: "33%",
+                        fontSize: "8px",
+                        lineHeight: 1.18,
+                      }}
+                    >
+                      {row.description}
+                    </div>
+
+                    <div
+                      className="absolute text-[#1178be] text-center whitespace-nowrap"
+                      style={{
+                        left: "51.0%",
+                        top: `${y}%`,
+                        width: "11%",
+                        fontSize: "8px",
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {row.qty}
+                    </div>
+
+                    <div
+                      className="absolute text-[#1178be] text-right whitespace-nowrap"
+                      style={{
+                        left: "68.6%",
+                        top: `${y}%`,
+                        width: "9%",
+                        fontSize: "8px",
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {row.unitPrice}
+                    </div>
+
+                    <div
+                      className="absolute text-[#1178be] text-right whitespace-nowrap font-semibold"
+                      style={{
+                        left: "84.1%",
+                        top: `${y}%`,
+                        width: "11%",
+                        fontSize: "8px",
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {row.total}
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
+                );
+              })}
 
-            {/* FOOTER */}
-            <div className="mt-auto bg-[#1178be] text-white rounded-tr-[0] rounded-tl-[0] rounded-bl-[34px] rounded-br-[34px] px-[28px] py-[12px]">
-              <div className="text-center leading-[1.25]">
-                <div className="text-[18px] font-bold">አድራሻ</div>
-                <div className="text-[12px] font-medium mt-[2px]">
-                  {f.phone1} | {f.phone2}
-                </div>
-                <div className="text-[11px] font-medium mt-[2px]">
-                  {f.email} &nbsp;&nbsp;&nbsp; {f.website}
-                </div>
+              <div
+                className="absolute text-[#111111] text-right font-bold whitespace-nowrap"
+                style={{
+                  right: "4.2%",
+                  top: "71.35%",
+                  width: "13.5%",
+                  fontSize: "9px",
+                }}
+              >
+                {formatMoney(totals.subTotal)}
+              </div>
+
+              <div
+                className="absolute text-[#111111] text-right font-bold whitespace-nowrap"
+                style={{
+                  right: "4.2%",
+                  top: "74.15%",
+                  width: "13.5%",
+                  fontSize: "9px",
+                }}
+              >
+                {formatMoney(totals.vat15)}
+              </div>
+
+              <div
+                className="absolute text-[#111111] text-right font-extrabold whitespace-nowrap"
+                style={{
+                  right: "4.2%",
+                  top: "76.9%",
+                  width: "13.5%",
+                  fontSize: "9px",
+                }}
+              >
+                {formatMoney(totals.total)}
               </div>
             </div>
           </div>
