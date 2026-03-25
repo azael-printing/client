@@ -38,9 +38,63 @@ function autoGrow(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 
+function normalizeStatus(status) {
+  return String(status || "")
+    .trim()
+    .toUpperCase();
+}
+
 function isEligiblePaymentStatus(status) {
-  const s = String(status || "").toUpperCase();
-  return s === "UNPAID" || s === "PARTIAL" || s === "CREDIT";
+  const s = normalizeStatus(status);
+  return (
+    s === "UNPAID" || s === "PARTIAL" || s === "PARTIAL_PAID" || s === "CREDIT"
+  );
+}
+
+function deriveDescription(job) {
+  return (
+    job?.description ||
+    job?.workType ||
+    job?.jobDescription ||
+    job?.itemName ||
+    ""
+  );
+}
+
+function deriveQty(job) {
+  return job?.qty ?? job?.quantity ?? "";
+}
+
+function deriveUnitType(job) {
+  return job?.unitType || job?.unit || "pcs";
+}
+
+function deriveUnitPrice(job) {
+  if (job?.unitPrice != null && job?.unitPrice !== "") {
+    return String(job.unitPrice);
+  }
+
+  const qty = Number(job?.qty ?? job?.quantity ?? 0);
+  const total = Number(job?.total ?? 0);
+
+  if (qty > 0 && total > 0) {
+    return String(Math.round(total / qty));
+  }
+
+  return "";
+}
+
+function deriveDeliveryDate(job) {
+  if (!job?.deliveryDate) return "";
+  return String(job.deliveryDate).slice(0, 10);
+}
+
+function deriveDeliveryTime(job) {
+  return job?.deliveryTime || "";
+}
+
+function deriveTin(job) {
+  return job?.tin || job?.customerTin || "";
 }
 
 export default function AdminInvoice() {
@@ -49,6 +103,7 @@ export default function AdminInvoice() {
   );
 
   const [allJobs, setAllJobs] = useState([]);
+  const [jobsErr, setJobsErr] = useState("");
   const [selectedJobId, setSelectedJobId] = useState("");
   const textRef = useRef(null);
 
@@ -75,11 +130,14 @@ export default function AdminInvoice() {
   useEffect(() => {
     (async () => {
       try {
+        setJobsErr("");
         const jobs = await listJobs();
-        setAllJobs(
-          (jobs || []).filter((j) => isEligiblePaymentStatus(j.paymentStatus)),
+        const eligible = (jobs || []).filter((j) =>
+          isEligiblePaymentStatus(j.paymentStatus),
         );
-      } catch {
+        setAllJobs(eligible);
+      } catch (e) {
+        setJobsErr(e?.response?.data?.message || "Failed to load jobs");
         setAllJobs([]);
       }
     })();
@@ -88,6 +146,7 @@ export default function AdminInvoice() {
   const matchedJobs = useMemo(() => {
     const q = f.customerName.trim().toLowerCase();
     if (!q) return [];
+
     return allJobs.filter((j) =>
       String(j.customerName || "")
         .toLowerCase()
@@ -95,45 +154,69 @@ export default function AdminInvoice() {
     );
   }, [allJobs, f.customerName]);
 
-  useEffect(() => {
-    const exactMatches = matchedJobs.filter(
+  const exactCustomerJobs = useMemo(() => {
+    const q = f.customerName.trim().toLowerCase();
+    if (!q) return [];
+
+    return allJobs.filter(
       (j) =>
         String(j.customerName || "")
           .trim()
-          .toLowerCase() === f.customerName.trim().toLowerCase(),
+          .toLowerCase() === q,
     );
-
-    if (exactMatches.length === 1) {
-      const job = exactMatches[0];
-      setSelectedJobId(job.id);
-      applyJob(job);
-    } else if (!f.customerName.trim()) {
-      setSelectedJobId("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [f.customerName, matchedJobs.length]);
+  }, [allJobs, f.customerName]);
 
   function applyJob(job) {
     if (!job) return;
+
     setF((p) => ({
       ...p,
       customerName: job.customerName || p.customerName,
-      tin: job.tin || p.tin || "",
-      description: job.description || job.workType || "",
-      quantity: job.qty ? String(job.qty) : "",
-      unitType: job.unitType || "pcs",
-      unitPrice: job.unitPrice
-        ? String(job.unitPrice)
-        : job.qty && job.total
-          ? String(Math.round(Number(job.total) / Number(job.qty)))
-          : "",
-      deliveryDate: job.deliveryDate
-        ? String(job.deliveryDate).slice(0, 10)
-        : "",
-      deliveryTime: job.deliveryTime || "",
+      tin: deriveTin(job),
+      description: deriveDescription(job),
+      quantity: String(deriveQty(job) || ""),
+      unitType: deriveUnitType(job),
+      unitPrice: deriveUnitPrice(job),
+      deliveryDate: deriveDeliveryDate(job),
+      deliveryTime: deriveDeliveryTime(job),
     }));
+
     requestAnimationFrame(() => autoGrow(textRef.current));
   }
+
+  useEffect(() => {
+    if (!f.customerName.trim()) {
+      setSelectedJobId("");
+      return;
+    }
+
+    if (exactCustomerJobs.length === 1) {
+      const one = exactCustomerJobs[0];
+      setSelectedJobId(String(one.id));
+      applyJob(one);
+      return;
+    }
+
+    if (exactCustomerJobs.length > 1) {
+      if (!selectedJobId) {
+        const first = exactCustomerJobs[0];
+        setSelectedJobId(String(first.id));
+        applyJob(first);
+      } else {
+        const found = exactCustomerJobs.find(
+          (j) => String(j.id) === String(selectedJobId),
+        );
+        if (found) applyJob(found);
+      }
+      return;
+    }
+
+    if (matchedJobs.length === 1) {
+      const one = matchedJobs[0];
+      setSelectedJobId(String(one.id));
+      applyJob(one);
+    }
+  }, [f.customerName, exactCustomerJobs, matchedJobs, selectedJobId]);
 
   function buildItem() {
     return {
@@ -274,7 +357,7 @@ export default function AdminInvoice() {
         }
       `}</style>
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_430px] xl:grid-cols-[minmax(0,1fr)_470px]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_390px] xl:grid-cols-[minmax(0,1fr)_430px]">
         {/* LEFT */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm no-print min-w-0">
           <div>
@@ -285,6 +368,12 @@ export default function AdminInvoice() {
               Generate Invoice
             </div>
           </div>
+
+          {jobsErr && (
+            <div className="mt-3 text-red-600 text-xs sm:text-sm font-bold">
+              {jobsErr}
+            </div>
+          )}
 
           <div className="mt-5">
             <div className="text-primary text-sm sm:text-base font-bold border-b border-zinc-200 pb-2">
@@ -297,17 +386,30 @@ export default function AdminInvoice() {
                   Customer name
                 </div>
                 <input
+                  list="invoice-customer-list"
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm"
                   value={f.customerName}
-                  onChange={(e) => update("customerName", e.target.value)}
+                  onChange={(e) => {
+                    update("customerName", e.target.value);
+                    setSelectedJobId("");
+                  }}
                   placeholder="Type customer name..."
                 />
+                <datalist id="invoice-customer-list">
+                  {Array.from(
+                    new Set(allJobs.map((j) => String(j.customerName || ""))),
+                  )
+                    .filter(Boolean)
+                    .map((name) => (
+                      <option key={name} value={name} />
+                    ))}
+                </datalist>
               </div>
 
-              {matchedJobs.length > 1 && (
+              {exactCustomerJobs.length > 1 && (
                 <div>
                   <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                    Select customer job
+                    Select job for this customer
                   </div>
                   <select
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm"
@@ -315,14 +417,14 @@ export default function AdminInvoice() {
                     onChange={(e) => {
                       const id = e.target.value;
                       setSelectedJobId(id);
-                      const job = matchedJobs.find(
+                      const job = exactCustomerJobs.find(
                         (x) => String(x.id) === String(id),
                       );
                       if (job) applyJob(job);
                     }}
                   >
                     <option value="">Select job</option>
-                    {matchedJobs.map((job) => (
+                    {exactCustomerJobs.map((job) => (
                       <option key={job.id} value={job.id}>
                         {`AZ0-${job.jobNo || ""} | ${job.workType || job.description || "Job"} | ${job.paymentStatus || ""}`}
                       </option>
@@ -354,7 +456,7 @@ export default function AdminInvoice() {
             <div className="mt-3 grid gap-3">
               <div>
                 <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                  Description
+                  Work Type / Description
                 </div>
                 <textarea
                   ref={textRef}
@@ -362,7 +464,7 @@ export default function AdminInvoice() {
                   value={f.description}
                   onInput={(e) => autoGrow(e.target)}
                   onChange={(e) => update("description", e.target.value)}
-                  placeholder="Long description accepted..."
+                  placeholder="Auto-filled from selected job"
                 />
               </div>
 
@@ -564,7 +666,7 @@ export default function AdminInvoice() {
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-[430px] xl:max-w-[470px]">
+          <div className="mx-auto w-full max-w-[390px] xl:max-w-[430px]">
             <div className="print-page relative w-full aspect-[1055/1493] overflow-hidden bg-white rounded-xl border border-zinc-200">
               <img
                 src={invoiceTemplate}
@@ -572,45 +674,45 @@ export default function AdminInvoice() {
                 className="absolute inset-0 w-full h-full object-cover"
               />
 
-              {/* number patch */}
+              {/* invoice number */}
               <div
                 className="absolute bg-white"
                 style={{
-                  left: "77.5%",
-                  top: "20.6%",
-                  width: "16.5%",
-                  height: "3.6%",
+                  left: "77.2%",
+                  top: "20.55%",
+                  width: "16.8%",
+                  height: "3.7%",
                 }}
               />
               <div
                 className="absolute text-[#111111] font-medium text-right whitespace-nowrap"
                 style={{
-                  right: "7.4%",
+                  right: "7.3%",
                   top: "21.0%",
-                  fontSize: "10px",
                   width: "16%",
+                  fontSize: "10px",
                 }}
               >
                 {docNumber}
               </div>
 
-              {/* date patch */}
+              {/* date */}
               <div
                 className="absolute bg-white"
                 style={{
-                  left: "77.5%",
-                  top: "23.6%",
-                  width: "16.5%",
-                  height: "3.6%",
+                  left: "77.2%",
+                  top: "23.58%",
+                  width: "16.8%",
+                  height: "3.7%",
                 }}
               />
               <div
                 className="absolute text-[#111111] font-medium text-right whitespace-nowrap"
                 style={{
-                  right: "7.4%",
-                  top: "24.0%",
-                  fontSize: "10px",
+                  right: "7.3%",
+                  top: "24.02%",
                   width: "16%",
+                  fontSize: "10px",
                 }}
               >
                 {todayDisplay()}
@@ -620,9 +722,9 @@ export default function AdminInvoice() {
               <div
                 className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis"
                 style={{
-                  left: "40.0%",
-                  top: "30.0%",
-                  width: "35.5%",
+                  left: "39.9%",
+                  top: "29.95%",
+                  width: "35.8%",
                   fontSize: "10px",
                   lineHeight: 1.1,
                 }}
@@ -634,9 +736,9 @@ export default function AdminInvoice() {
               <div
                 className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis"
                 style={{
-                  left: "40.0%",
-                  top: "32.25%",
-                  width: "35.5%",
+                  left: "39.9%",
+                  top: "32.2%",
+                  width: "35.8%",
                   fontSize: "10px",
                   lineHeight: 1.1,
                 }}
@@ -645,7 +747,7 @@ export default function AdminInvoice() {
               </div>
 
               {previewRows.slice(0, 7).map((row, idx) => {
-                const y = 43.4 + idx * 3.56;
+                const y = 43.35 + idx * 3.56;
                 return (
                   <div key={row.id}>
                     <div
@@ -716,6 +818,7 @@ export default function AdminInvoice() {
                 );
               })}
 
+              {/* totals */}
               <div
                 className="absolute text-[#111111] text-right font-bold whitespace-nowrap"
                 style={{
@@ -752,20 +855,19 @@ export default function AdminInvoice() {
                 {formatMoney(totals.total)}
               </div>
 
-              {/* payment instructions overlay fields only where placeholders are generic */}
+              {/* payment placeholders replacement */}
               <div
                 className="absolute text-[#4169b2] font-medium"
                 style={{
                   left: "3.0%",
-                  top: "81.6%",
-                  width: "48%",
+                  top: "81.55%",
+                  width: "49%",
                   fontSize: "10px",
-                  lineHeight: 1.45,
+                  lineHeight: 1.42,
                 }}
               >
-                <div style={{ visibility: "hidden" }}>Payment Instructions</div>
-                <div style={{ visibility: "hidden", marginTop: "10px" }}>
-                  spacer
+                <div style={{ visibility: "hidden", marginBottom: "10px" }}>
+                  Payment Instructions
                 </div>
                 <div>Account Name: {f.accountName}</div>
                 <div>Bank Name: {f.bankName}</div>
