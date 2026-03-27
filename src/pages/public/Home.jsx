@@ -611,6 +611,7 @@ export default function Home() {
               <a
                 href="https://mulutilacodecomp.vercel.app/"
                 className=" text-inherit"
+                target="_blank"
               >
                 Powered by MuluTilaCodeComp
               </a>
