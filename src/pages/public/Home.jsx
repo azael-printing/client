@@ -90,7 +90,7 @@ export default function Home() {
           <h1 className="mt-6 text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.05]">
             HD Quality + Fast Printing
             <span className="block text-white/90 font-light">
-              We Builds Your Real Business Presence.
+              We Build Your Real Business Presence.
             </span>
           </h1>
 
