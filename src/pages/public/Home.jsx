@@ -84,7 +84,7 @@ export default function Home() {
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 text-center">
           <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-md px-4 py-2 text-[11px] sm:text-xs md:text-sm text-white/90 shadow-lg">
-            Premium Printing • Branding • Fast Turnaround
+            We Established for Your Quality Printing Solution!
           </div>
 
           <h1 className="mt-6 text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.05]">
