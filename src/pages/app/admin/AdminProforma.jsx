@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import proformaTemplate from "../../../assets/proforma-template.png";
-import { getNextDocNumber } from "../../../utils/jobFormatting";
+import { exVatAmount } from "../../../utils/jobFormatting";
 
 function onlyNumberLike(v) {
   return String(v || "").replace(/[^\d.]/g, "");
@@ -23,6 +23,11 @@ function todayDisplay() {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const yyyy = d.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
+}
+
+function getNextDocNumber(storageKey, prefix) {
+  const raw = Number(localStorage.getItem(storageKey) || "0") + 1;
+  return `${prefix}${String(raw).padStart(7, "0")}`;
 }
 
 function autoGrow(el) {
@@ -59,8 +64,8 @@ export default function AdminProforma() {
       description: f.description,
       quantity: Number(f.quantity || 0),
       unitType: f.unitType,
-      unitPrice: Number(f.unitPrice || 0),
-      total: Number(f.quantity || 0) * Number(f.unitPrice || 0),
+      unitPrice: exVatAmount(Number(f.unitPrice || 0), true),
+      total: Number(f.quantity || 0) * exVatAmount(Number(f.unitPrice || 0), true),
     };
   }
 
@@ -143,6 +148,9 @@ export default function AdminProforma() {
   }, [items]);
 
   function printPdf() {
+    const key = "azael_proforma_counter";
+    const current = Number(localStorage.getItem(key) || "0") + 1;
+    localStorage.setItem(key, String(current));
     window.print();
   }
 
@@ -358,7 +366,7 @@ export default function AdminProforma() {
                 items.map((row, idx) => (
                   <div
                     key={row.id}
-                    className="grid grid-cols-[32px_minmax(0,1fr)_70px_90px_90px_64px] gap-2 items-start border border-zinc-200 rounded-xl p-2"
+                    className="grid grid-cols-[28px_minmax(0,1fr)_64px_70px_76px_62px] sm:grid-cols-[32px_minmax(0,1fr)_70px_90px_90px_64px] gap-2 items-start border border-zinc-200 rounded-xl p-2 overflow-hidden"
                   >
                     <div className="text-xs font-bold text-zinc-500 pt-1">
                       {idx + 1}
@@ -399,7 +407,7 @@ export default function AdminProforma() {
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-[430px] xl:max-w-[470px]">
+          <div className="mx-auto w-full max-w-[340px] sm:max-w-[390px] xl:max-w-[470px]">
             <div className="print-page relative w-full aspect-[1055/1493] overflow-hidden bg-white rounded-xl border border-zinc-200">
               <img
                 src={proformaTemplate}
@@ -453,7 +461,7 @@ export default function AdminProforma() {
 
               {/* customer name */}
               <div
-                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis bg-white px-[2px]"
                 style={{
                   left: "40.0%",
                   top: "30.0%",
@@ -467,7 +475,7 @@ export default function AdminProforma() {
 
               {/* tin */}
               <div
-                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis bg-white px-[2px]"
                 style={{
                   left: "40.0%",
                   top: "32.25%",
@@ -480,11 +488,20 @@ export default function AdminProforma() {
               </div>
 
               {previewRows.slice(0, 8).map((row, idx) => {
-                const y = 43.6 + idx * 3.56;
+                const y = 43.4 + idx * 3.56;
+                return (
+                  <div key={`mask-${row.id}`}>
+                    <div className="absolute bg-white" style={{ left: "7.2%", top: `${y + 0.55}%`, width: "87.0%", height: "1.35%" }} />
+                  </div>
+                );
+              })}
+
+              {previewRows.slice(0, 8).map((row, idx) => {
+                const y = 43.4 + idx * 3.56;
                 return (
                   <div key={row.id}>
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[1px]"
+                      className="absolute text-[#1178be]"
                       style={{
                         left: "4.1%",
                         top: `${y}%`,
@@ -497,7 +514,7 @@ export default function AdminProforma() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[2px] whitespace-pre-wrap break-words"
+                      className="absolute text-[#1178be] whitespace-pre-wrap break-words bg-white px-[2px]"
                       style={{
                         left: "9.2%",
                         top: `${y}%`,
@@ -510,7 +527,7 @@ export default function AdminProforma() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-center whitespace-nowrap"
+                      className="absolute text-[#1178be] text-center whitespace-nowrap bg-white px-[2px]"
                       style={{
                         left: "51.0%",
                         top: `${y}%`,
@@ -523,7 +540,7 @@ export default function AdminProforma() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-right whitespace-nowrap"
+                      className="absolute text-[#1178be] text-right whitespace-nowrap bg-white px-[2px]"
                       style={{
                         left: "68.6%",
                         top: `${y}%`,
@@ -536,7 +553,7 @@ export default function AdminProforma() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-right whitespace-nowrap font-semibold"
+                      className="absolute text-[#1178be] text-right whitespace-nowrap font-semibold bg-white px-[2px]"
                       style={{
                         left: "84.1%",
                         top: `${y}%`,

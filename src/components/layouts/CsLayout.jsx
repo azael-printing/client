@@ -174,7 +174,19 @@ export default function CSLayout() {
 
   const navItems = useMemo(
     () => [
-      { to: "/app/cs/overview", label: "CS Overview ", icon: "grid", badge: 0 },
+      { to: "/app/cs/overview", label: "CS Overview", icon: "grid", badge: 0 },
+      {
+        to: "/app/cs/create-order",
+        label: "Create Order",
+        icon: "plus",
+        badge: 0,
+      },
+      {
+        to: "/app/cs/jobs",
+        label: "Jobs Dashboard",
+        icon: "briefcase",
+        badge: 0,
+      },
       {
         to: "/app/cs/new",
         label: "New Requests",

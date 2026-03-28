@@ -172,10 +172,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="audit" element={<FinanceAudit />} />
                 <Route path="expenses" element={<FinanceExpensesDashboard />} />
               </Route>
-              {/* ✅ jobs MUST be inside /app */}
-              <Route path="create-order" element={<CreateOrder />} />
               <Route path="jobs" element={<JobsList />} />
-              {/* ========= */}
 
               {/* ==== */}
               <Route index element={<Navigate to="/" replace />} />

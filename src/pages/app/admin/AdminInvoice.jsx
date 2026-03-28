@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import invoiceTemplate from "../../../assets/invoice-template.png";
 import { listJobs } from "../../api/jobs.api";
-import { deriveExVatUnitPrice, formatJobCode, getNextDocNumber, isEligiblePaymentStatus } from "../../../utils/jobFormatting";
+import { exVatAmount } from "../../../utils/jobFormatting";
 
 function onlyNumberLike(v) {
   return String(v || "").replace(/[^\d.]/g, "");
@@ -26,10 +26,28 @@ function todayDisplay() {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+function getNextDocNumber(storageKey, prefix) {
+  const raw = Number(localStorage.getItem(storageKey) || "0") + 1;
+  return `${prefix}${String(raw).padStart(7, "0")}`;
+}
+
 function autoGrow(el) {
   if (!el) return;
   el.style.height = "auto";
   el.style.height = `${el.scrollHeight}px`;
+}
+
+function normalizeStatus(status) {
+  return String(status || "")
+    .trim()
+    .toUpperCase();
+}
+
+function isEligiblePaymentStatus(status) {
+  const s = normalizeStatus(status);
+  return (
+    s === "UNPAID" || s === "PARTIAL" || s === "PARTIAL_PAID" || s === "CREDIT"
+  );
 }
 
 function deriveDescription(job) {
@@ -50,6 +68,18 @@ function deriveUnitType(job) {
   return job?.unitType || job?.unit || "pcs";
 }
 
+function deriveUnitPrice(job) {
+  let unit = 0;
+  if (job?.unitPrice != null && job?.unitPrice !== "") {
+    unit = Number(job.unitPrice || 0);
+  } else {
+    const qty = Number(job?.qty ?? job?.quantity ?? 0);
+    const total = Number(job?.total ?? 0);
+    if (qty > 0 && total > 0) unit = total / qty;
+  }
+  return unit ? String(Math.round(exVatAmount(unit, job?.vatEnabled !== false))) : "";
+}
+
 function deriveDeliveryDate(job) {
   if (!job?.deliveryDate) return "";
   return String(job.deliveryDate).slice(0, 10);
@@ -64,7 +94,7 @@ function deriveTin(job) {
 }
 
 export default function AdminInvoice() {
-  const [docNumber, setDocNumber] = useState(() =>
+  const [docNumber] = useState(() =>
     getNextDocNumber("azael_invoice_counter", "AZ-INV-"),
   );
 
@@ -142,7 +172,7 @@ export default function AdminInvoice() {
       description: deriveDescription(job),
       quantity: String(deriveQty(job) || ""),
       unitType: deriveUnitType(job),
-      unitPrice: deriveExVatUnitPrice(job),
+      unitPrice: deriveUnitPrice(job),
       deliveryDate: deriveDeliveryDate(job),
       deliveryTime: deriveDeliveryTime(job),
     }));
@@ -190,8 +220,8 @@ export default function AdminInvoice() {
       description: f.description,
       quantity: Number(f.quantity || 0),
       unitType: f.unitType,
-      unitPrice: Number(f.unitPrice || 0),
-      total: Number(f.quantity || 0) * Number(f.unitPrice || 0),
+      unitPrice: exVatAmount(Number(f.unitPrice || 0), true),
+      total: Number(f.quantity || 0) * exVatAmount(Number(f.unitPrice || 0), true),
     };
   }
 
@@ -233,7 +263,6 @@ export default function AdminInvoice() {
       deliveryTime: "",
     }));
     setItems([]);
-    setDocNumber(getNextDocNumber("azael_invoice_counter", "AZ-INV-"));
     requestAnimationFrame(() => autoGrow(textRef.current));
   }
 
@@ -278,6 +307,9 @@ export default function AdminInvoice() {
   }, [items]);
 
   function printPdf() {
+    const key = "azael_invoice_counter";
+    const current = Number(localStorage.getItem(key) || "0") + 1;
+    localStorage.setItem(key, String(current));
     window.print();
   }
 
@@ -393,7 +425,7 @@ export default function AdminInvoice() {
                     <option value="">Select job</option>
                     {exactCustomerJobs.map((job) => (
                       <option key={job.id} value={job.id}>
-                        {`${formatJobCode(job.jobNo)} | ${job.workType || job.description || "Job"} | ${job.paymentStatus || ""}`}
+                        {`AZ0-${job.jobNo || ""} | ${job.workType || job.description || "Job"} | ${job.paymentStatus || ""}`}
                       </option>
                     ))}
                   </select>
@@ -592,7 +624,7 @@ export default function AdminInvoice() {
                 items.map((row, idx) => (
                   <div
                     key={row.id}
-                    className="grid grid-cols-[32px_minmax(0,1fr)_70px_90px_90px_64px] gap-2 items-start border border-zinc-200 rounded-xl p-2"
+                    className="grid grid-cols-[28px_minmax(0,1fr)_64px_70px_76px_62px] sm:grid-cols-[32px_minmax(0,1fr)_70px_90px_90px_64px] gap-2 items-start border border-zinc-200 rounded-xl p-2 overflow-hidden"
                   >
                     <div className="text-xs font-bold text-zinc-500 pt-1">
                       {idx + 1}
@@ -687,7 +719,7 @@ export default function AdminInvoice() {
 
               {/* customer name */}
               <div
-                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis bg-white px-[2px]"
                 style={{
                   left: "39.9%",
                   top: "29.95%",
@@ -701,7 +733,7 @@ export default function AdminInvoice() {
 
               {/* tin */}
               <div
-                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis bg-white px-[2px]"
                 style={{
                   left: "39.9%",
                   top: "32.2%",
@@ -714,11 +746,20 @@ export default function AdminInvoice() {
               </div>
 
               {previewRows.slice(0, 7).map((row, idx) => {
-                const y = 43.6 + idx * 3.56;
+                const y = 36.7 + idx * 4.35;
+                return (
+                  <div key={`mask-${row.id}`}>
+                    <div className="absolute bg-white" style={{ left: "6.4%", top: `${y + 0.7}%`, width: "86.5%", height: "1.55%" }} />
+                  </div>
+                );
+              })}
+
+              {previewRows.slice(0, 7).map((row, idx) => {
+                const y = 43.35 + idx * 3.56;
                 return (
                   <div key={row.id}>
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[1px]"
+                      className="absolute text-[#1178be]"
                       style={{
                         left: "4.1%",
                         top: `${y}%`,
@@ -731,7 +772,7 @@ export default function AdminInvoice() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[2px] whitespace-pre-wrap break-words"
+                      className="absolute text-[#1178be] whitespace-pre-wrap break-words bg-white px-[2px]"
                       style={{
                         left: "9.2%",
                         top: `${y}%`,
@@ -744,7 +785,7 @@ export default function AdminInvoice() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-center whitespace-nowrap"
+                      className="absolute text-[#1178be] text-center whitespace-nowrap bg-white px-[2px]"
                       style={{
                         left: "51.0%",
                         top: `${y}%`,
@@ -757,7 +798,7 @@ export default function AdminInvoice() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-right whitespace-nowrap"
+                      className="absolute text-[#1178be] text-right whitespace-nowrap bg-white px-[2px]"
                       style={{
                         left: "68.6%",
                         top: `${y}%`,
@@ -770,7 +811,7 @@ export default function AdminInvoice() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-right whitespace-nowrap font-semibold"
+                      className="absolute text-[#1178be] text-right whitespace-nowrap font-semibold bg-white px-[2px]"
                       style={{
                         left: "84.1%",
                         top: `${y}%`,

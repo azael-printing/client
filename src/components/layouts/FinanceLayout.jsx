@@ -424,7 +424,6 @@ export default function FinanceLayout() {
       { to: "/app/finance/audit", label: "Audit Log", icon: "log" },
       { divider: true },
       { to: "/app/finance/jobs", label: "Jobs", icon: "briefcase" },
-      { to: "/app/create-order", label: "Create Order", icon: "plus" },
     ],
     [],
   );
