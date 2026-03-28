@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { listJobs, updateJob, cancelJob } from "../../api/jobs.api";
 import { useAuth } from "../../../app/providers/AuthProvider";
 import { getMachines } from "../../../pages/api/ref.api";
+import { formatJobCode, getOrCreateInvoiceNumber } from "../../../utils/jobFormatting";
 
 function cn(...xs) {
   return xs.filter(Boolean).join(" ");
@@ -47,25 +48,12 @@ function downloadFile(filename, content) {
   URL.revokeObjectURL(url);
 }
 
-const STATUS_OPTIONS = [
-  "NEW_REQUEST",
-  "FINANCE_WAITING_APPROVAL",
-  "FINANCE_APPROVED",
-  "DESIGN_ASSIGNED",
-  "DESIGN_PENDING",
-  "DESIGN_WAITING",
-  "IN_DESIGN",
-  "DESIGN_DONE",
-  "PRODUCTION_READY",
-  "PRODUCTION_PENDING",
-  "PRODUCTION_WAITING",
-  "IN_PRODUCTION",
-  "PRODUCTION_DONE",
-  "DELIVERED",
-  "CANCELLED",
+const QUOTATION_OPTIONS = [
+  { value: "QUOTATION_APPROVED", label: "Quotation approved" },
+  { value: "QUOTATION_DENIED", label: "Quotation denied" },
 ];
 
-const PAYMENT_OPTIONS = ["UNPAID", "PARTIAL", "PAID", "CREDIT"];
+const PAYMENT_OPTIONS = ["UNPAID", "PARTIAL", "PAID"];
 
 function Badge({ text }) {
   const map = {
@@ -81,13 +69,12 @@ function Badge({ text }) {
     UNPAID: "bg-zinc-100 text-zinc-700",
     PARTIAL: "bg-yellow-100 text-yellow-800",
     PAID: "bg-green-100 text-green-700",
-    CREDIT: "bg-orange-100 text-orange-700",
-  };
+      };
   const cls = map[text] || "bg-zinc-100 text-zinc-700";
   return (
     <span
       className={cn(
-        "px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-extrabold whitespace-nowrap",
+        "px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold whitespace-nowrap",
         cls,
       )}
     >
@@ -102,6 +89,31 @@ const CANCEL_REASONS = [
   "Suddenly machine disfunction",
   "Other",
 ];
+
+function deriveQuotationDecision(job) {
+  const status = String(job?.status || "").toUpperCase();
+  if (status === "CANCELLED") return "QUOTATION_DENIED";
+  if (job?.quotationDecision === "QUOTATION_DENIED") return "QUOTATION_DENIED";
+  return "QUOTATION_APPROVED";
+}
+
+function jobPatchFromDraft(selected, draft) {
+  const isApproved = draft.quotationDecision === "QUOTATION_APPROVED";
+  const total = Number(selected?.total || 0);
+  const deposit = draft.paymentStatus === "PAID" ? total : Number(draft.depositAmount || 0);
+  const remaining = draft.paymentStatus === "PAID" ? 0 : Math.max(total - deposit, 0);
+
+  return {
+    machine: draft.machine,
+    status: isApproved ? "FINANCE_APPROVED" : "CANCELLED",
+    quotationDecision: draft.quotationDecision,
+    paymentStatus: isApproved ? draft.paymentStatus : "UNPAID",
+    depositAmount: isApproved && draft.paymentStatus === "PARTIAL" ? deposit : isApproved && draft.paymentStatus === "PAID" ? total : 0,
+    remainingBalance: isApproved ? remaining : total,
+    deliveryDate: draft.deliveryDate || null,
+    invoiceNumber: isApproved ? (selected?.invoiceNumber || selected?.invoiceNo || draft.invoiceNumber) : null,
+  };
+}
 
 export default function JobsList() {
   const navigate = useNavigate();
@@ -322,7 +334,7 @@ export default function JobsList() {
                   )}
                 >
                   <td className="py-2.5 px-3 font-bold text-zinc-800 whitespace-nowrap">
-                    AZ0-{j.jobNo}
+                    {formatJobCode(j.jobNo)}
                   </td>
                   <td className="py-2.5 px-3 whitespace-nowrap">
                     {j.customerName}
@@ -411,7 +423,7 @@ export default function JobsList() {
             </div>
 
             <div className="text-primary font-extrabold text-base sm:text-lg leading-tight">
-              AZ-{selected.jobNo} — {selected.workType}
+              {formatJobCode(selected.jobNo)} — {selected.workType}
             </div>
 
             <div className="text-xs sm:text-sm text-zinc-700 font-bold">
@@ -460,8 +472,19 @@ export default function JobsList() {
                 onClick={() => {
                   setDraft({
                     machine: selected.machine || "",
-                    status: selected.status || "",
-                    paymentStatus: selected.paymentStatus || "UNPAID",
+                    quotationDecision: deriveQuotationDecision(selected),
+                    paymentStatus: ["PAID", "PARTIAL"].includes(String(selected.paymentStatus || "").toUpperCase())
+                      ? String(selected.paymentStatus).toUpperCase()
+                      : "UNPAID",
+                    depositAmount:
+                      Number(selected.depositAmount || 0) > 0
+                        ? String(selected.depositAmount)
+                        : "",
+                    remainingBalance: Number(selected.remainingBalance || selected.total || 0),
+                    invoiceNumber:
+                      selected.invoiceNumber ||
+                      selected.invoiceNo ||
+                      getOrCreateInvoiceNumber(selected),
                     deliveryDate: selected.deliveryDate
                       ? String(selected.deliveryDate).slice(0, 10)
                       : "",
@@ -529,41 +552,113 @@ export default function JobsList() {
 
               <div>
                 <div className="text-xs sm:text-sm font-bold text-zinc-700 mb-1">
-                  Status
+                  Quotation Status
                 </div>
                 <select
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                  value={draft.status}
+                  value={draft.quotationDecision}
                   onChange={(e) =>
-                    setDraft((p) => ({ ...p, status: e.target.value }))
+                    setDraft((p) => ({ ...p, quotationDecision: e.target.value }))
                   }
                 >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
+                  {QUOTATION_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div>
-                <div className="text-xs sm:text-sm font-bold text-zinc-700 mb-1">
-                  Payment Status
+              {draft.quotationDecision === "QUOTATION_APPROVED" && (
+                <>
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-zinc-700 mb-1">
+                      Payment Status
+                    </div>
+                    <select
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
+                      value={draft.paymentStatus}
+                      onChange={(e) =>
+                        setDraft((p) => {
+                          const nextStatus = e.target.value;
+                          const total = Number(selected?.total || 0);
+                          const nextDeposit =
+                            nextStatus === "PAID"
+                              ? String(total)
+                              : nextStatus === "UNPAID"
+                                ? ""
+                                : p.depositAmount;
+                          const depositNum = Number(nextDeposit || 0);
+                          return {
+                            ...p,
+                            paymentStatus: nextStatus,
+                            depositAmount: nextDeposit,
+                            remainingBalance:
+                              nextStatus === "PAID"
+                                ? 0
+                                : Math.max(total - depositNum, 0),
+                          };
+                        })
+                      }
+                    >
+                      {PAYMENT_OPTIONS.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-zinc-700 mb-1">
+                      Invoice Number
+                    </div>
+                    <input
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
+                      value={draft.invoiceNumber || ""}
+                      disabled
+                    />
+                  </div>
+                </>
+              )}
+
+              {draft.quotationDecision === "QUOTATION_APPROVED" && draft.paymentStatus === "PARTIAL" && (
+                <div>
+                  <div className="text-xs sm:text-sm font-bold text-zinc-700 mb-1">
+                    Deposit Amount
+                  </div>
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
+                    value={draft.depositAmount}
+                    onChange={(e) =>
+                      setDraft((p) => {
+                        const total = Number(selected?.total || 0);
+                        const raw = e.target.value.replace(/[^\d.]/g, "");
+                        const deposit = Math.min(Number(raw || 0), total);
+                        return {
+                          ...p,
+                          depositAmount: raw,
+                          remainingBalance: Math.max(total - deposit, 0),
+                        };
+                      })
+                    }
+                    placeholder="0"
+                  />
                 </div>
-                <select
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                  value={draft.paymentStatus}
-                  onChange={(e) =>
-                    setDraft((p) => ({ ...p, paymentStatus: e.target.value }))
-                  }
-                >
-                  {PAYMENT_OPTIONS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              )}
+
+              {draft.quotationDecision === "QUOTATION_APPROVED" && (
+                <div>
+                  <div className="text-xs sm:text-sm font-bold text-zinc-700 mb-1">
+                    Remaining Balance
+                  </div>
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
+                    value={Math.round(Number(draft.remainingBalance || 0)).toLocaleString()}
+                    disabled
+                  />
+                </div>
+              )}
 
               <div>
                 <div className="text-xs sm:text-sm font-bold text-zinc-700 mb-1">
@@ -581,12 +676,7 @@ export default function JobsList() {
 
               <button
                 onClick={async () => {
-                  await saveSelected({
-                    machine: draft.machine,
-                    status: draft.status,
-                    paymentStatus: draft.paymentStatus,
-                    deliveryDate: draft.deliveryDate || null,
-                  });
+                  await saveSelected(jobPatchFromDraft(selected, draft));
                   setEditOpen(false);
                 }}
                 className="mt-1 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-extrabold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:opacity-95"

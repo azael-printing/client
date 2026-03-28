@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import proformaTemplate from "../../../assets/proforma-template.png";
+import { getNextDocNumber } from "../../../utils/jobFormatting";
 
 function onlyNumberLike(v) {
   return String(v || "").replace(/[^\d.]/g, "");
@@ -22,13 +23,6 @@ function todayDisplay() {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const yyyy = d.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
-}
-
-function getNextDocNumber(storageKey, prefix) {
-  const raw = Number(localStorage.getItem(storageKey) || "0");
-  const next = raw + 1;
-  localStorage.setItem(storageKey, String(next));
-  return `${prefix}${String(next).padStart(7, "0")}`;
 }
 
 function autoGrow(el) {
@@ -486,11 +480,11 @@ export default function AdminProforma() {
               </div>
 
               {previewRows.slice(0, 8).map((row, idx) => {
-                const y = 43.4 + idx * 3.56;
+                const y = 43.6 + idx * 3.56;
                 return (
                   <div key={row.id}>
                     <div
-                      className="absolute text-[#1178be]"
+                      className="absolute text-[#1178be] bg-white/95 px-[1px]"
                       style={{
                         left: "4.1%",
                         top: `${y}%`,
@@ -503,7 +497,7 @@ export default function AdminProforma() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] whitespace-pre-wrap break-words"
+                      className="absolute text-[#1178be] bg-white/95 px-[2px] whitespace-pre-wrap break-words"
                       style={{
                         left: "9.2%",
                         top: `${y}%`,
@@ -516,7 +510,7 @@ export default function AdminProforma() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] text-center whitespace-nowrap"
+                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-center whitespace-nowrap"
                       style={{
                         left: "51.0%",
                         top: `${y}%`,
@@ -529,7 +523,7 @@ export default function AdminProforma() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] text-right whitespace-nowrap"
+                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-right whitespace-nowrap"
                       style={{
                         left: "68.6%",
                         top: `${y}%`,
@@ -542,7 +536,7 @@ export default function AdminProforma() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] text-right whitespace-nowrap font-semibold"
+                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-right whitespace-nowrap font-semibold"
                       style={{
                         left: "84.1%",
                         top: `${y}%`,

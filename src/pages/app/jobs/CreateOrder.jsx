@@ -27,10 +27,9 @@ const PAYMENT_ACCOUNTS = {
   },
 };
 
-const PAYMENT_STATUS_OPTIONS = [
-  { value: "UNPAID", label: "Unpaid" },
-  { value: "PARTIAL", label: "Partial" },
-  { value: "PAID", label: "Paid" },
+const VAT_OPTIONS = [
+  { value: "YES", label: "Yes" },
+  { value: "NO", label: "No" },
 ];
 
 function todayMinDate() {
@@ -98,10 +97,7 @@ export default function CreateOrder() {
     deliveryType: "PICKUP",
 
     unitPrice: 0,
-    vatEnabled: true, // this controls invoice VAT calc AND default price variant selection
-    paymentStatus: "UNPAID",
-    depositPaid: false,
-    depositAmount: "",
+    vatEnabled: true,
   });
 
   function update(key, value) {
@@ -214,23 +210,7 @@ export default function CreateOrder() {
   );
   const total = useMemo(() => subtotal + vatAmount, [subtotal, vatAmount]);
 
-  // PAID => deposit paid full
-  useEffect(() => {
-    if (f.paymentStatus === "PAID") {
-      setF((p) => ({
-        ...p,
-        depositPaid: true,
-        depositAmount: String(Math.round(total)),
-      }));
-    }
-  }, [f.paymentStatus, total]);
-
-  const depositAmountNum = Number(f.depositAmount || 0);
-  const remainingBalance = useMemo(() => {
-    if (f.paymentStatus === "PAID") return 0;
-    const rem = total - (f.depositPaid ? depositAmountNum : 0);
-    return rem > 0 ? rem : 0;
-  }, [total, f.depositPaid, depositAmountNum, f.paymentStatus]);
+  const remainingBalance = useMemo(() => total, [total]);
 
   const item = items.find((x) => x.id === f.itemId);
   const machine = machines.find((x) => x.id === f.machineId);
@@ -303,13 +283,6 @@ Note:
     if (!validateDateTime())
       return alert("Fail: Delivery date/time must be current or future only");
 
-    if (f.depositPaid && f.paymentStatus !== "PAID") {
-      if (!Number.isFinite(depositAmountNum) || depositAmountNum < 0)
-        return alert("Fail: Deposit amount invalid");
-      if (depositAmountNum > total)
-        return alert("Fail: Deposit cannot exceed total");
-    }
-
     try {
       const payload = {
         customerName: name,
@@ -328,19 +301,13 @@ Note:
         deliveryTime: f.deliveryTime || null,
         unitPrice: unitPriceNum,
         vatEnabled: !!f.vatEnabled,
-
-        paymentStatus: f.paymentStatus,
-        depositAmount:
-          f.paymentStatus === "PAID"
-            ? total
-            : f.depositPaid
-              ? depositAmountNum
-              : 0,
+        paymentStatus: "UNPAID",
+        depositAmount: 0,
         remainingBalance,
       };
 
       const job = await createJob(payload);
-      alert(`Success: Job created AZ-${job.jobNo}`);
+      alert(`Success: Quotation sent for ${job.jobNo ? `AZ-${String(job.jobNo).padStart(4, "0")}` : "job"}`);
       navigate(role === "CS" ? "/app/cs/overview" : "/app/admin/jobs");
     } catch (e) {
       alert(e?.response?.data?.message || "Fail: Failed to create job");
@@ -764,14 +731,22 @@ Note:
               </div>
 
               <div className="flex items-end">
-                <label className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-zinc-700">
-                  <input
-                    type="checkbox"
-                    checked={f.vatEnabled}
-                    onChange={(e) => update("vatEnabled", e.target.checked)}
-                  />
-                  {f.vatEnabled ? "VAT?" : "Non-VAT?"}
-                </label>
+                <div className="w-full">
+                  <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
+                    VAT
+                  </div>
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
+                    value={f.vatEnabled ? "YES" : "NO"}
+                    onChange={(e) => update("vatEnabled", e.target.value === "YES")}
+                  >
+                    {VAT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -803,31 +778,15 @@ Note:
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="flex items-end">
-                <label className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-zinc-700">
-                  <input
-                    type="checkbox"
-                    checked={f.depositPaid || f.paymentStatus === "PAID"}
-                    onChange={(e) => update("depositPaid", e.target.checked)}
-                    disabled={f.paymentStatus === "PAID"}
-                  />
-                  Deposit Paid?
-                </label>
-              </div>
-
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">
-                  Deposit Amount
+                  Quotation Workflow
                 </div>
                 <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                  value={f.depositAmount}
-                  onChange={(e) =>
-                    update("depositAmount", onlyNumberLike(e.target.value))
-                  }
-                  disabled={!f.depositPaid && f.paymentStatus !== "PAID"}
-                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
+                  value="Payment and deposit will be added after quotation approval."
+                  disabled
                 />
               </div>
 
@@ -969,23 +928,9 @@ Note:
             </div>
 
             <div className="text-right font-medium text-zinc-600">
-              Payment Status:
+              Quotation Stage:
             </div>
-            <div className="font-semibold text-zinc-900">{f.paymentStatus}</div>
-
-            <div className="text-right font-medium text-zinc-600">
-              Deposit Paid? :
-            </div>
-            <div className="font-semibold text-zinc-900">
-              {f.depositPaid || f.paymentStatus === "PAID" ? "Yes" : "No"}
-            </div>
-
-            <div className="text-right font-medium text-zinc-600">
-              Deposit Amount:
-            </div>
-            <div className="font-semibold text-zinc-900">
-              {Math.round(Number(f.depositAmount || 0)).toLocaleString()}
-            </div>
+            <div className="font-semibold text-zinc-900">Quotation sent</div>
 
             <div className="text-right text-zinc-600">Remaining Balance:</div>
             <div className="font-semibold text-zinc-900">
@@ -1005,7 +950,7 @@ Note:
             onClick={approveQuotation}
             className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold hover:opacity-90 transition"
           >
-            Approve quotation
+            Quotation sent
           </button>
         </div>
 

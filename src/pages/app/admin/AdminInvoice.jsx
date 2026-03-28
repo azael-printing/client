@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import invoiceTemplate from "../../../assets/invoice-template.png";
 import { listJobs } from "../../api/jobs.api";
+import { deriveExVatUnitPrice, formatJobCode, getNextDocNumber, isEligiblePaymentStatus } from "../../../utils/jobFormatting";
 
 function onlyNumberLike(v) {
   return String(v || "").replace(/[^\d.]/g, "");
@@ -25,30 +26,10 @@ function todayDisplay() {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-function getNextDocNumber(storageKey, prefix) {
-  const raw = Number(localStorage.getItem(storageKey) || "0");
-  const next = raw + 1;
-  localStorage.setItem(storageKey, String(next));
-  return `${prefix}${String(next).padStart(7, "0")}`;
-}
-
 function autoGrow(el) {
   if (!el) return;
   el.style.height = "auto";
   el.style.height = `${el.scrollHeight}px`;
-}
-
-function normalizeStatus(status) {
-  return String(status || "")
-    .trim()
-    .toUpperCase();
-}
-
-function isEligiblePaymentStatus(status) {
-  const s = normalizeStatus(status);
-  return (
-    s === "UNPAID" || s === "PARTIAL" || s === "PARTIAL_PAID" || s === "CREDIT"
-  );
 }
 
 function deriveDescription(job) {
@@ -69,21 +50,6 @@ function deriveUnitType(job) {
   return job?.unitType || job?.unit || "pcs";
 }
 
-function deriveUnitPrice(job) {
-  if (job?.unitPrice != null && job?.unitPrice !== "") {
-    return String(job.unitPrice);
-  }
-
-  const qty = Number(job?.qty ?? job?.quantity ?? 0);
-  const total = Number(job?.total ?? 0);
-
-  if (qty > 0 && total > 0) {
-    return String(Math.round(total / qty));
-  }
-
-  return "";
-}
-
 function deriveDeliveryDate(job) {
   if (!job?.deliveryDate) return "";
   return String(job.deliveryDate).slice(0, 10);
@@ -98,7 +64,7 @@ function deriveTin(job) {
 }
 
 export default function AdminInvoice() {
-  const [docNumber] = useState(() =>
+  const [docNumber, setDocNumber] = useState(() =>
     getNextDocNumber("azael_invoice_counter", "AZ-INV-"),
   );
 
@@ -176,7 +142,7 @@ export default function AdminInvoice() {
       description: deriveDescription(job),
       quantity: String(deriveQty(job) || ""),
       unitType: deriveUnitType(job),
-      unitPrice: deriveUnitPrice(job),
+      unitPrice: deriveExVatUnitPrice(job),
       deliveryDate: deriveDeliveryDate(job),
       deliveryTime: deriveDeliveryTime(job),
     }));
@@ -267,6 +233,7 @@ export default function AdminInvoice() {
       deliveryTime: "",
     }));
     setItems([]);
+    setDocNumber(getNextDocNumber("azael_invoice_counter", "AZ-INV-"));
     requestAnimationFrame(() => autoGrow(textRef.current));
   }
 
@@ -426,7 +393,7 @@ export default function AdminInvoice() {
                     <option value="">Select job</option>
                     {exactCustomerJobs.map((job) => (
                       <option key={job.id} value={job.id}>
-                        {`AZ0-${job.jobNo || ""} | ${job.workType || job.description || "Job"} | ${job.paymentStatus || ""}`}
+                        {`${formatJobCode(job.jobNo)} | ${job.workType || job.description || "Job"} | ${job.paymentStatus || ""}`}
                       </option>
                     ))}
                   </select>
@@ -747,11 +714,11 @@ export default function AdminInvoice() {
               </div>
 
               {previewRows.slice(0, 7).map((row, idx) => {
-                const y = 43.35 + idx * 3.56;
+                const y = 43.6 + idx * 3.56;
                 return (
                   <div key={row.id}>
                     <div
-                      className="absolute text-[#1178be]"
+                      className="absolute text-[#1178be] bg-white/95 px-[1px]"
                       style={{
                         left: "4.1%",
                         top: `${y}%`,
@@ -764,7 +731,7 @@ export default function AdminInvoice() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] whitespace-pre-wrap break-words"
+                      className="absolute text-[#1178be] bg-white/95 px-[2px] whitespace-pre-wrap break-words"
                       style={{
                         left: "9.2%",
                         top: `${y}%`,
@@ -777,7 +744,7 @@ export default function AdminInvoice() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] text-center whitespace-nowrap"
+                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-center whitespace-nowrap"
                       style={{
                         left: "51.0%",
                         top: `${y}%`,
@@ -790,7 +757,7 @@ export default function AdminInvoice() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] text-right whitespace-nowrap"
+                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-right whitespace-nowrap"
                       style={{
                         left: "68.6%",
                         top: `${y}%`,
@@ -803,7 +770,7 @@ export default function AdminInvoice() {
                     </div>
 
                     <div
-                      className="absolute text-[#1178be] text-right whitespace-nowrap font-semibold"
+                      className="absolute text-[#1178be] bg-white/95 px-[1px] text-right whitespace-nowrap font-semibold"
                       style={{
                         left: "84.1%",
                         top: `${y}%`,
