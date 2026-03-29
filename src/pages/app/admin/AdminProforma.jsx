@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import proformaTemplate from "../../../assets/proforma-template.png";
-import { exVatAmount } from "../../../utils/jobFormatting";
+import logo from "../../../assets/logo.png";
+import { listJobs } from "../../api/jobs.api";
+import seal from "../../../assets/azaelCompanySeal-01.png";
 
 function onlyNumberLike(v) {
   return String(v || "").replace(/[^\d.]/g, "");
 }
 
 function safeId() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return `${Date.now()}-${Math.random()}`;
 }
 
@@ -27,7 +26,7 @@ function todayDisplay() {
 
 function getNextDocNumber(storageKey, prefix) {
   const raw = Number(localStorage.getItem(storageKey) || "0") + 1;
-  return `${prefix}${String(raw).padStart(7, "0")}`;
+  return `${prefix}${String(raw).padStart(5, "0")}`;
 }
 
 function autoGrow(el) {
@@ -36,84 +35,136 @@ function autoGrow(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 
-export default function AdminProforma() {
-  const [docNumber] = useState(() =>
-    getNextDocNumber("azael_proforma_counter", "AZ-PR-"),
+function percent(v) {
+  return `${v}%`;
+}
+
+function ProformaSheet({ docNumber, customerName, tin, rows, totals }) {
+  const rowCount = Math.max(1, rows.length);
+  const tableTop = 40;
+  const headerH = 4.4;
+  const maxTableBody = 24;
+  const rowH = Math.min(5.8, maxTableBody / rowCount);
+  const totalsTop = tableTop + headerH + rowCount * rowH + 0.8;
+
+  return (
+    <div className="sheet-page relative overflow-hidden bg-white text-[#1f2937]">
+      <div className="absolute left-[1.5%] top-[1.8%] h-[14%] w-[53%] rounded-br-[3.8rem] bg-[#1679bf]" />
+      <img src={logo} alt="Azael" className="absolute left-[5%] top-[3.3%] w-[44%]" />
+      <div className="absolute left-[18.8%] top-[15.2%] text-[2.7%] tracking-[0.14em] text-[#1679bf] font-semibold">PROFORMA</div>
+      <div className="absolute right-0 top-[3.1%] h-[1.4%] w-[16%] rounded-l-full bg-[#1679bf]" />
+      <div className="absolute right-0 top-[6.2%] h-[1.4%] w-[11%] rounded-l-full bg-[#1679bf]" />
+
+      <div className="absolute right-[5.8%] top-[20.8%] text-right text-[1.95%] leading-[1.55] text-[#4169b2] font-semibold">
+        <div>TIN 0082555133</div>
+        <div>VAT REG 19889750816</div>
+        <div>PROFORMA NUMBER <span className="text-[#111111] font-medium">{docNumber}</span></div>
+        <div>DATE <span className="text-[#111111] font-medium">{todayDisplay()}</span></div>
+      </div>
+
+      <div className="absolute left-[7%] top-[29.4%] text-[2.35%] font-semibold text-[#1679bf]">PRICING QUATATION TO:</div>
+      <div className="absolute left-[35%] top-[30.5%] h-[0.18%] w-[42%] bg-[#4f7cc3]" />
+      <div className="absolute left-[46%] top-[29.1%] max-w-[28%] text-center overflow-hidden whitespace-nowrap text-ellipsis bg-white px-[2px] text-[1.9%] text-[#111111] font-semibold">{customerName}</div>
+      <div className="absolute left-[28.8%] top-[32.55%] text-[2.35%] font-semibold text-[#4f7cc3]">TIN :</div>
+      <div className="absolute left-[35%] top-[33.7%] h-[0.18%] w-[42%] bg-[#4f7cc3]" />
+      <div className="absolute left-[46%] top-[32.35%] max-w-[28%] text-center overflow-hidden whitespace-nowrap text-ellipsis bg-white px-[2px] text-[1.9%] text-[#111111] font-semibold">{tin}</div>
+
+      <div className="absolute left-[4%] top-[38%] w-[91.3%] text-[2.0%] text-[#1679bf] font-semibold">
+        <div className="grid h-[4.2%] grid-cols-[5%_47%_20%_13%_15%] bg-[#1679bf] text-white border border-[#1679bf]" style={{ height: percent(headerH) }}>
+          <div className="flex items-center justify-center border-r border-white/30">NO</div>
+          <div className="flex items-center px-[3%] border-r border-white/30">Description</div>
+          <div className="flex items-center justify-center border-r border-white/30">QTY</div>
+          <div className="flex items-center justify-center border-r border-white/30">Unit Price</div>
+          <div className="flex items-center justify-center">Total Price</div>
+        </div>
+        {Array.from({ length: rowCount }).map((_, idx) => {
+          const row = rows[idx] || { no: "", description: "", qty: "", unitPrice: "", total: "" };
+          return (
+            <div key={row.id || idx} className="grid grid-cols-[5%_47%_20%_13%_15%] border-x border-b border-[#1679bf]" style={{ height: percent(rowH) }}>
+              <div className="flex items-center justify-center border-r border-[#1679bf] text-[1.9%] text-[#111111] font-semibold">{row.no}</div>
+              <div className="flex items-center px-[2.2%] border-r border-[#1679bf] text-[1.9%] text-[#111111] font-semibold overflow-hidden whitespace-nowrap text-ellipsis">{row.description}</div>
+              <div className="flex items-center justify-center px-[1%] border-r border-[#1679bf] text-[1.9%] text-[#111111] font-semibold overflow-hidden whitespace-nowrap text-ellipsis">{row.qty}</div>
+              <div className="flex items-center justify-end px-[5%] border-r border-[#1679bf] text-[1.9%] text-[#111111] font-semibold">{row.unitPrice}</div>
+              <div className="flex items-center justify-end px-[5%] text-[1.9%] text-[#111111] font-semibold">{row.total}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="absolute right-[4.7%] w-[33%] text-[2%]" style={{ top: percent(totalsTop) }}>
+        {[["Sub total", formatMoney(totals.subTotal)], ["VAT 15%", formatMoney(totals.vat15)], ["Total", formatMoney(totals.total)]].map(([label, value]) => (
+          <div key={label} className="grid grid-cols-[48%_52%] h-[2.7%]">
+            <div className="bg-[#1679bf] text-white flex items-center justify-end pr-[6%] border border-[#1679bf]">{label}</div>
+            <div className="bg-white text-[#111111] flex items-center justify-end pr-[6%] border-y border-r border-[#1679bf]">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="absolute left-[8.2%] bottom-[19.4%] text-[2.35%] font-semibold text-[#4169b2]">NOTE:</div>
+      <div className="absolute left-[8.2%] bottom-[7.7%] text-[1.95%] leading-[1.58] font-semibold text-[#4169b2]">
+        <div>The above price are including 15%vat</div>
+        <div>A 60% advance payment must be issues before</div>
+        <div>project stated</div>
+        <div>Delivery date __________ working days</div>
+        <div>the price is valid for 10 working days</div>
+      </div>
+
+      <img src={seal} alt="Seal" className="absolute left-[75%] bottom-[7.5%] w-[13%] opacity-95" />
+      <div className="absolute right-[4.8%] bottom-[9.8%] text-right text-[1.95%] leading-[1.22] font-semibold text-[#4169b2]">
+        <div>Fikadesselassie Ayana</div>
+        <div>General manager</div>
+      </div>
+
+      <div className="absolute left-0 right-0 bottom-0 h-[6.9%] bg-[#1679bf]" />
+      <div className="absolute bottom-[3.4%] left-0 right-0 text-center text-[1.85%] text-white font-semibold">ስልክ</div>
+      <div className="absolute bottom-[1.8%] left-0 right-0 text-center text-[1.65%] text-white">0941413132 | 0944781211</div>
+      <div className="absolute bottom-[0.5%] left-0 right-0 text-center text-[1.35%] text-white">info@azaelprinting.com &nbsp;&nbsp; www.azaelprinting.com</div>
+    </div>
   );
+}
 
-  const [f, setF] = useState({
-    customerName: "",
-    tin: "",
-    description: "",
-    quantity: "",
-    unitType: "pcs",
-    unitPrice: "",
-    deliveryDate: "",
-  });
-
+export default function AdminProforma() {
+  const [docNumber] = useState(() => getNextDocNumber("azael_proforma_counter", "AZ-PR-"));
+  const [f, setF] = useState({ customerName: "", tin: "", description: "", quantity: "", unitType: "pcs", unitPrice: "", deliveryDate: "" });
   const [items, setItems] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
   const textRef = useRef(null);
 
-  function update(key, value) {
-    setF((p) => ({ ...p, [key]: value }));
-  }
-
+  function update(key, value) { setF((p) => ({ ...p, [key]: value })); }
   function buildItem() {
-    return {
-      id: safeId(),
-      description: f.description,
-      quantity: Number(f.quantity || 0),
-      unitType: f.unitType,
-      unitPrice: exVatAmount(Number(f.unitPrice || 0), true),
-      total: Number(f.quantity || 0) * exVatAmount(Number(f.unitPrice || 0), true),
-    };
+    const unitPrice = Number(f.unitPrice || 0);
+    const quantity = Number(f.quantity || 0);
+    return { id: safeId(), description: f.description, quantity, unitType: f.unitType, unitPrice, total: quantity * unitPrice };
   }
-
   function addItem() {
     if (!f.description.trim()) return alert("Description is required");
-    if (!f.quantity || Number(f.quantity) <= 0) {
-      return alert("Quantity must be greater than 0");
-    }
-    if (!f.unitPrice || Number(f.unitPrice) < 0) {
-      return alert("Unit price is required");
-    }
-
+    if (!f.quantity || Number(f.quantity) <= 0) return alert("Quantity must be greater than 0");
+    if (!f.unitPrice || Number(f.unitPrice) < 0) return alert("Unit price is required");
     setItems((prev) => [...prev, buildItem()]);
   }
-
-  function addNew() {
-    addItem();
-    setF((p) => ({
-      ...p,
-      description: "",
-      quantity: "",
-      unitType: "pcs",
-      unitPrice: "",
-    }));
-    requestAnimationFrame(() => autoGrow(textRef.current));
-  }
-
-  function clearForm() {
-    setF({
-      customerName: "",
-      tin: "",
-      description: "",
-      quantity: "",
-      unitType: "pcs",
-      unitPrice: "",
-      deliveryDate: "",
-    });
-    setItems([]);
-    requestAnimationFrame(() => autoGrow(textRef.current));
-  }
-
-  function removeRow(id) {
-    setItems((prev) => prev.filter((x) => x.id !== id));
-  }
+  function addNew() { addItem(); setF((p) => ({ ...p, description: "", quantity: "", unitType: "pcs", unitPrice: "" })); requestAnimationFrame(() => autoGrow(textRef.current)); }
+  function clearForm() { setF({ customerName: "", tin: "", description: "", quantity: "", unitType: "pcs", unitPrice: "", deliveryDate: "" }); setItems([]); requestAnimationFrame(() => autoGrow(textRef.current)); }
+  function removeRow(id) { setItems((prev) => prev.filter((x) => x.id !== id)); }
 
   useEffect(() => {
-    autoGrow(textRef.current);
-  }, [f.description]);
+    (async () => {
+      try {
+        const jobs = await listJobs();
+        setAllJobs(jobs || []);
+      } catch {
+        setAllJobs([]);
+      }
+    })();
+  }, []);
+
+
+  useEffect(() => {
+    const exact = allJobs.find((j) => String(j.customerName || "").trim().toLowerCase() === String(f.customerName || "").trim().toLowerCase());
+    if (exact?.tin || exact?.customerTin) {
+      setF((prev) => ({ ...prev, tin: String(exact.tin || exact.customerTin || prev.tin || "") }));
+    }
+  }, [f.customerName, allJobs]);
+  useEffect(() => { autoGrow(textRef.current); }, [f.description]);
 
   const totals = useMemo(() => {
     const subTotal = items.reduce((s, x) => s + Number(x.total || 0), 0);
@@ -122,29 +173,9 @@ export default function AdminProforma() {
     return { subTotal, vat15, total };
   }, [items]);
 
-  const previewRows = useMemo(() => {
-    const minRows = 8;
-    const actual = items.map((x, i) => ({
-      id: x.id,
-      no: i + 1,
-      description: x.description,
-      qty: `${x.quantity} ${x.unitType || ""}`.trim(),
-      unitPrice: formatMoney(x.unitPrice),
-      total: formatMoney(x.total),
-    }));
-
-    const emptyRows = Array.from({
-      length: Math.max(0, minRows - actual.length),
-    }).map((_, i) => ({
-      id: `empty-${i}`,
-      no: "",
-      description: "",
-      qty: "",
-      unitPrice: "",
-      total: "",
-    }));
-
-    return [...actual, ...emptyRows];
+  const rows = useMemo(() => {
+    const actual = items.map((x, i) => ({ id: x.id, no: i + 1, description: x.description, qty: `${x.quantity} ${x.unitType || ""}`.trim(), unitPrice: formatMoney(x.unitPrice), total: formatMoney(x.total) }));
+    return actual.length ? actual : [{ id: "empty", no: "", description: "", qty: "", unitPrice: "", total: "" }];
   }, [items]);
 
   function printPdf() {
@@ -157,455 +188,26 @@ export default function AdminProforma() {
   return (
     <>
       <style>{`
-        @page {
-          size: A4 portrait;
-          margin: 0;
-        }
-
+        @page { size: A4 portrait; margin: 0; }
+        .sheet-page { width: 100%; aspect-ratio: 210 / 297; }
         @media print {
-          body * {
-            visibility: hidden !important;
-          }
-
-          .print-root,
-          .print-root * {
-            visibility: visible !important;
-          }
-
-          .print-root {
-            position: absolute;
-            inset: 0;
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: white !important;
-          }
-
-          .no-print {
-            display: none !important;
-          }
-
-          .print-page {
-            width: 210mm !important;
-            min-height: 297mm !important;
-            margin: 0 !important;
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-          }
+          body * { visibility: hidden !important; }
+          .print-root, .print-root * { visibility: visible !important; }
+          .print-root { position: absolute; inset: 0; width: 210mm !important; min-height: 297mm !important; margin: 0 !important; padding: 0 !important; background: white !important; display: block !important; }
+          .no-print { display: none !important; }
+          .sheet-wrap { width: 100% !important; max-width: none !important; margin: 0 !important; }
+          .sheet-page { width: 210mm !important; height: 297mm !important; }
         }
       `}</style>
-
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_430px] xl:grid-cols-[minmax(0,1fr)_470px]">
-        {/* LEFT */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm no-print min-w-0">
-          <div>
-            <div className="text-primary text-base sm:text-lg font-bold">
-              Pricing Quotation
-            </div>
-            <div className="text-zinc-400 text-[11px] sm:text-xs font-semibold mt-1">
-              Generate Proforma
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <div className="text-primary text-sm sm:text-base font-bold border-b border-zinc-200 pb-2">
-              Customer Info
-            </div>
-
-            <div className="mt-3 grid gap-3">
-              <div>
-                <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                  Customer name
-                </div>
-                <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm"
-                  value={f.customerName}
-                  onChange={(e) => update("customerName", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                  TIN
-                </div>
-                <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm"
-                  value={f.tin}
-                  onChange={(e) =>
-                    update("tin", onlyNumberLike(e.target.value))
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="text-primary text-sm sm:text-base font-bold border-b border-zinc-200 pb-2">
-              Job Description
-            </div>
-
-            <div className="mt-3 grid gap-3">
-              <div>
-                <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                  Description
-                </div>
-                <textarea
-                  ref={textRef}
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[110px] text-xs sm:text-sm resize-none overflow-hidden"
-                  value={f.description}
-                  onInput={(e) => autoGrow(e.target)}
-                  onChange={(e) => update("description", e.target.value)}
-                  placeholder="Long description accepted..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                    Quantity
-                  </div>
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm"
-                    value={f.quantity}
-                    onChange={(e) =>
-                      update("quantity", onlyNumberLike(e.target.value))
-                    }
-                  />
-                </div>
-
-                <div>
-                  <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                    Unit Type
-                  </div>
-                  <select
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm"
-                    value={f.unitType}
-                    onChange={(e) => update("unitType", e.target.value)}
-                  >
-                    <option value="pcs">pcs</option>
-                    <option value="sqm">sqm</option>
-                    <option value="meter">meter</option>
-                    <option value="set">set</option>
-                    <option value="box">box</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                    Unit Price
-                  </div>
-                  <input
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm"
-                    value={f.unitPrice}
-                    onChange={(e) =>
-                      update("unitPrice", onlyNumberLike(e.target.value))
-                    }
-                  />
-                </div>
-
-                <div>
-                  <div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">
-                    Delivery date
-                  </div>
-                  <input
-                    type="date"
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm"
-                    value={f.deliveryDate}
-                    onChange={(e) => update("deliveryDate", e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-2">
-            <button
-              onClick={addNew}
-              className="px-4 py-2.5 rounded-xl bg-primary text-white text-[11px] sm:text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              Add new
-            </button>
-
-            <button
-              onClick={addItem}
-              className="px-4 py-2.5 rounded-xl bg-success text-white text-[11px] sm:text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              Add
-            </button>
-
-            <button
-              onClick={clearForm}
-              className="px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 text-[11px] sm:text-xs font-bold transition-all duration-300 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm"
-            >
-              Clear
-            </button>
-
-            <button
-              onClick={printPdf}
-              className="ml-auto px-4 py-2.5 rounded-xl bg-primary text-white text-[11px] sm:text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              Print / Export PDF
-            </button>
-          </div>
-
-          <div className="mt-6">
-            <div className="text-primary text-sm font-bold border-b border-zinc-200 pb-2">
-              Added Items
-            </div>
-
-            <div className="mt-3 grid gap-2">
-              {items.length === 0 ? (
-                <div className="text-zinc-400 text-xs font-semibold">
-                  No item added yet
-                </div>
-              ) : (
-                items.map((row, idx) => (
-                  <div
-                    key={row.id}
-                    className="grid grid-cols-[28px_minmax(0,1fr)_64px_70px_76px_62px] sm:grid-cols-[32px_minmax(0,1fr)_70px_90px_90px_64px] gap-2 items-start border border-zinc-200 rounded-xl p-2 overflow-hidden"
-                  >
-                    <div className="text-xs font-bold text-zinc-500 pt-1">
-                      {idx + 1}
-                    </div>
-                    <div className="text-xs text-zinc-800 whitespace-pre-wrap break-words">
-                      {row.description}
-                    </div>
-                    <div className="text-xs font-semibold text-zinc-700 pt-1">
-                      {row.quantity} {row.unitType}
-                    </div>
-                    <div className="text-xs font-semibold text-zinc-700 pt-1">
-                      {formatMoney(row.unitPrice)}
-                    </div>
-                    <div className="text-xs font-bold text-primary pt-1">
-                      {formatMoney(row.total)}
-                    </div>
-                    <button
-                      onClick={() => removeRow(row.id)}
-                      className="px-2 py-1 rounded-lg border border-zinc-200 text-[10px] font-bold hover:bg-red-50 hover:text-red-600"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <div><div className="text-primary text-base sm:text-lg font-bold">Pricing Quotation</div><div className="text-zinc-400 text-[11px] sm:text-xs font-semibold mt-1">Generate Proforma</div></div>
+          <div className="mt-5"><div className="text-primary text-sm sm:text-base font-bold border-b border-zinc-200 pb-2">Customer Info</div><div className="mt-3 grid gap-3"><div><div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">Customer name</div><input list="proforma-customer-list" className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm" value={f.customerName} onChange={(e) => update("customerName", e.target.value)} /><datalist id="proforma-customer-list">{Array.from(new Set(allJobs.map((j) => String(j.customerName || "")))).filter(Boolean).map((name) => <option key={name} value={name} />)}</datalist></div><div><div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">TIN</div><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm" value={f.tin} onChange={(e) => update("tin", onlyNumberLike(e.target.value))} /></div></div></div>
+          <div className="mt-6"><div className="text-primary text-sm sm:text-base font-bold border-b border-zinc-200 pb-2">Job Description</div><div className="mt-3 grid gap-3"><div><div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">Description</div><textarea ref={textRef} className="w-full px-3 py-2 rounded-xl border border-zinc-200 min-h-[110px] text-xs sm:text-sm resize-none overflow-hidden" value={f.description} onInput={(e) => autoGrow(e.target)} onChange={(e) => update("description", e.target.value)} placeholder="Long description accepted..." />{allJobs.filter((j) => String(j.customerName || "").trim().toLowerCase() === String(f.customerName || "").trim().toLowerCase()).length > 0 && <select className="mt-2 w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm" value="" onChange={(e) => e.target.value && update("description", e.target.value)}><option value="">Pick description from existing jobs</option>{Array.from(new Set(allJobs.filter((j) => String(j.customerName || "").trim().toLowerCase() === String(f.customerName || "").trim().toLowerCase()).map((j) => String(j.description || j.workType || j.jobDescription || "")))).filter(Boolean).map((desc) => <option key={desc} value={desc}>{desc}</option>)}</select>}</div><div className="grid grid-cols-2 gap-3"><div><div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">Quantity</div><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm" value={f.quantity} onChange={(e) => update("quantity", onlyNumberLike(e.target.value))} /></div><div><div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">Unit Type</div><select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm" value={f.unitType} onChange={(e) => update("unitType", e.target.value)}><option value="pcs">pcs</option><option value="sqm">sqm</option><option value="meter">meter</option><option value="set">set</option><option value="box">box</option></select></div></div><div className="grid grid-cols-2 gap-3"><div><div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">Unit Price</div><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm" value={f.unitPrice} onChange={(e) => update("unitPrice", onlyNumberLike(e.target.value))} /></div><div><div className="text-[11px] sm:text-xs font-semibold text-zinc-700 mb-1">Delivery date</div><input type="date" className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm" value={f.deliveryDate} onChange={(e) => update("deliveryDate", e.target.value)} /></div></div></div></div>
+          <div className="mt-6 flex flex-wrap gap-2"><button onClick={addNew} className="px-4 py-2.5 rounded-xl bg-primary text-white text-[11px] sm:text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">Add new</button><button onClick={addItem} className="px-4 py-2.5 rounded-xl bg-success text-white text-[11px] sm:text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">Add</button><button onClick={clearForm} className="px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 text-[11px] sm:text-xs font-bold transition-all duration-300 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm">Clear</button></div>
+          <div className="mt-6"><div className="text-primary text-sm font-bold border-b border-zinc-200 pb-2">Added Items</div><div className="mt-3 grid gap-2">{items.length === 0 ? <div className="text-zinc-400 text-xs font-semibold">No item added yet</div> : items.map((row, idx) => <div key={row.id} className="grid grid-cols-[28px_minmax(0,1fr)_64px_70px_76px_62px] sm:grid-cols-[32px_minmax(0,1fr)_70px_90px_90px_64px] gap-2 items-start border border-zinc-200 rounded-xl p-2 overflow-hidden"><div className="text-xs font-bold text-zinc-500 pt-1">{idx + 1}</div><div className="text-xs text-zinc-800 whitespace-pre-wrap break-words">{row.description}</div><div className="text-xs font-semibold text-zinc-700 pt-1">{row.quantity} {row.unitType}</div><div className="text-xs font-semibold text-zinc-700 pt-1">{formatMoney(row.unitPrice)}</div><div className="text-xs font-bold text-primary pt-1">{formatMoney(row.total)}</div><button onClick={() => removeRow(row.id)} className="px-2 py-1 rounded-lg border border-zinc-200 text-[10px] font-bold hover:bg-red-50 hover:text-red-600">Remove</button></div>)}</div></div>
         </div>
-
-        {/* RIGHT */}
-        <div className="print-root bg-white border border-zinc-200 rounded-2xl p-2 sm:p-3 shadow-sm min-w-0">
-          <div className="no-print mb-3">
-            <div className="text-primary text-base sm:text-lg font-bold">
-              Preview
-            </div>
-            <div className="text-zinc-400 text-[11px] sm:text-xs font-semibold">
-              Exact-style printable proforma
-            </div>
-          </div>
-
-          <div className="mx-auto w-full max-w-[340px] sm:max-w-[390px] xl:max-w-[470px]">
-            <div className="print-page relative w-full aspect-[1055/1493] overflow-hidden bg-white rounded-xl border border-zinc-200">
-              <img
-                src={proformaTemplate}
-                alt="Proforma template"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-
-              {/* number patch */}
-              <div
-                className="absolute bg-white"
-                style={{
-                  left: "77.5%",
-                  top: "20.6%",
-                  width: "16.5%",
-                  height: "3.6%",
-                }}
-              />
-              <div
-                className="absolute text-[#111111] font-medium text-right whitespace-nowrap"
-                style={{
-                  right: "7.4%",
-                  top: "21.0%",
-                  fontSize: "10px",
-                  width: "16%",
-                }}
-              >
-                {docNumber}
-              </div>
-
-              {/* date patch */}
-              <div
-                className="absolute bg-white"
-                style={{
-                  left: "77.5%",
-                  top: "23.6%",
-                  width: "16.5%",
-                  height: "3.6%",
-                }}
-              />
-              <div
-                className="absolute text-[#111111] font-medium text-right whitespace-nowrap"
-                style={{
-                  right: "7.4%",
-                  top: "24.0%",
-                  fontSize: "10px",
-                  width: "16%",
-                }}
-              >
-                {todayDisplay()}
-              </div>
-
-              {/* customer name */}
-              <div
-                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis bg-white px-[2px]"
-                style={{
-                  left: "40.0%",
-                  top: "30.0%",
-                  width: "35.5%",
-                  fontSize: "10px",
-                  lineHeight: 1.1,
-                }}
-              >
-                {f.customerName}
-              </div>
-
-              {/* tin */}
-              <div
-                className="absolute text-[#111111] font-medium whitespace-nowrap overflow-hidden text-ellipsis bg-white px-[2px]"
-                style={{
-                  left: "40.0%",
-                  top: "32.25%",
-                  width: "35.5%",
-                  fontSize: "10px",
-                  lineHeight: 1.1,
-                }}
-              >
-                {f.tin}
-              </div>
-
-              {previewRows.slice(0, 8).map((row, idx) => {
-                const y = 43.4 + idx * 3.56;
-                return (
-                  <div key={`mask-${row.id}`}>
-                    <div className="absolute bg-white" style={{ left: "7.2%", top: `${y + 0.55}%`, width: "87.0%", height: "1.35%" }} />
-                  </div>
-                );
-              })}
-
-              {previewRows.slice(0, 8).map((row, idx) => {
-                const y = 43.4 + idx * 3.56;
-                return (
-                  <div key={row.id}>
-                    <div
-                      className="absolute text-[#1178be]"
-                      style={{
-                        left: "4.1%",
-                        top: `${y}%`,
-                        width: "3%",
-                        fontSize: "8px",
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {row.no}
-                    </div>
-
-                    <div
-                      className="absolute text-[#1178be] whitespace-pre-wrap break-words bg-white px-[2px]"
-                      style={{
-                        left: "9.2%",
-                        top: `${y}%`,
-                        width: "33%",
-                        fontSize: "8px",
-                        lineHeight: 1.18,
-                      }}
-                    >
-                      {row.description}
-                    </div>
-
-                    <div
-                      className="absolute text-[#1178be] text-center whitespace-nowrap bg-white px-[2px]"
-                      style={{
-                        left: "51.0%",
-                        top: `${y}%`,
-                        width: "11%",
-                        fontSize: "8px",
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {row.qty}
-                    </div>
-
-                    <div
-                      className="absolute text-[#1178be] text-right whitespace-nowrap bg-white px-[2px]"
-                      style={{
-                        left: "68.6%",
-                        top: `${y}%`,
-                        width: "9%",
-                        fontSize: "8px",
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {row.unitPrice}
-                    </div>
-
-                    <div
-                      className="absolute text-[#1178be] text-right whitespace-nowrap font-semibold bg-white px-[2px]"
-                      style={{
-                        left: "84.1%",
-                        top: `${y}%`,
-                        width: "11%",
-                        fontSize: "8px",
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {row.total}
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div
-                className="absolute text-[#111111] text-right font-bold whitespace-nowrap"
-                style={{
-                  right: "4.2%",
-                  top: "71.35%",
-                  width: "13.5%",
-                  fontSize: "9px",
-                }}
-              >
-                {formatMoney(totals.subTotal)}
-              </div>
-
-              <div
-                className="absolute text-[#111111] text-right font-bold whitespace-nowrap"
-                style={{
-                  right: "4.2%",
-                  top: "74.15%",
-                  width: "13.5%",
-                  fontSize: "9px",
-                }}
-              >
-                {formatMoney(totals.vat15)}
-              </div>
-
-              <div
-                className="absolute text-[#111111] text-right font-extrabold whitespace-nowrap"
-                style={{
-                  right: "4.2%",
-                  top: "76.9%",
-                  width: "13.5%",
-                  fontSize: "9px",
-                }}
-              >
-                {formatMoney(totals.total)}
-              </div>
-            </div>
-          </div>
-        </div>
+        <div className="print-root bg-white border border-zinc-200 rounded-2xl p-2 sm:p-3 shadow-sm min-w-0"><div className="no-print mb-3 flex items-center justify-between gap-2"><div><div className="text-primary text-base sm:text-lg font-bold">Preview</div><div className="text-zinc-400 text-[11px] sm:text-xs font-semibold">Professional printable proforma</div></div><button onClick={printPdf} className="px-4 py-2.5 rounded-xl bg-primary text-white text-[11px] sm:text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">Print / Export PDF</button></div><div className="sheet-wrap mx-auto w-full max-w-[420px] xl:max-w-[470px]"><ProformaSheet docNumber={docNumber} customerName={f.customerName} tin={f.tin} rows={rows} totals={totals} /></div></div>
       </div>
     </>
   );

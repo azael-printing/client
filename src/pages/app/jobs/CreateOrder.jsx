@@ -16,14 +16,30 @@ import {
 const URGENCY_FEES = { NORMAL: 0, HIGH: 300, URGENT: 1000 };
 const PAYMENT_ACCOUNTS = {
   vat: {
-    cbe: "Payment Method (CBE): 1000542470333",
-    tele: "Payment Method (Tele birr): 0941413132",
+    cbe: "1000542470333",
+    tele: "0941413132",
   },
   novat: {
-    cbe: "Payment Method (CBE): 1000508510218",
-    tele: "Payment Method (Tele birr): 0944781211",
+    cbe: "1000508510218",
+    tele: "0944781211",
   },
 };
+const PAYMENT_META_KEY = "azael_job_payment_meta";
+
+function readPaymentMeta() {
+  try {
+    return JSON.parse(localStorage.getItem(PAYMENT_META_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function savePaymentMeta(jobId, data) {
+  if (!jobId) return;
+  const current = readPaymentMeta();
+  current[String(jobId)] = data;
+  localStorage.setItem(PAYMENT_META_KEY, JSON.stringify(current));
+}
 
 function todayMinDate() {
   const d = new Date();
@@ -76,6 +92,9 @@ export default function CreateOrder() {
     deliveryType: "PICKUP",
     unitPrice: 0,
     vatEnabled: true,
+    accountName: "Azael Printing",
+    bankName: "CBE",
+    accountNumber: PAYMENT_ACCOUNTS.vat.cbe,
   });
 
   function update(key, value) {
@@ -135,6 +154,18 @@ export default function CreateOrder() {
     update("unitPrice", rule.unitPrice);
     update("vatEnabled", String(rule.variant || "").toUpperCase() !== "NON_VAT");
   }, [f.priceRuleId]);
+  useEffect(() => {
+    const vatDefault = PAYMENT_ACCOUNTS.vat.cbe;
+    const nonVatDefault = PAYMENT_ACCOUNTS.novat.cbe;
+    setF((prev) => {
+      const nextDefault = prev.vatEnabled ? vatDefault : nonVatDefault;
+      if (!prev.accountNumber || prev.accountNumber === vatDefault || prev.accountNumber === nonVatDefault) {
+        return { ...prev, accountNumber: nextDefault, bankName: prev.bankName || "CBE" };
+      }
+      return prev;
+    });
+  }, [f.vatEnabled]);
+
 
   const qtyNum = Number(f.qty || 0);
   const unitPriceNum = Number(f.unitPrice || 0);
@@ -161,7 +192,6 @@ export default function CreateOrder() {
   const quotationText = useMemo(() => {
     const date = new Date().toISOString().slice(0, 10);
     const jobDesc = f.description || item?.name || "-";
-    const pay = f.vatEnabled ? PAYMENT_ACCOUNTS.vat : PAYMENT_ACCOUNTS.novat;
     return `Azael printing Proforma Invoice
 Date: ${date}
 
@@ -174,13 +204,14 @@ Job Details:
 - Total Price: ${Math.round(total).toLocaleString()}
 
 Payment Information:
-- ${pay.cbe}
-- ${pay.tele}
+- Account Name: ${f.accountName || "Azael Printing"}
+- Bank Name: ${f.bankName || "CBE"}
+- Account Number: ${f.accountNumber || "-"}
 
 Note:
 - Quotation only. Payment status and deposit will be updated after quotation approval.
 - Thanks for choosing us.`;
-  }, [f.description, item?.name, f.qty, f.unitType, unitPriceNum, f.vatEnabled, f.urgency, total]);
+  }, [f.description, item?.name, f.qty, f.unitType, unitPriceNum, f.vatEnabled, f.urgency, total, f.accountName, f.bankName, f.accountNumber]);
 
   async function copyQuotation() {
     try {
@@ -220,8 +251,16 @@ Note:
         paymentStatus: "UNPAID",
         depositAmount: 0,
         remainingBalance: total,
+        accountName: f.accountName,
+        bankName: f.bankName,
+        accountNumber: f.accountNumber,
       };
       const job = await createJob(payload);
+      savePaymentMeta(job?.id, {
+        accountName: f.accountName,
+        bankName: f.bankName,
+        accountNumber: f.accountNumber,
+      });
       alert(`Success: Quotation sent ${job?.jobNo ? `for AZ-${String(job.jobNo).padStart(4, "0")}` : ""}`);
       navigate(role === "CS" ? "/app/cs/jobs" : "/app/admin/jobs");
     } catch (e) {
@@ -256,6 +295,13 @@ Note:
         const label = tmp.variantLabel ? String(tmp.variantLabel).trim() : null;
         await addPrice(tmp.itemId, tmp.machineId, Number(tmp.unitPrice), tmp.vatEnabled !== false, variant, label);
       }
+      if (modal === "payment") {
+        const accountName = String(tmp.accountName || "").trim() || "Azael Printing";
+        const bankName = String(tmp.bankName || "").trim() || "CBE";
+        const accountNumber = String(tmp.accountNumber || "").trim();
+        if (!accountNumber) return alert("Fail: Account number required");
+        setF((prev) => ({ ...prev, accountName, bankName, accountNumber }));
+      }
       setModal(null);
       setTmp({});
       await loadRefs();
@@ -279,6 +325,7 @@ Note:
             <button onClick={() => { setModal("item"); setTmp({ name: "", defaultUnit: "pcs" }); }} className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold">Add Item</button>
             <button onClick={() => { setModal("machine"); setTmp({ name: "" }); }} className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold">Add Machine</button>
             <button onClick={() => { setModal("price"); setTmp({ itemId: "", machineId: "", unitPrice: "", vatEnabled: true, variant: "VAT", variantLabel: "" }); }} className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold">Add Price</button>
+            <button onClick={() => { setModal("payment"); setTmp({ accountName: f.accountName, bankName: f.bankName || "CBE", accountNumber: f.accountNumber }); }} className="px-3 py-2 rounded-xl bg-bgLight text-primary text-xs sm:text-sm font-semibold">Add Payment Method</button>
           </div>
         </div>
 
@@ -406,6 +453,8 @@ Note:
             <div className="text-right font-semibold text-zinc-600">Work Type:</div><div className="font-semibold text-zinc-900 truncate">{item?.name || "..."}</div>
             <div className="text-right font-semibold text-zinc-600">Quantity:</div><div className="font-semibold text-zinc-900">{f.qty || "..."} {f.unitType}</div>
             <div className="text-right font-semibold text-zinc-600">VAT:</div><div className="font-semibold text-zinc-900">{f.vatEnabled ? "Yes" : "No"}</div>
+            <div className="text-right font-semibold text-zinc-600">Bank:</div><div className="font-semibold text-zinc-900 truncate">{f.bankName || "CBE"}</div>
+            <div className="text-right font-semibold text-zinc-600">Account #:</div><div className="font-semibold text-zinc-900 truncate">{f.accountNumber || "..."}</div>
             <div className="text-right font-semibold text-zinc-600">Total:</div><div className="font-semibold text-zinc-900">{Math.round(total).toLocaleString()}</div>
           </div>
         </div>
@@ -425,14 +474,14 @@ Note:
             <div className="absolute inset-0 bg-black/30" onClick={() => setModal(null)} />
             <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-lg">
               <div className="flex items-center justify-between gap-3">
-                <div className="font-semibold text-primary text-base sm:text-lg">{modal === "customer" && "Register Customer"}{modal === "machine" && "Add Machine"}{modal === "item" && "Add Item"}{modal === "price" && "Add Price"}</div>
+                <div className="font-semibold text-primary text-base sm:text-lg">{modal === "customer" && "Register Customer"}{modal === "machine" && "Add Machine"}{modal === "item" && "Add Item"}{modal === "price" && "Add Price"}{modal === "payment" && "Add Payment Method"}</div>
                 <button onClick={() => setModal(null)} className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight">Close</button>
               </div>
               <div className="mt-4 grid gap-3">
                 {modal === "customer" && <><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Customer name" value={tmp.name || ""} onChange={(e) => setTmp((p) => ({ ...p, name: e.target.value }))} /><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Phone" value={tmp.phone || ""} onChange={(e) => setTmp((p) => ({ ...p, phone: e.target.value }))} /></>}
                 {modal === "machine" && <input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Machine name" value={tmp.name || ""} onChange={(e) => setTmp((p) => ({ ...p, name: e.target.value }))} />}
                 {modal === "item" && <><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Item name" value={tmp.name || ""} onChange={(e) => setTmp((p) => ({ ...p, name: e.target.value }))} /><select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={tmp.defaultUnit || "pcs"} onChange={(e) => setTmp((p) => ({ ...p, defaultUnit: e.target.value }))}><option value="pcs">pcs</option><option value="sqm">sqm</option><option value="meter">meter</option><option value="set">set</option><option value="box">box</option></select></>}
-                {modal === "price" && <><select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={tmp.itemId || ""} onChange={(e) => setTmp((p) => ({ ...p, itemId: e.target.value }))}><option value="">Select item</option>{items.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={tmp.machineId || ""} onChange={(e) => setTmp((p) => ({ ...p, machineId: e.target.value }))}><option value="">Select machine</option>{machines.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Unit price" value={tmp.unitPrice || ""} onChange={(e) => setTmp((p) => ({ ...p, unitPrice: onlyNumberLike(e.target.value) }))} /><select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={tmp.variant || "VAT"} onChange={(e) => setTmp((p) => ({ ...p, variant: e.target.value, vatEnabled: e.target.value !== "NON_VAT" }))}><option value="VAT">VAT</option><option value="NON_VAT">NON_VAT</option></select></>}
+                {modal === "price" && <><select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={tmp.itemId || ""} onChange={(e) => setTmp((p) => ({ ...p, itemId: e.target.value }))}><option value="">Select item</option>{items.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={tmp.machineId || ""} onChange={(e) => setTmp((p) => ({ ...p, machineId: e.target.value }))}><option value="">Select machine</option>{machines.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Unit price" value={tmp.unitPrice || ""} onChange={(e) => setTmp((p) => ({ ...p, unitPrice: onlyNumberLike(e.target.value) }))} /><select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={tmp.variant || "VAT"} onChange={(e) => setTmp((p) => ({ ...p, variant: e.target.value, vatEnabled: e.target.value !== "NON_VAT" }))}><option value="VAT">VAT</option><option value="NON_VAT">NON_VAT</option></select></>}{modal === "payment" && <><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Account Name" value={tmp.accountName || "Azael Printing"} onChange={(e) => setTmp((p) => ({ ...p, accountName: e.target.value }))} /><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Bank Name" value={tmp.bankName || "CBE"} onChange={(e) => setTmp((p) => ({ ...p, bankName: e.target.value }))} /><input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Account Number" value={tmp.accountNumber || ""} onChange={(e) => setTmp((p) => ({ ...p, accountNumber: e.target.value }))} /></>}
                 <button onClick={handleCreateModal} className="mt-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold">Save</button>
               </div>
             </div>
