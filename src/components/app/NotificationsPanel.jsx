@@ -52,9 +52,9 @@
 //   }
 
 //   return (
-//     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
+//     <div className="bg-white border border-zinc-200 rounded-2xl p-4 sm:p-6 shadow-sm">
 //       <div className="flex items-center justify-between">
-//         <h3 className="text-xl font-extrabold text-primary">Notifications</h3>
+//         <h3 className="text-lg sm:text-xl font-semibold text-primary">Notifications</h3>
 //         <button
 //           onClick={load}
 //           className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold hover:opacity-90"
@@ -69,7 +69,7 @@
 //         {items.map((n) => (
 //           <div
 //             key={n.id}
-//             className={`border rounded-2xl p-4 ${
+//             className={`border rounded-2xl p-3 sm:p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
 //               n.isRead
 //                 ? "border-zinc-200 bg-white"
 //                 : "border-primary bg-bgLight"
@@ -83,7 +83,7 @@
 //             <div className="mt-3 flex gap-2">
 //               <button
 //                 onClick={() => viewMessage(n)}
-//                 className="px-3 py-2 rounded-xl bg-primary text-white font-bold hover:opacity-90"
+//                 className="px-3 py-2 rounded-xl bg-primary text-white font-semibold hover:opacity-90"
 //               >
 //                 View Message
 //               </button>
@@ -158,9 +158,9 @@ export default function NotificationsPanel({ onOpenTarget }) {
   }
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
+    <div className="bg-white border border-zinc-200 rounded-2xl p-4 sm:p-6 shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-extrabold text-primary">Notifications</h3>
+        <h3 className="text-lg sm:text-xl font-semibold text-primary">Notifications</h3>
         <button
           onClick={load}
           className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold hover:opacity-90"
@@ -175,7 +175,7 @@ export default function NotificationsPanel({ onOpenTarget }) {
         {items.map((n) => (
           <div
             key={n.id}
-            className={`border rounded-2xl p-4 ${
+            className={`border rounded-2xl p-3 sm:p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
               n.isRead
                 ? "border-zinc-200 bg-white"
                 : "border-primary bg-bgLight"
@@ -189,7 +189,7 @@ export default function NotificationsPanel({ onOpenTarget }) {
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => viewMessage(n)}
-                className="px-3 py-2 rounded-xl bg-primary text-white font-bold hover:opacity-90"
+                className="px-3 py-2 rounded-xl bg-primary text-white font-semibold hover:opacity-90"
               >
                 View Message
               </button>

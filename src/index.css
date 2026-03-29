@@ -378,3 +378,147 @@ textarea {
 [class*="font-extrabold"] {
   font-weight: 600 !important;
 }
+
+/* ===== DASHBOARD UI NORMALIZATION ===== */
+:root {
+  --ui-primary: #0f76bc;
+  --ui-bg: #eef7fb;
+  --ui-border: #d9e5ee;
+  --ui-text: #0f172a;
+  --ui-muted: #64748b;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+a,
+input,
+select,
+textarea,
+svg,
+img {
+  transition:
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    background-color 0.28s ease,
+    border-color 0.28s ease,
+    opacity 0.28s ease;
+}
+
+button:hover,
+a:hover {
+  transform: translateY(-1px);
+}
+
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+main,
+section,
+div,
+aside {
+  min-width: 0;
+}
+
+/* consistent white cards */
+div[class*="bg-white"][class*="rounded-2xl"],
+section[class*="bg-white"][class*="rounded-2xl"] {
+  box-shadow: 0 8px 24px rgba(15, 118, 188, 0.06);
+}
+
+/* stat-card-like treatment */
+div[class*="shadow-sm"]:hover,
+section[class*="shadow-sm"]:hover,
+article[class*="shadow-sm"]:hover {
+  box-shadow: 0 16px 34px rgba(15, 118, 188, 0.12) !important;
+}
+
+/* tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table th,
+table td {
+  padding: 0.7rem 0.75rem;
+  font-size: clamp(11px, 1.15vw, 14px);
+  vertical-align: middle;
+}
+
+table thead th {
+  font-weight: 700;
+}
+
+table tbody tr {
+  transition: background-color 0.22s ease, transform 0.22s ease;
+}
+
+table tbody tr:hover {
+  background: #f5fbff;
+}
+
+/* scrollbar polish */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(15, 118, 188, 0.25);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* responsive density */
+@media (max-width: 1024px) {
+  html, body {
+    font-size: 15px;
+  }
+
+  table th,
+  table td {
+    padding: 0.6rem 0.55rem;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  html, body {
+    font-size: 14px;
+  }
+
+  div[class*="rounded-2xl"],
+  section[class*="rounded-2xl"] {
+    border-radius: 1rem !important;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  table th,
+  table td {
+    font-size: 11px;
+    padding: 0.5rem 0.45rem;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-size: 12px !important;
+  }
+}
