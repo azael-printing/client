@@ -34,3 +34,17 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# garbage
+*.bak
+*.tmp
+*.temp  
+node_modules/
+client.zip
+node_modules.zip
+dist/
+.env
+node_modules/
+*.zip
+dist/
+.env
