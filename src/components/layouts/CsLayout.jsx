@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useMemo, useState, useEffect } from "react";
 import NotificationsPanel from "../../components/app/NotificationsPanel";
 import { useAuth } from "../../app/providers/AuthProvider";
+import { useDialog } from "../common/DialogProvider";
 import { myNotifications } from "../../pages/api/notifications.api";
 import { listJobs } from "../../pages/api/jobs.api";
 
@@ -110,6 +111,7 @@ export default function CSLayout() {
 
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const dialog = useDialog();
   const location = useLocation();
 
   async function loadCounts() {
@@ -239,9 +241,9 @@ export default function CSLayout() {
           </button>
 
           <button
-            onClick={() => {
-              if (confirm("Are you sure you need to leave this page?"))
-                navigate("/");
+            onClick={async () => {
+              const ok = await dialog.confirm("Are you sure you need to leave this page?");
+              if (ok) navigate("/");
             }}
             className="flex items-center gap-2"
           >
@@ -418,7 +420,7 @@ export default function CSLayout() {
                 onOpenTarget={({ path, jobId }) => {
                   setNotifOpen(false); // auto-close drawer
                   if (jobId)
-                    navigate(`${path}?jobID=${encodeURIComponent(jobId)}`);
+                    navigate(`${path}?jobId=${encodeURIComponent(jobId)}`);
                   else navigate(path);
                 }}
               />

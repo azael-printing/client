@@ -141,7 +141,7 @@ function InvoiceSheet({
         alt="Azael"
         className="absolute left-[5%] top-[3.3%] w-[44%]"
       />
-      <div className="absolute left-[20.5%] top-[15.2%] text-[2.7%] tracking-[0.14em] text-white font-semibold">
+      <div className="absolute left-[20.5%] top-[15.2%] text-[2.7%] tracking-[0.14em] text-black font-semibold">
         INVOICE
       </div>
 
@@ -190,7 +190,7 @@ function InvoiceSheet({
           <div className="flex items-center justify-center border-r border-white/30">
             NO
           </div>
-          <div className="flex items-center px-[3%] border-r border-white/30">
+          <div className="flex items-center px-[3%] py-[3%] border-r border-white/30">
             Description
           </div>
           <div className="flex items-center justify-center border-r border-white/30">
@@ -296,7 +296,7 @@ function InvoiceSheet({
       <img
         src={seal}
         alt="Seal"
-        className="absolute left-[75%] bottom-[7.5%] w-[13%] opacity-95"
+        className="absolute left-[65%] bottom-[9.5%] w-[13%] opacity-95"
       />
       <div className="absolute right-[4.8%] bottom-[9.8%] text-right text-[1.95%] leading-[1.22] font-semibold text-[#4169b2]">
         <div>Fikadesselassie Ayana</div>
@@ -961,7 +961,10 @@ export default function AdminInvoice() {
             </button>
           </div>
 
-          <div className="sheet-wrap mx-auto w-full max-w-[420px] xl:max-w-[470px]">
+          <div
+            className="sheet-wrap mx-auto w-full max-w-[420px] xl:max-w-[470px] text-black
+            font-bold"
+          >
             <InvoiceSheet
               docNumber={docNumber}
               customerName={f.customerName}

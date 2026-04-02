@@ -16,10 +16,15 @@ export async function listJobs(status) {
   return res.data.jobs;
 }
 export async function cancelJob(id, reason, note = " ") {
-  const res = await http.patch(`/api/job/${id}/cancel`, { reason, note });
+  const res = await http.patch(`/api/jobs/${id}/cancel`, { reason, note });
   return res.data.job;
 }
 export async function workflowAction(jobId, action) {
   const res = await http.post(`/api/jobs/${jobId}/workflow`, { action });
   return res.data.job;
+}
+
+export async function deleteJob(id) {
+  const res = await http.delete(`/api/jobs/${id}`);
+  return res.data;
 }

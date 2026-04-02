@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDialog } from "../../../components/common/DialogProvider";
 import { useAuth } from "../../../app/providers/AuthProvider";
 import { createJob } from "../../api/jobs.api";
 import {
@@ -63,6 +64,7 @@ function onlyNumberLike(s) {
 
 export default function CreateOrder() {
   const navigate = useNavigate();
+  const dialog = useDialog();
   const { user } = useAuth();
   const role = user?.role;
 
@@ -109,7 +111,7 @@ export default function CreateOrder() {
   }
 
   useEffect(() => {
-    loadRefs().catch((e) => alert(e?.response?.data?.message || "Failed to load reference data"));
+    loadRefs().catch((e) => dialog.toast(e?.response?.data?.message || "Failed to load reference data", "error"));
   }, []);
 
   useEffect(() => {
@@ -216,21 +218,21 @@ Note:
   async function copyQuotation() {
     try {
       await navigator.clipboard.writeText(quotationText);
-      alert("Success: Quotation copied");
+      dialog.toast("Quotation copied", "success");
     } catch {
-      alert("Fail: Could not copy quotation");
+      dialog.toast("Could not copy quotation", "error");
     }
   }
 
   async function quotationSent() {
     const name = f.customerName.trim();
-    if (!name) return alert("Fail: Customer name required");
-    if (!/^[A-Za-z\s]+$/.test(name)) return alert("Fail: Customer name must be alphabets only");
-    if (f.customerPhone && !/^\d{10}$/.test(f.customerPhone)) return alert("Fail: Phone must be exactly 10 digits (or leave empty)");
-    if (!f.itemId) return alert("Fail: Select Work Type");
-    if (!f.priceRuleId) return alert("Fail: Select Price");
-    if (!qtyNum || qtyNum <= 0) return alert("Fail: Quantity must be a number");
-    if (!validateDateTime()) return alert("Fail: Delivery date/time must be current or future only");
+    if (!name) return dialog.alert("Customer name required");
+    if (!/^[A-Za-z\s]+$/.test(name)) return dialog.alert("Customer name must be alphabets only");
+    if (f.customerPhone && !/^\d{10}$/.test(f.customerPhone)) return dialog.alert("Phone must be exactly 10 digits (or leave empty)");
+    if (!f.itemId) return dialog.alert("Select Work Type");
+    if (!f.priceRuleId) return dialog.alert("Select Price");
+    if (!qtyNum || qtyNum <= 0) return dialog.alert("Quantity must be a number");
+    if (!validateDateTime()) return dialog.alert("Delivery date/time must be current or future only");
 
     try {
       const payload = {
@@ -261,10 +263,10 @@ Note:
         bankName: f.bankName,
         accountNumber: f.accountNumber,
       });
-      alert(`Success: Quotation sent ${job?.jobNo ? `for AZ-${String(job.jobNo).padStart(4, "0")}` : ""}`);
+      dialog.toast(`Quotation sent ${job?.jobNo ? `for AZ-${String(job.jobNo).padStart(4, "0")}` : ""}`, "success");
       navigate(role === "CS" ? "/app/cs/jobs" : "/app/admin/jobs");
     } catch (e) {
-      alert(e?.response?.data?.message || "Fail: Failed to create job");
+      dialog.toast(e?.response?.data?.message || "Failed to create job", "error");
     }
   }
 
@@ -273,24 +275,24 @@ Note:
       if (modal === "customer") {
         const name = onlyLettersSpaces(tmp.name).trim();
         const phone = onlyDigitsMax10(tmp.phone).trim();
-        if (!name) return alert("Fail: Name required");
-        if (phone && phone.length !== 10) return alert("Fail: Phone must be exactly 10 digits");
+        if (!name) return dialog.alert("Name required");
+        if (phone && phone.length !== 10) return dialog.alert("Phone must be exactly 10 digits");
         await addCustomer(name, phone || "");
       }
       if (modal === "machine") {
         const name = String(tmp.name || "").trim();
-        if (!name) return alert("Fail: Machine name required");
+        if (!name) return dialog.alert("Machine name required");
         await addMachine(name);
       }
       if (modal === "item") {
         const name = String(tmp.name || "").trim();
-        if (!name) return alert("Fail: Item name required");
+        if (!name) return dialog.alert("Item name required");
         await addItem(name, String(tmp.defaultUnit || "pcs").trim());
       }
       if (modal === "price") {
-        if (!tmp.itemId) return alert("Fail: Select item");
-        if (!tmp.machineId) return alert("Fail: Select machine");
-        if (!tmp.unitPrice || Number(tmp.unitPrice) <= 0) return alert("Fail: Enter unit price");
+        if (!tmp.itemId) return dialog.alert("Select item");
+        if (!tmp.machineId) return dialog.alert("Select machine");
+        if (!tmp.unitPrice || Number(tmp.unitPrice) <= 0) return dialog.alert("Enter unit price");
         const variant = String(tmp.variant || (tmp.vatEnabled === false ? "NON_VAT" : "VAT")).trim();
         const label = tmp.variantLabel ? String(tmp.variantLabel).trim() : null;
         await addPrice(tmp.itemId, tmp.machineId, Number(tmp.unitPrice), tmp.vatEnabled !== false, variant, label);
@@ -299,7 +301,7 @@ Note:
         const accountName = String(tmp.accountName || "").trim() || "Azael Printing";
         const bankName = String(tmp.bankName || "").trim() || "CBE";
         const accountNumber = String(tmp.accountNumber || "").trim();
-        if (!accountNumber) return alert("Fail: Account number required");
+        if (!accountNumber) return dialog.alert("Account number required");
         setF((prev) => ({ ...prev, accountName, bankName, accountNumber }));
       }
       setModal(null);
@@ -309,9 +311,9 @@ Note:
         const rules = await lookupPricesByItem(f.itemId);
         setPriceOptions(rules || []);
       }
-      alert("Success: Saved");
+      dialog.toast("Saved", "success");
     } catch (e) {
-      alert(e?.response?.data?.message || "Fail: Save failed");
+      dialog.toast(e?.response?.data?.message || "Save failed", "error");
     }
   }
 
@@ -451,6 +453,7 @@ Note:
             <div className="text-right font-semibold text-zinc-600">Phone:</div><div className="font-semibold text-zinc-900 truncate">{f.customerPhone || "..."}</div>
             <div className="text-right font-semibold text-zinc-600">Machine:</div><div className="font-semibold text-zinc-900 truncate">{machine?.name || "..."}</div>
             <div className="text-right font-semibold text-zinc-600">Work Type:</div><div className="font-semibold text-zinc-900 truncate">{item?.name || "..."}</div>
+            <div className="text-right font-semibold text-zinc-600">Description:</div><div className="font-semibold text-zinc-900 break-words">{f.description || "..."}</div>
             <div className="text-right font-semibold text-zinc-600">Quantity:</div><div className="font-semibold text-zinc-900">{f.qty || "..."} {f.unitType}</div>
             <div className="text-right font-semibold text-zinc-600">VAT:</div><div className="font-semibold text-zinc-900">{f.vatEnabled ? "Yes" : "No"}</div>
             <div className="text-right font-semibold text-zinc-600">Bank:</div><div className="font-semibold text-zinc-900 truncate">{f.bankName || "CBE"}</div>

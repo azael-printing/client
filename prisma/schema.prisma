@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  jobs          Job[]          @relation("UserJobs")
+  notifications Notification[] @relation("UserNotifications")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model Machine {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+  priceRule PriceRule[]
+}
+
+model Item {
+  id          String      @id @default(cuid())
+  name        String      @unique // work type: Sticker, Business card, etc.
+  defaultUnit String      @default("pcs")
+  createdAt   DateTime    @default(now())
+  priceRule   PriceRule[]
+}
+
+model PriceRule {
+  id         String   @id @default(cuid())
+  itemId     String
+  machineId  String
+  unitPrice  Float
+  vatEnabled Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  item    Item    @relation(fields: [itemId], references: [id])
+  machine Machine @relation(fields: [machineId], references: [id])
+
+  variant      String   @default("VAT")
+  variantLabel String?
+  @@unique([itemId, machineId, variant])
+}
+
+model Job {
+  id        String   @id @default(cuid())
+  jobNo     Int      @unique @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  createdByUserId String
+  createdBy       User   @relation("UserJobs", fields: [createdByUserId], references: [id])
+
+  customerName  String
+  customerPhone String
+  machine       String
+  workType      String
+  description   String?
+
+  qty      Float
+  unitType String
+
+  designerRequired Boolean      @default(false)
+  urgency          UrgencyLevel @default(NORMAL)
+
+  deliveryDate DateTime?
+  deliveryTime String?
+  deliveryType DeliveryType @default(PICKUP)
+
+  unitPrice  Float
+  vatEnabled Boolean @default(true)
+  vatAmount  Float   @default(0)
+  subtotal   Float   @default(0)
+  total      Float   @default(0)
+
+  paymentStatus    PaymentStatus @default(UNPAID)
+  depositAmount    Float         @default(0)
+  remainingBalance Float         @default(0)
+
+  status PipelineStatus @default(NEW_REQUEST)
+
+  notifications Notification[] @relation("JobNotifications")
+  history       JobHistory[]   @relation("JobHistoryItems")
+
+  @@index([createdByUserId])
+  @@index([status])
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id])
+
+  jobId String?
+  job   Job?    @relation("JobNotifications", fields: [jobId], references: [id])
+
+  type    String
+  message String
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([jobId])
+  @@index([isRead])
+}
+
+model JobHistory {
+  id String @id @default(uuid())
+
+  jobId String
+  job   Job    @relation("JobHistoryItems", fields: [jobId], references: [id])
+
+  actorId   String?
+  actorRole String?
+
+  action     String
+  fromStatus String?
+  toStatus   String?
+  note       String?
+
+  createdAt DateTime @default(now())
+
+  @@index([jobId])
+  @@index([createdAt])
+}
+
+enum Role {
+  ADMIN
+  CS
+  DESIGNER
+  OPERATOR
+  FINANCE
+}
+
+enum UrgencyLevel {
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  CREDIT
+}
+
+enum PipelineStatus {
+  NEW_REQUEST
+
+  FINANCE_WAITING_APPROVAL
+  FINANCE_APPROVED
+
+  DESIGN_PENDING
+  DESIGN_WAITING
+  DESIGN_ASSIGNED
+  IN_DESIGN
+  DESIGN_DONE
+
+  PRODUCTION_PENDING
+  PRODUCTION_WAITING
+  PRODUCTION_READY
+  IN_PRODUCTION
+  PRODUCTION_DONE
+
+  READY_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}

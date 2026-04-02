@@ -1,16 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { listJobs, updateJob, cancelJob } from "../../api/jobs.api";
 import { useAuth } from "../../../app/providers/AuthProvider";
-import { getMachines } from "../../../pages/api/ref.api";
+import { useDialog } from "../../../components/common/DialogProvider";
+import Pagination from "../../../components/common/Pagination";
+import JobInlineEditor from "../../../components/common/JobInlineEditor";
+import { cancelJob, deleteJob, listJobs, updateJob } from "../../api/jobs.api";
+import { getMachines } from "../../api/ref.api";
 import { formatJobId } from "../../../utils/jobFormatting";
+import {
+  PAYMENT_OPTIONS,
+  buildJobDraft,
+  normalizeMachineOptions,
+  toUpdatePayload,
+} from "../../../utils/jobEditor";
 
 function cn(...xs) {
   return xs.filter(Boolean).join(" ");
 }
 
-const QUOTATION_OPTIONS = ["QUOTATION_APPROVED", "QUOTATION_DENIED"];
-const PAYMENT_OPTIONS = ["PAID", "PARTIAL", "UNPAID"];
+const STATUS_OPTIONS = [
+  "NEW_REQUEST",
+  "FINANCE_WAITING_APPROVAL",
+  "FINANCE_APPROVED",
+  "DESIGN_PENDING",
+  "DESIGN_WAITING",
+  "IN_DESIGN",
+  "DESIGN_DONE",
+  "PRODUCTION_PENDING",
+  "PRODUCTION_WAITING",
+  "IN_PRODUCTION",
+  "PRODUCTION_DONE",
+  "READY_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+];
+
 const CANCEL_REASONS = [
   "Quotation does not approved",
   "Customer replay as price expensive",
@@ -20,12 +44,14 @@ const CANCEL_REASONS = [
 
 function Badge({ text }) {
   const map = {
-    QUOTATION_APPROVED: "bg-green-100 text-green-700",
-    QUOTATION_DENIED: "bg-red-100 text-red-700",
+    FINANCE_APPROVED: "bg-green-100 text-green-700",
+    READY_FOR_DELIVERY: "bg-blue-100 text-blue-700",
+    DELIVERED: "bg-green-100 text-green-700",
     PAID: "bg-green-100 text-green-700",
     PARTIAL: "bg-yellow-100 text-yellow-800",
-    UNPAID: "bg-zinc-100 text-zinc-700",
+    CREDIT: "bg-orange-100 text-orange-700",
     CANCELLED: "bg-red-100 text-red-700",
+    UNPAID: "bg-zinc-100 text-zinc-700",
   };
   const cls = map[text] || "bg-zinc-100 text-zinc-700";
   return (
@@ -40,60 +66,19 @@ function Badge({ text }) {
   );
 }
 
-function toCSV(rows) {
-  const headers = [
-    "jobNo",
-    "customerName",
-    "customerPhone",
-    "machine",
-    "status",
-    "paymentStatus",
-    "deliveryDate",
-    "workType",
-    "qty",
-    "unitType",
-    "total",
-    "remainingBalance",
-  ];
-
-  const esc = (v) => {
-    const s = String(v ?? "");
-    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-      return `"${s.replaceAll('"', '""')}"`;
-    }
-    return s;
-  };
-
-  return [
-    headers.join(","),
-    ...rows.map((r) => headers.map((h) => esc(r[h])).join(",")),
-  ].join("\n");
-}
-
-function downloadFile(filename, content) {
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export default function JobsList() {
   const location = useLocation();
   const { user } = useAuth();
+  const dialog = useDialog();
   const role = user?.role;
-  const qs = useMemo(
-    () => new URLSearchParams(location.search),
-    [location.search],
-  );
+  const canManage = role === "ADMIN" || role === "CS";
+  const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
   const [machineOptions, setMachineOptions] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [editOpen, setEditOpen] = useState(false);
+  const [editingId, setEditingId] = useState("");
   const [draft, setDraft] = useState(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelJobId, setCancelJobId] = useState("");
@@ -104,16 +89,20 @@ export default function JobsList() {
   const [statusFilter, setStatusFilter] = useState(qs.get("status") || "");
   const [paymentFilter, setPaymentFilter] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const pageSize = 10;
 
   async function load() {
     try {
       setErr("");
       const data = await listJobs();
       setJobs(data || []);
+
       if (selected) {
         const found = (data || []).find((x) => x.id === selected.id);
         setSelected(found || null);
+        if (found && editingId === found.id) {
+          setDraft(buildJobDraft(found));
+        }
       }
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load jobs");
@@ -121,7 +110,7 @@ export default function JobsList() {
 
     try {
       const ms = await getMachines();
-      setMachineOptions(ms || []);
+      setMachineOptions(normalizeMachineOptions(ms || []));
     } catch {
       setMachineOptions([]);
     }
@@ -137,20 +126,20 @@ export default function JobsList() {
     setPage(1);
   }, [qs]);
 
+  const machineFilterOptions = useMemo(() => {
+    const merged = [
+      ...machineOptions,
+      ...normalizeMachineOptions(jobs.map((job) => job.machine).filter(Boolean)),
+    ];
+    return normalizeMachineOptions(merged.map((item) => item.value || item.label));
+  }, [jobs, machineOptions]);
+
   const filtered = useMemo(
     () =>
       (jobs || []).filter((j) => {
-        const okMachine = machineFilter
-          ? String(j.machine || "")
-              .toLowerCase()
-              .includes(machineFilter.toLowerCase())
-          : true;
-        const okStatus = statusFilter
-          ? String(j.status || "") === statusFilter
-          : true;
-        const okPay = paymentFilter
-          ? String(j.paymentStatus || "") === paymentFilter
-          : true;
+        const okMachine = machineFilter ? String(j.machine || "") === machineFilter : true;
+        const okStatus = statusFilter ? String(j.status || "") === statusFilter : true;
+        const okPay = paymentFilter ? String(j.paymentStatus || "") === paymentFilter : true;
         return okMachine && okStatus && okPay;
       }),
     [jobs, machineFilter, statusFilter, paymentFilter],
@@ -160,22 +149,36 @@ export default function JobsList() {
   const pageSafe = Math.min(page, totalPages);
   const slice = filtered.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
 
-  const partialRemaining = useMemo(() => {
-    const total = Number(selected?.total || 0);
-    const deposit = Number(draft?.depositAmount || 0);
-    const rem = total - deposit;
-    return rem > 0 ? rem : 0;
-  }, [selected, draft]);
+  async function openDelete(job) {
+    const ok = await dialog.confirm(`Delete ${formatJobId(job.jobNo)} permanently?`);
+    if (!ok) return;
+    try {
+      await deleteJob(job.id);
+      if (selected?.id === job.id) setSelected(null);
+      if (editingId === job.id) {
+        setEditingId("");
+        setDraft(null);
+      }
+      dialog.toast("Job deleted", "success");
+      await load();
+    } catch (e) {
+      dialog.toast(e?.response?.data?.message || "Delete failed", "error");
+    }
+  }
 
-  function exportExcel() {
-    downloadFile(
-      `jobs_export_${new Date().toISOString().slice(0, 10)}.csv`,
-      toCSV(filtered),
-    );
+  function startEditing(job) {
+    setSelected(job);
+    setEditingId(job.id);
+    setDraft(buildJobDraft(job));
+  }
+
+  function stopEditing() {
+    setEditingId("");
+    setDraft(null);
   }
 
   function openCancelModal() {
-    if (!selected) return alert("Select a job first");
+    if (!selected) return dialog.alert("Select a job first");
     setCancelJobId(selected.id);
     setCancelReason("");
     setCancelOther("");
@@ -183,409 +186,215 @@ export default function JobsList() {
   }
 
   async function confirmCancel() {
-    const finalReason =
-      cancelReason === "Other" ? cancelOther.trim() : cancelReason;
-    if (!finalReason) return alert("Fail: select reason");
+    const finalReason = cancelReason === "Other" ? cancelOther.trim() : cancelReason;
+    if (!finalReason) return dialog.alert("Select a cancellation reason");
 
     try {
       await cancelJob(cancelJobId, finalReason, "");
-      alert("Success: Job cancelled");
+      dialog.toast("Job cancelled", "success");
       setCancelOpen(false);
       setSelected(null);
+      stopEditing();
       await load();
     } catch (e) {
-      alert(e?.response?.data?.message || "Fail: cancel failed");
+      dialog.toast(e?.response?.data?.message || "Cancel failed", "error");
     }
   }
 
   async function submitUpdate() {
     if (!selected || !draft) return;
 
-    const patch = {
-      machine: draft.machine,
-      status: draft.status,
-    };
+    const payload = toUpdatePayload(draft, { includePayment: role === "ADMIN" });
 
-    if (draft.status === "QUOTATION_APPROVED") {
-      patch.paymentStatus = draft.paymentStatus;
-      if (draft.paymentStatus === "PARTIAL") {
-        patch.depositAmount = Number(draft.depositAmount || 0);
-        patch.remainingBalance = partialRemaining;
-      } else if (draft.paymentStatus === "PAID") {
-        patch.depositAmount = Number(selected.total || 0);
-        patch.remainingBalance = 0;
-      } else {
-        patch.depositAmount = 0;
-        patch.remainingBalance = Number(selected.total || 0);
-      }
-    } else {
-      patch.paymentStatus = "UNPAID";
-      patch.depositAmount = 0;
-      patch.remainingBalance = Number(selected.total || 0);
+    if (!payload.customerName || !payload.machine || !payload.workType || !payload.qty || !payload.unitPrice) {
+      return dialog.alert("Customer, machine, work type, quantity, and unit price are required");
     }
 
     try {
-      await updateJob(selected.id, patch);
-      alert("Success: Updated");
-      setEditOpen(false);
+      await updateJob(selected.id, payload);
+      dialog.toast("Job updated", "success");
+      stopEditing();
       await load();
     } catch (e) {
-      alert(e?.response?.data?.message || "Fail: Update failed");
+      dialog.toast(e?.response?.data?.message || "Update failed", "error");
     }
   }
 
+  const selectedTotal = Number(selected?.total || 0);
+
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0 overflow-hidden">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/20">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h2 className="text-lg sm:text-xl font-semibold text-primary">Jobs</h2>
-          <button
-            onClick={exportExcel}
-            className="px-3 py-2 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold"
-          >
-            Export to Excel
-          </button>
+          <div className="text-xs sm:text-sm font-semibold text-zinc-500">Page size: 10</div>
         </div>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <div>
-            <div className="text-[11px] sm:text-xs font-semibold text-primary mb-1">
-              Machine
-            </div>
-            <input
-              value={machineFilter}
-              onChange={(e) => {
-                setMachineFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm"
-            />
+            <div className="text-[11px] sm:text-xs font-semibold text-primary mb-1">Machine</div>
+            <select value={machineFilter} onChange={(e) => { setMachineFilter(e.target.value); setPage(1); }} className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm transition-all duration-300 hover:border-primary/30 focus:border-primary/40 outline-none">
+              <option value="">All Machines</option>
+              {machineFilterOptions.map((m) => (
+                <option key={m.key} value={m.value}>{m.label}</option>
+              ))}
+            </select>
           </div>
           <div>
-            <div className="text-[11px] sm:text-xs font-semibold text-primary mb-1">
-              Status
-            </div>
-            <input
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm"
-            />
+            <div className="text-[11px] sm:text-xs font-semibold text-primary mb-1">Status</div>
+            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm transition-all duration-300 hover:border-primary/30 focus:border-primary/40 outline-none">
+              <option value="">All Statuses</option>
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
           </div>
           <div>
-            <div className="text-[11px] sm:text-xs font-semibold text-primary mb-1">
-              Payment Status
-            </div>
-            <input
-              value={paymentFilter}
-              onChange={(e) => {
-                setPaymentFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm"
-            />
+            <div className="text-[11px] sm:text-xs font-semibold text-primary mb-1">Payment Status</div>
+            <select value={paymentFilter} onChange={(e) => { setPaymentFilter(e.target.value); setPage(1); }} className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm transition-all duration-300 hover:border-primary/30 focus:border-primary/40 outline-none">
+              <option value="">All Payments</option>
+              {PAYMENT_OPTIONS.map((payment) => (
+                <option key={payment} value={payment}>{payment}</option>
+              ))}
+            </select>
           </div>
         </div>
 
         {err && <div className="mt-3 text-red-600 text-sm font-semibold">{err}</div>}
 
         <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-200">
-          <table className="min-w-[820px] w-full text-xs sm:text-sm">
+          <table className="min-w-[1080px] w-full text-xs sm:text-sm">
             <thead className="text-left text-zinc-500 bg-bgLight">
               <tr>
                 <th className="py-2.5 px-3 whitespace-nowrap">Job ID</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Customer</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Number</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Work Type</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Machine</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Status</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Payment Status</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Payment</th>
                 <th className="py-2.5 px-3 whitespace-nowrap">Delivery</th>
+                {canManage && <th className="py-2.5 px-3 whitespace-nowrap">Action</th>}
               </tr>
             </thead>
             <tbody>
               {slice.map((j) => (
-                <tr
-                  key={j.id}
-                  onClick={() => setSelected(j)}
-                  className={cn(
-                    "border-t border-zinc-200 cursor-pointer transition-colors duration-200",
-                    selected?.id === j.id ? "bg-bgLight" : "hover:bg-zinc-50",
-                  )}
-                >
-                  <td className="py-2.5 px-3 font-semibold text-zinc-800 whitespace-nowrap">
-                    {formatJobId(j.jobNo)}
-                  </td>
+                <tr key={j.id} onClick={() => setSelected(j)} className={cn("border-t border-zinc-200 cursor-pointer transition-all duration-300 hover:bg-zinc-50", selected?.id === j.id ? "bg-bgLight" : "") }>
+                  <td className="py-2.5 px-3 font-semibold text-zinc-800 whitespace-nowrap">{formatJobId(j.jobNo)}</td>
                   <td className="py-2.5 px-3 whitespace-nowrap">{j.customerName}</td>
                   <td className="py-2.5 px-3 whitespace-nowrap">{j.customerPhone || "-"}</td>
+                  <td className="py-2.5 px-3 whitespace-nowrap">{j.workType || "-"}</td>
                   <td className="py-2.5 px-3 whitespace-nowrap">{j.machine || "-"}</td>
                   <td className="py-2.5 px-3"><Badge text={j.status} /></td>
-                  <td className="py-2.5 px-3">
-                    <Badge text={j.paymentStatus || "UNPAID"} />
-                  </td>
-                  <td className="py-2.5 px-3 whitespace-nowrap">
-                    {j.deliveryDate ? String(j.deliveryDate).slice(0, 10) : "-"}
-                  </td>
+                  <td className="py-2.5 px-3"><Badge text={j.paymentStatus || "UNPAID"} /></td>
+                  <td className="py-2.5 px-3 whitespace-nowrap">{j.deliveryDate ? String(j.deliveryDate).slice(0, 10) : "-"}</td>
+                  {canManage && (
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(j);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-primary text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDelete(j);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-red-500 text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
               {slice.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-6 px-3 text-zinc-500 font-semibold text-center">
-                    No jobs found.
-                  </td>
+                  <td colSpan={canManage ? 9 : 8} className="py-6 px-3 text-zinc-500 font-semibold text-center">No jobs found.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
 
-        <div className="mt-4 flex items-center justify-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-2 rounded-lg border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight transition"
-          >
-            Prev
-          </button>
-          {Array.from({ length: totalPages })
-            .slice(0, 6)
-            .map((_, idx) => {
-              const p = idx + 1;
-              const active = p === pageSafe;
-              return (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={cn(
-                    "px-3 py-2 rounded-lg border text-xs sm:text-sm font-semibold transition",
-                    active
-                      ? "bg-primary text-white border-primary"
-                      : "border-zinc-200 hover:bg-bgLight",
-                  )}
-                >
-                  {p}
-                </button>
-              );
-            })}
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-3 py-2 rounded-lg border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight transition"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
       </div>
 
-      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0">
+      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0 lg:sticky lg:top-4 self-start transition-all duration-300 hover:shadow-md hover:border-primary/20">
         {!selected ? (
-          <div className="text-zinc-500 text-sm font-semibold text-center mt-8">
-            No job selected — select a job to see details
+          <div className="text-zinc-500 text-sm font-semibold text-center mt-8">No job selected — select a job to see details</div>
+        ) : editingId === selected.id && draft ? (
+          <div className="grid gap-4">
+            <div>
+              <div className="text-zinc-500 text-xs sm:text-sm font-semibold">Inline Edit</div>
+              <div className="text-primary font-semibold text-base sm:text-lg leading-tight">{formatJobId(selected.jobNo)} — {selected.workType}</div>
+              <div className="text-xs text-zinc-500 font-semibold mt-1">Edit directly here. No popup update box.</div>
+            </div>
+
+            <JobInlineEditor
+              draft={draft}
+              setDraft={setDraft}
+              machineOptions={machineOptions}
+              statusOptions={STATUS_OPTIONS}
+              canEditPayment={role === "ADMIN"}
+              paymentNote="Payment status is editable only for Admin."
+            />
+
+            <div className="flex flex-wrap gap-2">
+              <button onClick={submitUpdate} className="flex-1 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Update Job</button>
+              <button onClick={stopEditing} className="px-4 py-2.5 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight transition">Cancel</button>
+            </div>
           </div>
         ) : (
           <div className="grid gap-3">
-            <div className="text-zinc-500 text-xs sm:text-sm font-semibold">Job Details</div>
-            <div className="text-primary font-semibold text-base sm:text-lg leading-tight">
-              {formatJobId(selected.jobNo)} — {selected.workType}
-            </div>
-            <div className="text-xs sm:text-sm text-zinc-700 font-semibold">
-              Customer: <span className="font-medium">{selected.customerName}</span>
-            </div>
-            <div className="text-xs sm:text-sm text-zinc-700 font-semibold">
-              Phone: <span className="font-medium">{selected.customerPhone || "-"}</span>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs sm:text-sm font-semibold text-zinc-700">Status:</span>
-              <Badge text={selected.status} />
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs sm:text-sm font-semibold text-zinc-700">Payment:</span>
-              <Badge text={selected.paymentStatus || "UNPAID"} />
-            </div>
+            <div className="text-zinc-500 text-xs sm:text-sm font-semibold">Job Summary Panel</div>
+            <div className="text-primary font-semibold text-base sm:text-lg leading-tight">{formatJobId(selected.jobNo)} — {selected.workType}</div>
+            <div className="text-xs sm:text-sm text-zinc-700 font-semibold">Customer: <span className="font-medium">{selected.customerName}</span></div>
+            <div className="text-xs sm:text-sm text-zinc-700 font-semibold">Phone: <span className="font-medium">{selected.customerPhone || "-"}</span></div>
+            <div className="text-xs sm:text-sm text-zinc-700 font-semibold">Machine: <span className="font-medium">{selected.machine || "-"}</span></div>
+            <div className="text-xs sm:text-sm text-zinc-700 font-semibold">Description text:</div>
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs sm:text-sm text-zinc-700 font-medium break-words">{selected.description || "-"}</div>
+            <div className="flex items-center gap-2 flex-wrap"><span className="text-xs sm:text-sm font-semibold text-zinc-700">Status:</span><Badge text={selected.status} /></div>
+            <div className="flex items-center gap-2 flex-wrap"><span className="text-xs sm:text-sm font-semibold text-zinc-700">Payment:</span><Badge text={selected.paymentStatus || "UNPAID"} /></div>
             <div className="mt-2 grid gap-2 text-xs sm:text-sm">
-              <div className="flex justify-between gap-2">
-                <span className="text-zinc-500 font-semibold">Total</span>
-                <span className="text-primary font-semibold">
-                  {Math.round(selected.total || 0).toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-zinc-500 font-semibold">Outstanding</span>
-                <span className="text-red-600 font-semibold">
-                  {Math.round(selected.remainingBalance || 0).toLocaleString()}
-                </span>
-              </div>
+              <div className="flex justify-between gap-2"><span className="text-zinc-500 font-semibold">Quantity</span><span className="text-zinc-900 font-semibold">{selected.qty} {selected.unitType}</span></div>
+              <div className="flex justify-between gap-2"><span className="text-zinc-500 font-semibold">Unit price</span><span className="text-zinc-900 font-semibold">{Math.round(Number(selected.unitPrice || 0)).toLocaleString()}</span></div>
+              <div className="flex justify-between gap-2"><span className="text-zinc-500 font-semibold">Total</span><span className="text-primary font-semibold">{Math.round(selectedTotal).toLocaleString()}</span></div>
+              <div className="flex justify-between gap-2"><span className="text-zinc-500 font-semibold">Outstanding</span><span className="text-red-600 font-semibold">{Math.round(Number(selected.remainingBalance || 0)).toLocaleString()}</span></div>
             </div>
-
-            {(role === "ADMIN" || role === "CS") && (
-              <button
-                onClick={() => {
-                  setDraft({
-                    machine: selected.machine || "",
-                    status: QUOTATION_OPTIONS.includes(selected.status)
-                      ? selected.status
-                      : "QUOTATION_APPROVED",
-                    paymentStatus: selected.paymentStatus || "UNPAID",
-                    depositAmount: selected.depositAmount || "",
-                  });
-                  setEditOpen(true);
-                }}
-                className="mt-3 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold"
-              >
-                Update
-              </button>
-            )}
-
-            {(role === "ADMIN" || role === "CS") && (
-              <button
-                onClick={openCancelModal}
-                className="px-4 py-2.5 rounded-xl bg-danger text-white text-xs sm:text-sm font-semibold"
-              >
-                Cancel Job
-              </button>
-            )}
+            {canManage ? (
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => startEditing(selected)} className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Edit Inline</button>
+                <button onClick={openCancelModal} className="px-4 py-2.5 rounded-xl bg-danger text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Cancel Job</button>
+              </div>
+            ) : null}
           </div>
         )}
       </div>
 
-      {editOpen && draft && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setEditOpen(false)} />
-          <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-lg">
-            <div className="flex items-center justify-between gap-3">
-              <div className="font-semibold text-primary text-base sm:text-lg">Update Job</div>
-              <button
-                onClick={() => setEditOpen(false)}
-                className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-3">
-              <div>
-                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">Machine</div>
-                <select
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                  value={draft.machine}
-                  onChange={(e) => setDraft((p) => ({ ...p, machine: e.target.value }))}
-                >
-                  <option value="">Select Machine</option>
-                  {machineOptions.map((m) => (
-                    <option key={m.id} value={m.name}>{m.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">Status</div>
-                <select
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                  value={draft.status}
-                  onChange={(e) => setDraft((p) => ({ ...p, status: e.target.value }))}
-                >
-                  {QUOTATION_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-
-              {draft.status === "QUOTATION_APPROVED" && (
-                <>
-                  <div>
-                    <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">Payment Status</div>
-                    <select
-                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm"
-                      value={draft.paymentStatus}
-                      onChange={(e) => setDraft((p) => ({ ...p, paymentStatus: e.target.value }))}
-                    >
-                      {PAYMENT_OPTIONS.map((p) => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {draft.paymentStatus === "PARTIAL" && (
-                    <>
-                      <div>
-                        <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">Deposit Amount</div>
-                        <input
-                          className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                          value={draft.depositAmount}
-                          onChange={(e) =>
-                            setDraft((p) => ({
-                              ...p,
-                              depositAmount: e.target.value.replace(/[^0-9.]/g, ""),
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">Remaining</div>
-                        <input
-                          className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm"
-                          value={Math.round(partialRemaining).toLocaleString()}
-                          disabled
-                        />
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-
-              <button
-                onClick={submitUpdate}
-                className="mt-1 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold"
-              >
-                Confirm Update
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {cancelOpen && (
         <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setCancelOpen(false)} />
-          <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-lg">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" onClick={() => setCancelOpen(false)} />
+          <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-3xl p-4 sm:p-5 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div className="font-semibold text-primary text-base sm:text-lg">Cancel Job</div>
-              <button
-                onClick={() => setCancelOpen(false)}
-                className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight"
-              >
-                Close
-              </button>
+              <button onClick={() => setCancelOpen(false)} className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight">Close</button>
             </div>
-
             <div className="mt-4 grid gap-2 text-xs sm:text-sm">
               <div className="font-semibold text-zinc-700">Why are you cancelling this job?</div>
-              {CANCEL_REASONS.map((r) => (
-                <label key={r} className="flex items-center gap-2 font-semibold text-zinc-700">
-                  <input
-                    type="radio"
-                    name="cancelReason"
-                    checked={cancelReason === r}
-                    onChange={() => setCancelReason(r)}
-                  />
-                  {r}
+              {CANCEL_REASONS.map((reason) => (
+                <label key={reason} className="flex items-center gap-2 font-semibold text-zinc-700">
+                  <input type="radio" name="cancelReason" checked={cancelReason === reason} onChange={() => setCancelReason(reason)} />{reason}
                 </label>
               ))}
-
-              {cancelReason === "Other" && (
-                <input
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm"
-                  placeholder="Write reason..."
-                  value={cancelOther}
-                  onChange={(e) => setCancelOther(e.target.value)}
-                />
-              )}
-
-              <button
-                onClick={confirmCancel}
-                className="mt-3 px-4 py-2.5 rounded-xl bg-danger text-white text-xs sm:text-sm font-semibold"
-              >
-                Confirm Cancel
-              </button>
+              {cancelReason === "Other" ? <input className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" placeholder="Write reason..." value={cancelOther} onChange={(e) => setCancelOther(e.target.value)} /> : null}
+              <button onClick={confirmCancel} className="mt-3 px-4 py-2.5 rounded-xl bg-danger text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Confirm Cancel</button>
             </div>
           </div>
         </div>

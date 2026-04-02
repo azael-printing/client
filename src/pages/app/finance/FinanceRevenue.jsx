@@ -1,14 +1,19 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listFinanceJobs } from "../../api/finance.api";
+import Pagination from "../../../components/common/Pagination";
 
 function money(v) {
   return `ETB ${Number(v || 0).toLocaleString()}`;
 }
 
-function StatCard({ title, value, subtitle }) {
+function StatCard({ title, value, subtitle, onClick }) {
+
+  const tableTotalPages = Math.max(1, Math.ceil(rows.length / tablePageSize));
+  const tablePageSafe = Math.min(tablePage, tableTotalPages);
+  const rowsPage = rows.slice((tablePageSafe - 1) * tablePageSize, tablePageSafe * tablePageSize);
   return (
-    <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/20">
+    <button onClick={onClick} className="text-left bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/20 w-full">
       <div className="text-zinc-900 font-extrabold text-[16px] leading-tight">
         {title}
       </div>
@@ -16,7 +21,7 @@ function StatCard({ title, value, subtitle }) {
         {value}
       </div>
       <div className="mt-2 text-zinc-500 font-semibold text-sm">{subtitle}</div>
-    </div>
+    </button>
   );
 }
 
@@ -90,6 +95,8 @@ export default function FinanceRevenue() {
   const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
+  const [tablePage, setTablePage] = useState(1);
+  const tablePageSize = 10;
 
   const viewportRef = useRef(null);
   const contentRef = useRef(null);
@@ -256,21 +263,25 @@ export default function FinanceRevenue() {
                 title="Paid This Month"
                 value={money(summary.paidThisMonth)}
                 subtitle="payment received"
+                onClick={() => navigate("/app/finance/revenue")}
               />
               <StatCard
                 title="Unpaid"
                 value={money(summary.unpaid)}
                 subtitle="Invoiced, not settled"
+                onClick={() => navigate("/app/finance/revenue")}
               />
               <StatCard
                 title="Overdue"
                 value={money(summary.overdue)}
                 subtitle="> 30 days"
+                onClick={() => navigate("/app/finance/revenue")}
               />
               <StatCard
                 title="Credit"
                 value={money(summary.credit)}
                 subtitle="Credit holdings"
+                onClick={() => navigate("/app/finance/revenue")}
               />
             </div>
 
@@ -316,7 +327,7 @@ export default function FinanceRevenue() {
                           </td>
                         </tr>
                       ) : (
-                        rows.slice(0, 10).map((row) => (
+                        rowsPage.map((row) => (
                           <tr
                             key={row.id}
                             className="border-t border-zinc-100 hover:bg-zinc-50/70 transition-colors"
@@ -354,6 +365,7 @@ export default function FinanceRevenue() {
                     Export to excel
                   </button>
                 </div>
+                <Pagination page={tablePageSafe} totalPages={tableTotalPages} onChange={setTablePage} />
               </div>
 
               <div className="bg-white border border-zinc-200 rounded-[24px] p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/10">

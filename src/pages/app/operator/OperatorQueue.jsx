@@ -1,113 +1,19 @@
 import { useEffect, useState } from "react";
-import {
-  listOperatorJobsByStatus,
-  operatorWorkflow,
-} from "../../api/operator.api";
+import Pagination from "../../../components/common/Pagination";
+import { useDialog } from "../../../components/common/DialogProvider";
+import { formatJobId } from "../../../utils/jobFormatting";
+import { listOperatorJobsByStatus, operatorWorkflow } from "../../api/operator.api";
+import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
+
+function cn(...xs) { return xs.filter(Boolean).join(" "); }
 
 export default function OperatorQueue() {
-  const [jobs, setJobs] = useState([]);
-  const [err, setErr] = useState("");
-
-  async function load() {
-    try {
-      setErr("");
-      const a = await listOperatorJobsByStatus("PRODUCTION_READY");
-      const b = await listOperatorJobsByStatus("PRODUCTION_PENDING");
-      const c = await listOperatorJobsByStatus("PRODUCTION_WAITING");
-      setJobs(
-        [...a, ...b, ...c].sort(
-          (x, y) => new Date(y.createdAt) - new Date(x.createdAt),
-        ),
-      );
-    } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to load queue");
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function markWaiting(jobId) {
-    try {
-      await operatorWorkflow(jobId, "OPERATOR_MARK_WAITING");
-      load();
-    } catch (e) {
-      alert(e?.response?.data?.message || "Failed");
-    }
-  }
-
-  async function start(jobId) {
-    try {
-      await operatorWorkflow(jobId, "OPERATOR_START");
-      load();
-    } catch (e) {
-      alert(e?.response?.data?.message || "Failed");
-    }
-  }
-
-  return (
-    <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-extrabold text-primary">
-          Production Queue
-        </h2>
-        <button
-          onClick={load}
-          className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold hover:opacity-90"
-        >
-          Refresh
-        </button>
-      </div>
-
-      {err && <div className="mt-3 text-red-600 font-bold">{err}</div>}
-
-      <div className="mt-4 overflow-auto">
-        <table className="min-w-full text-sm">
-          <thead className="text-left text-zinc-500">
-            <tr>
-              <th className="py-2 pr-4">Job#</th>
-              <th className="py-2 pr-4">Customer</th>
-              <th className="py-2 pr-4">Work</th>
-              <th className="py-2 pr-4">Status</th>
-              <th className="py-2 pr-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jobs.map((j) => (
-              <tr key={j.id} className="border-t border-zinc-200">
-                <td className="py-2 pr-4 font-extrabold text-primary">
-                  #{j.jobNo}
-                </td>
-                <td className="py-2 pr-4">{j.customerName}</td>
-                <td className="py-2 pr-4">{j.workType}</td>
-                <td className="py-2 pr-4 font-bold">{j.status}</td>
-                <td className="py-2 pr-4 flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => markWaiting(j.id)}
-                    className="px-3 py-2 rounded-xl bg-warning text-white font-extrabold hover:opacity-90"
-                  >
-                    Mark Waiting
-                  </button>
-                  <button
-                    onClick={() => start(j.id)}
-                    className="px-3 py-2 rounded-xl bg-primary text-white font-extrabold hover:opacity-90"
-                  >
-                    Start Production
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {jobs.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-4 text-zinc-500">
-                  No queued jobs.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+  const dialog = useDialog();
+  const [jobs, setJobs] = useState([]); const [selected, setSelected] = useState(null); const [err, setErr] = useState(""); const [page, setPage] = useState(1); const pageSize = 10;
+  async function load() { try { setErr(""); const [a,b,c] = await Promise.all([listOperatorJobsByStatus("PRODUCTION_READY"), listOperatorJobsByStatus("PRODUCTION_PENDING"), listOperatorJobsByStatus("PRODUCTION_WAITING")]); const all = [...a,...b,...c].sort((x,y)=>new Date(y.createdAt)-new Date(x.createdAt)); setJobs(all); if (selected) setSelected(all.find((x)=>x.id===selected.id)||null); } catch (e) { setErr(e?.response?.data?.message || "Failed to load queue"); } }
+  useEffect(() => { load(); }, []);
+  async function markWaiting(jobId) { try { await operatorWorkflow(jobId, "OPERATOR_SET_WAITING"); dialog.toast("Marked waiting", "success"); load(); } catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); } }
+  async function start(jobId) { try { await operatorWorkflow(jobId, "OPERATOR_START"); dialog.toast("Production started", "success"); load(); } catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); } }
+  const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize)); const pageSafe = Math.min(page, totalPages); const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
+  return <div className="grid gap-4 lg:grid-cols-[1fr_360px]"><div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20"><div className="flex items-center justify-between"><h2 className="text-2xl font-extrabold text-primary">Production Queue</h2><button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button></div>{err && <div className="mt-3 text-red-600 font-bold">{err}</div>}<div className="mt-4 overflow-auto rounded-2xl border border-zinc-200"><table className="min-w-full text-sm"><thead className="text-left text-zinc-500 bg-bgLight"><tr><th className="py-2 px-3">Job#</th><th className="py-2 px-3">Customer</th><th className="py-2 px-3">Work</th><th className="py-2 px-3">Status</th><th className="py-2 px-3">Actions</th></tr></thead><tbody>{slice.map((j)=><tr key={j.id} onClick={() => setSelected(j)} className={cn("border-t border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors", selected?.id===j.id ? "bg-bgLight":"")}><td className="py-2 px-3 font-extrabold text-primary">{formatJobId(j.jobNo)}</td><td className="py-2 px-3">{j.customerName}</td><td className="py-2 px-3">{j.workType}</td><td className="py-2 px-3 font-bold">{j.status}</td><td className="py-2 px-3 flex gap-2 flex-wrap"><button onClick={(e)=>{e.stopPropagation();markWaiting(j.id);}} className="px-3 py-2 rounded-xl bg-warning text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Mark Waiting</button><button onClick={(e)=>{e.stopPropagation();start(j.id);}} className="px-3 py-2 rounded-xl bg-primary text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Start Production</button></td></tr>)}{slice.length===0&&<tr><td colSpan={5} className="py-4 px-3 text-zinc-500">No queued jobs.</td></tr>}</tbody></table></div><Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} /></div><JobDetailActionPanel selected={selected}>{selected ? <><button onClick={() => markWaiting(selected.id)} className="flex-1 px-4 py-3 rounded-xl bg-warning text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Mark Waiting</button><button onClick={() => start(selected.id)} className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Start Production</button></> : null}</JobDetailActionPanel></div>;
 }

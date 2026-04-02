@@ -25,3 +25,20 @@ http.interceptors.request.use(
   },
   (error) => Promise.reject(error),
 );
+
+
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      localStorage.removeItem("azael_auth");
+      localStorage.removeItem("accessToken");
+      delete http.defaults.headers.common["Authorization"];
+      if (!window.location.pathname.includes("/login")) {
+        window.location.replace("/login");
+      }
+    }
+    return Promise.reject(error);
+  },
+);

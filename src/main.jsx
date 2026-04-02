@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./index.css";
 
 import { AuthProvider, useAuth } from "./app/providers/AuthProvider";
+import { DialogProvider } from "./components/common/DialogProvider";
 import LoadingSplash from "./components/common/LoadingSplash";
 
 import PublicLayout from "./app/layouts/PublicLayout";
@@ -79,6 +80,7 @@ function BootGate({ children }) {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
+      <DialogProvider>
       <BootGate>
         <BrowserRouter>
           <Routes>
@@ -180,6 +182,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           </Routes>
         </BrowserRouter>
       </BootGate>
+      </DialogProvider>
     </AuthProvider>
   </React.StrictMode>,
 );
