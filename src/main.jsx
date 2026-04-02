@@ -54,6 +54,9 @@ import JobsList from "./pages/app/jobs/JobsList";
 //
 import FinanceRevenue from "./pages/app/finance/FinanceRevenue";
 import FinanceExpensesDashboard from "./pages/app/finance/FinanceExpensesDashboard";
+import FinanceInvoiceDashboard from "./pages/app/finance/FinanceInvoiceDashboard";
+import FinanceRevenueOverdue from "./pages/app/finance/FinanceRevenueOverdue";
+import FinanceRegisterExpense from "./pages/app/finance/FinanceRegisterExpense";
 // import FinanceDashboard from "./pages/app/finance/FinanceDashboard";
 //
 import AdminProforma from "./pages/app/admin/AdminProforma";
@@ -118,15 +121,50 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="finance">
                   <Route index element={<Navigate to="overview" replace />} />
                   <Route path="overview" element={<FinanceDashboard />} />
-                  <Route path="revenue" element={<FinanceRevenue />} />
-                  <Route path="waiting" element={<FinanceWaiting />} />
-                  <Route path="done" element={<FinanceDoneTracking />} />
-                  <Route path="jobs" element={<FinanceJobs />} />
-                  <Route path="audit" element={<FinanceAudit />} />
-                  <Route
-                    path="expenses"
-                    element={<FinanceExpensesDashboard />}
-                  />
+                  <Route path="revenue" element={<Navigate to="/app/admin/finance/revenue/overview" replace />} />
+                  <Route path="revenue/overview" element={<FinanceRevenue />} />
+                  <Route path="revenue/invoice" element={<FinanceInvoiceDashboard />} />
+                  <Route path="revenue/overdue" element={<FinanceRevenueOverdue />} />
+                  <Route path="expenses" element={<Navigate to="/app/admin/finance/expenses/overview" replace />} />
+                  <Route path="expenses/overview" element={<FinanceExpensesDashboard />} />
+                  <Route path="expenses/register" element={<FinanceRegisterExpense />} />
+                  <Route path="expenses/report" element={<FinanceExpensesDashboard />} />
+                  <Route path="jobs" element={<Navigate to="/app/admin/finance/jobs/list" replace />} />
+                  <Route path="jobs/list" element={<FinanceJobs />} />
+                  <Route path="jobs/waiting" element={<FinanceWaiting />} />
+                  <Route path="jobs/done" element={<FinanceDoneTracking />} />
+                  <Route path="history" element={<FinanceAudit />} />
+                  <Route path="audit" element={<Navigate to="/app/admin/finance/history" replace />} />
+                </Route>
+
+                <Route path="cs">
+                  <Route index element={<Navigate to="overview" replace />} />
+                  <Route path="overview" element={<CSOverview />} />
+                  <Route path="create-order" element={<CreateOrder />} />
+                  <Route path="jobs" element={<JobsList />} />
+                  <Route path="new" element={<CSNewRequests />} />
+                  <Route path="design" element={<CSInDesign />} />
+                  <Route path="production" element={<CSInProduction />} />
+                  <Route path="completed" element={<CSCompleted />} />
+                  <Route path="audit" element={<CSAudit />} />
+                </Route>
+
+                <Route path="designer">
+                  <Route index element={<Navigate to="overview" replace />} />
+                  <Route path="overview" element={<DesignerOverview />} />
+                  <Route path="queue" element={<DesignerQueue />} />
+                  <Route path="in-design" element={<DesignerInDesign />} />
+                  <Route path="completed" element={<DesignerCompleted />} />
+                  <Route path="audit" element={<DesignerAudit />} />
+                </Route>
+
+                <Route path="operator">
+                  <Route index element={<Navigate to="overview" replace />} />
+                  <Route path="overview" element={<OperatorOverview />} />
+                  <Route path="queue" element={<OperatorQueue />} />
+                  <Route path="in-production" element={<OperatorInProduction />} />
+                  <Route path="completed" element={<OperatorCompleted />} />
+                  <Route path="audit" element={<OperatorAudit />} />
                 </Route>
               </Route>
               {/* ================== */}
@@ -167,12 +205,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="finance" element={<FinanceLayout />}>
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<FinanceDashboard />} />
-                <Route path="revenue" element={<FinanceRevenue />} />
-                <Route path="waiting" element={<FinanceWaiting />} />
-                <Route path="done" element={<FinanceDoneTracking />} />
-                <Route path="jobs" element={<FinanceJobs />} />
-                <Route path="audit" element={<FinanceAudit />} />
-                <Route path="expenses" element={<FinanceExpensesDashboard />} />
+                <Route path="revenue" element={<Navigate to="/app/finance/revenue/overview" replace />} />
+                <Route path="revenue/overview" element={<FinanceRevenue />} />
+                <Route path="revenue/invoice" element={<FinanceInvoiceDashboard />} />
+                <Route path="revenue/overdue" element={<FinanceRevenueOverdue />} />
+                <Route path="expenses" element={<Navigate to="/app/finance/expenses/overview" replace />} />
+                <Route path="expenses/overview" element={<FinanceExpensesDashboard />} />
+                <Route path="expenses/register" element={<FinanceRegisterExpense />} />
+                <Route path="expenses/report" element={<FinanceExpensesDashboard />} />
+                <Route path="jobs" element={<Navigate to="/app/finance/jobs/list" replace />} />
+                <Route path="jobs/list" element={<FinanceJobs />} />
+                <Route path="jobs/waiting" element={<FinanceWaiting />} />
+                <Route path="jobs/done" element={<FinanceDoneTracking />} />
+                <Route path="history" element={<FinanceAudit />} />
+                <Route path="audit" element={<Navigate to="/app/finance/history" replace />} />
               </Route>
               <Route path="jobs" element={<JobsList />} />
 

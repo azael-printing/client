@@ -8,10 +8,6 @@ function money(v) {
 }
 
 function StatCard({ title, value, subtitle, onClick }) {
-
-  const tableTotalPages = Math.max(1, Math.ceil(rows.length / tablePageSize));
-  const tablePageSafe = Math.min(tablePage, tableTotalPages);
-  const rowsPage = rows.slice((tablePageSafe - 1) * tablePageSize, tablePageSafe * tablePageSize);
   return (
     <button onClick={onClick} className="text-left bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/20 w-full">
       <div className="text-zinc-900 font-extrabold text-[16px] leading-tight">
@@ -198,6 +194,10 @@ export default function FinanceRevenue() {
     });
   }, [jobs]);
 
+  const tableTotalPages = Math.max(1, Math.ceil(rows.length / tablePageSize));
+  const tablePageSafe = Math.min(tablePage, tableTotalPages);
+  const rowsPage = rows.slice((tablePageSafe - 1) * tablePageSize, tablePageSafe * tablePageSize);
+
   const summary = useMemo(() => {
     const paidThisMonth = rows
       .filter((r) => r.status === "Paid")
@@ -263,25 +263,25 @@ export default function FinanceRevenue() {
                 title="Paid This Month"
                 value={money(summary.paidThisMonth)}
                 subtitle="payment received"
-                onClick={() => navigate("/app/finance/revenue")}
+                onClick={() => navigate("/app/finance/revenue/overview")}
               />
               <StatCard
                 title="Unpaid"
                 value={money(summary.unpaid)}
                 subtitle="Invoiced, not settled"
-                onClick={() => navigate("/app/finance/revenue")}
+                onClick={() => navigate("/app/finance/revenue/overview")}
               />
               <StatCard
                 title="Overdue"
                 value={money(summary.overdue)}
                 subtitle="> 30 days"
-                onClick={() => navigate("/app/finance/revenue")}
+                onClick={() => navigate("/app/finance/revenue/overview")}
               />
               <StatCard
                 title="Credit"
                 value={money(summary.credit)}
                 subtitle="Credit holdings"
-                onClick={() => navigate("/app/finance/revenue")}
+                onClick={() => navigate("/app/finance/revenue/overview")}
               />
             </div>
 
@@ -385,7 +385,7 @@ export default function FinanceRevenue() {
                     <div className="mt-3 flex justify-end">
                       <button
                         type="button"
-                        onClick={() => navigate("/app/finance/done")}
+                        onClick={() => navigate("/app/finance/jobs/done")}
                         className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:opacity-95 transition"
                       >
                         View overdue list
@@ -404,7 +404,7 @@ export default function FinanceRevenue() {
                     <div className="mt-3 flex justify-end">
                       <button
                         type="button"
-                        onClick={() => navigate("/app/finance/waiting")}
+                        onClick={() => navigate("/app/finance/jobs/waiting")}
                         className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:opacity-95 transition"
                       >
                         view unpaid and partial

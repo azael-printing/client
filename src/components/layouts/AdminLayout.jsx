@@ -150,6 +150,9 @@ export default function AdminLayout() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [financeOpen, setFinanceOpen] = useState(false);
+  const [csOpen, setCsOpen] = useState(false);
+  const [designerOpen, setDesignerOpen] = useState(false);
+  const [operatorOpen, setOperatorOpen] = useState(false);
 
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -160,9 +163,10 @@ export default function AdminLayout() {
   const [machines, setMachines] = useState([]);
 
   useEffect(() => {
-    if (location.pathname.startsWith("/app/admin/finance")) {
-      setFinanceOpen(true);
-    }
+    if (location.pathname.startsWith("/app/admin/finance")) setFinanceOpen(true);
+    if (location.pathname.startsWith("/app/admin/cs")) setCsOpen(true);
+    if (location.pathname.startsWith("/app/admin/designer")) setDesignerOpen(true);
+    if (location.pathname.startsWith("/app/admin/operator")) setOperatorOpen(true);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -227,7 +231,7 @@ export default function AdminLayout() {
   }
 
   const sidebarContent = (
-    <nav className="space-y-1.5 max-w-fit">
+    <nav className="space-y-1.5">
       <NavLink to="/app/admin" className={navClass} end>
         <span className="text-primary shrink-0">
           <Icon name="dash" />
@@ -286,55 +290,104 @@ export default function AdminLayout() {
 
       {financeOpen && (
         <div className="ml-5 mt-1 space-y-1">
-          <NavLink to="/app/admin/finance/overview" className={navClass} end>
-            <span className="text-primary shrink-0">
-              <Icon name="dash" />
-            </span>
-            <span className="truncate">Overview</span>
-          </NavLink>
+          <NavLink to="/app/admin/finance/overview" className={navClass} end><span className="text-primary shrink-0"><Icon name="dash" /></span><span className="truncate">Overview</span></NavLink>
+          <NavLink to="/app/admin/finance/revenue/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="trend" /></span><span className="truncate">Revenue Overview</span></NavLink>
+          <NavLink to="/app/admin/finance/revenue/invoice" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">Invoice</span></NavLink>
+          <NavLink to="/app/admin/finance/revenue/overdue" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Overdue</span></NavLink>
+          <NavLink to="/app/admin/finance/expenses/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">Expense Overview</span></NavLink>
+          <NavLink to="/app/admin/finance/expenses/register" className={navClass}><span className="text-primary shrink-0"><Icon name="create" /></span><span className="truncate">Register Expenses</span></NavLink>
+          <NavLink to="/app/admin/finance/expenses/report" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Expense Report</span></NavLink>
+          <NavLink to="/app/admin/finance/jobs/list" className={navClass}><span className="text-primary shrink-0"><Icon name="jobs" /></span><span className="truncate">Job List</span></NavLink>
+          <NavLink to="/app/admin/finance/jobs/waiting" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Waiting Approval</span></NavLink>
+          <NavLink to="/app/admin/finance/jobs/done" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Done Tracking</span></NavLink>
+          <NavLink to="/app/admin/finance/history" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">History Log</span></NavLink>
+        </div>
+      )}
 
-          <NavLink to="/app/admin/finance/revenue" className={navClass}>
-            <span className="text-primary shrink-0">
-              <Icon name="trend" />
-            </span>
-            <span className="truncate">Revenue</span>
-          </NavLink>
+      <button
+        onClick={() => setCsOpen((v) => !v)}
+        className={cn(
+          "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-bold text-[13px] transition-all duration-300 text-left",
+          location.pathname.startsWith("/app/admin/cs")
+            ? "bg-bgLight text-primary shadow-sm"
+            : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
+        )}
+      >
+        <span className="text-primary shrink-0">
+          <Icon name="jobs" />
+        </span>
+        <span className="flex-1 truncate">Customer Service</span>
+        <span className="ml-auto text-zinc-400">
+          <Icon name={csOpen ? "chevronDown" : "chevronRight"} className="w-4 h-4" />
+        </span>
+      </button>
 
-          <NavLink to="/app/admin/finance/waiting" className={navClass}>
-            <span className="text-primary shrink-0">
-              <Icon name="clock" />
-            </span>
-            <span className="truncate">Waiting Approval</span>
-          </NavLink>
+      {csOpen && (
+        <div className="ml-5 mt-1 space-y-1">
+          <NavLink to="/app/admin/cs/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="dash" /></span><span className="truncate">Overview</span></NavLink>
+          <NavLink to="/app/admin/cs/create-order" className={navClass}><span className="text-primary shrink-0"><Icon name="create" /></span><span className="truncate">Create Order</span></NavLink>
+          <NavLink to="/app/admin/cs/jobs" className={navClass}><span className="text-primary shrink-0"><Icon name="jobs" /></span><span className="truncate">Jobs Dashboard</span></NavLink>
+          <NavLink to="/app/admin/cs/new" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">New Requests</span></NavLink>
+          <NavLink to="/app/admin/cs/design" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">In Design</span></NavLink>
+          <NavLink to="/app/admin/cs/production" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">In Production</span></NavLink>
+          <NavLink to="/app/admin/cs/completed" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Completed</span></NavLink>
+          <NavLink to="/app/admin/cs/audit" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Audit Log</span></NavLink>
+        </div>
+      )}
 
-          <NavLink to="/app/admin/finance/done" className={navClass}>
-            <span className="text-primary shrink-0">
-              <Icon name="check" />
-            </span>
-            {/* Done Tracking */}
-            <span className="truncate">Completed Jobs</span>
-          </NavLink>
+      <button
+        onClick={() => setDesignerOpen((v) => !v)}
+        className={cn(
+          "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-bold text-[13px] transition-all duration-300 text-left",
+          location.pathname.startsWith("/app/admin/designer")
+            ? "bg-bgLight text-primary shadow-sm"
+            : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
+        )}
+      >
+        <span className="text-primary shrink-0">
+          <Icon name="receipt" />
+        </span>
+        <span className="flex-1 truncate">Designer</span>
+        <span className="ml-auto text-zinc-400">
+          <Icon name={designerOpen ? "chevronDown" : "chevronRight"} className="w-4 h-4" />
+        </span>
+      </button>
 
-          <NavLink to="/app/admin/finance/expenses" className={navClass}>
-            <span className="text-primary shrink-0">
-              <Icon name="receipt" />
-            </span>
-            <span className="truncate">Expenses</span>
-          </NavLink>
+      {designerOpen && (
+        <div className="ml-5 mt-1 space-y-1">
+          <NavLink to="/app/admin/designer/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="dash" /></span><span className="truncate">Overview</span></NavLink>
+          <NavLink to="/app/admin/designer/queue" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Queue</span></NavLink>
+          <NavLink to="/app/admin/designer/in-design" className={navClass}><span className="text-primary shrink-0"><Icon name="trend" /></span><span className="truncate">In Design</span></NavLink>
+          <NavLink to="/app/admin/designer/completed" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Completed</span></NavLink>
+          <NavLink to="/app/admin/designer/audit" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Audit Log</span></NavLink>
+        </div>
+      )}
 
-          <NavLink to="/app/admin/finance/audit" className={navClass}>
-            <span className="text-primary shrink-0">
-              <Icon name="audit" />
-            </span>
-            <span className="truncate">Audit Log</span>
-          </NavLink>
+      <button
+        onClick={() => setOperatorOpen((v) => !v)}
+        className={cn(
+          "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-bold text-[13px] transition-all duration-300 text-left",
+          location.pathname.startsWith("/app/admin/operator")
+            ? "bg-bgLight text-primary shadow-sm"
+            : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
+        )}
+      >
+        <span className="text-primary shrink-0">
+          <Icon name="jobs" />
+        </span>
+        <span className="flex-1 truncate">Operator</span>
+        <span className="ml-auto text-zinc-400">
+          <Icon name={operatorOpen ? "chevronDown" : "chevronRight"} className="w-4 h-4" />
+        </span>
+      </button>
 
-          {/* <NavLink to="/app/admin/finance/jobs" className={navClass}>
-            <span className="text-primary shrink-0">
-              <Icon name="jobs" />
-            </span>
-            <span className="truncate">Jobs</span>
-          </NavLink> */}
+      {operatorOpen && (
+        <div className="ml-5 mt-1 space-y-1">
+          <NavLink to="/app/admin/operator/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="dash" /></span><span className="truncate">Overview</span></NavLink>
+          <NavLink to="/app/admin/operator/queue" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Queue</span></NavLink>
+          <NavLink to="/app/admin/operator/in-production" className={navClass}><span className="text-primary shrink-0"><Icon name="trend" /></span><span className="truncate">In Production</span></NavLink>
+          <NavLink to="/app/admin/operator/completed" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Completed</span></NavLink>
+          <NavLink to="/app/admin/operator/audit" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Audit Log</span></NavLink>
         </div>
       )}
 

@@ -338,28 +338,28 @@ export default function FinanceDashboard() {
 
                   <div className="mt-5 flex gap-3">
                     <Link
-                      to="/app/finance/revenue"
+                      to="/app/finance/revenue/overview"
                       className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-zinc-50 transition"
                     >
                       Revenue Page
                     </Link>
 
                     <Link
-                      to="/app/finance/waiting"
+                      to="/app/finance/jobs/waiting"
                       className="px-5 py-3 rounded-2xl bg-primary text-white font-extrabold hover:opacity-90 transition"
                     >
                       Waiting Approval
                     </Link>
 
                     <Link
-                      to="/app/finance/done"
+                      to="/app/finance/jobs/done"
                       className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-zinc-50 transition"
                     >
                       Done Tracking
                     </Link>
 
                     <Link
-                      to="/app/finance/expenses"
+                      to="/app/finance/expenses/report"
                       className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-zinc-50 transition"
                     >
                       Expense Report
