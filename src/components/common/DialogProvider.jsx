@@ -48,6 +48,15 @@ export function DialogProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    function onAppToast(event) {
+      pushToast(event?.detail?.message || "Done", event?.detail?.tone || "info");
+    }
+
+    window.addEventListener("app-toast", onAppToast);
+    return () => window.removeEventListener("app-toast", onAppToast);
+  }, [pushToast]);
+
+  useEffect(() => {
     const originalAlert = window.alert;
     window.alert = (message) => {
       appAlert(message);

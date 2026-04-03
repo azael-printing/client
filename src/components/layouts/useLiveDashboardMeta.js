@@ -1,9 +1,10 @@
 // useLiveDashboardMeta.js
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { myNotifications } from "../../pages/api/notifications.api";
 import { listDesignerJobsByStatus } from "../../pages/api/designer.api";
 import { listOperatorJobsByStatus } from "../../pages/api/operator.api";
 import { listFinanceJobs } from "../../pages/api/finance.api";
+import { emitAppToast, playNotificationSound } from "../../utils/notificationSound";
 
 function countByStatuses(jobs, statuses) {
   return (jobs || []).filter((j) => statuses.includes(String(j.status || "")))
@@ -13,6 +14,7 @@ function countByStatuses(jobs, statuses) {
 export function useLiveDashboardMeta(role) {
   const [unread, setUnread] = useState(0);
   const [counts, setCounts] = useState({});
+  const unreadIdsRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -20,7 +22,19 @@ export function useLiveDashboardMeta(role) {
     async function load() {
       try {
         const notifs = await myNotifications();
-        if (alive) setUnread((notifs || []).filter((n) => !n.isRead).length);
+        const unreadItems = (notifs || []).filter((n) => !n.isRead);
+        const nextIds = new Set(unreadItems.map((n) => n.id));
+
+        if (unreadIdsRef.current) {
+          const fresh = unreadItems.find((n) => !unreadIdsRef.current.has(n.id));
+          if (fresh) {
+            playNotificationSound();
+            emitAppToast(fresh.message || "New notification received", "info");
+          }
+        }
+
+        unreadIdsRef.current = nextIds;
+        if (alive) setUnread(unreadItems.length);
       } catch {
         if (alive) setUnread(0);
       }

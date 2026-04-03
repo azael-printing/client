@@ -4,6 +4,7 @@ import { useAuth } from "../../app/providers/AuthProvider";
 import { useDialog } from "../common/DialogProvider";
 import NotificationsPanel from "../app/NotificationsPanel";
 import { http } from "../../pages/api/http";
+import { emitAppToast, playNotificationSound } from "../../utils/notificationSound";
 import { useInterval } from "../../app/hooks/useInterval";
 
 function cn(...xs) {
@@ -149,6 +150,7 @@ export default function AdminLayout() {
 
   const [notifOpen, setNotifOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const unreadIdsRef = useRef(null);
   const [financeOpen, setFinanceOpen] = useState(false);
   const [financeRevenueOpen, setFinanceRevenueOpen] = useState(false);
   const [financeExpenseOpen, setFinanceExpenseOpen] = useState(false);
@@ -183,7 +185,19 @@ export default function AdminLayout() {
     try {
       const res = await http.get("/api/notifications/me");
       const list = res.data.notifications || [];
-      setUnread(list.filter((n) => !n.isRead).length);
+      const unreadItems = list.filter((n) => !n.isRead);
+      const nextIds = new Set(unreadItems.map((n) => n.id));
+
+      if (unreadIdsRef.current) {
+        const fresh = unreadItems.find((n) => !unreadIdsRef.current.has(n.id));
+        if (fresh) {
+          playNotificationSound();
+          emitAppToast(fresh.message || "New notification received", "info");
+        }
+      }
+
+      unreadIdsRef.current = nextIds;
+      setUnread(unreadItems.length);
     } catch {
       setUnread(0);
     }

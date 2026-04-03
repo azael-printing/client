@@ -31,6 +31,7 @@ export default function NotificationsPanel({ onOpenTarget }) {
     try {
       if (!n.isRead) await markNotificationRead(n.id);
       await load();
+      dialog?.toast?.("Notification opened", "info");
 
       const target = getNotificationTarget(n, user?.role);
       if (onOpenTarget) onOpenTarget(target);
