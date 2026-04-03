@@ -4,7 +4,7 @@ import { myNotifications } from "../../pages/api/notifications.api";
 import { listDesignerJobsByStatus } from "../../pages/api/designer.api";
 import { listOperatorJobsByStatus } from "../../pages/api/operator.api";
 import { listFinanceJobs } from "../../pages/api/finance.api";
-import { emitAppToast, playNotificationSound } from "../../utils/notificationSound";
+import { triggerNotificationAlert } from "../../utils/notificationSound";
 
 function countByStatuses(jobs, statuses) {
   return (jobs || []).filter((j) => statuses.includes(String(j.status || "")))
@@ -28,8 +28,7 @@ export function useLiveDashboardMeta(role) {
         if (unreadIdsRef.current) {
           const fresh = unreadItems.find((n) => !unreadIdsRef.current.has(n.id));
           if (fresh) {
-            playNotificationSound();
-            emitAppToast(fresh.message || "New notification received", "info");
+            triggerNotificationAlert({ direction: "received", message: fresh.message || "New notification received" });
           }
         }
 

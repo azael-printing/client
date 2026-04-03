@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDialog } from "../../../components/common/DialogProvider";
 import { useAuth } from "../../../app/providers/AuthProvider";
 import { createJob } from "../../api/jobs.api";
+import { triggerNotificationAlert } from "../../../utils/notificationSound";
 import {
   getCustomers,
   getMachines,
@@ -81,6 +82,7 @@ export default function CreateOrder() {
   const [items, setItems] = useState([]);
   const [priceOptions, setPriceOptions] = useState([]);
   const [modal, setModal] = useState(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const [tmp, setTmp] = useState({});
 
   const minDate = todayMinDate();
@@ -224,12 +226,49 @@ Note:
   }, [f.description, item?.name, f.qty, f.unitType, unitPriceNum, f.vatEnabled, f.urgency, total, f.accountName, f.bankName, f.accountNumber]);
 
   async function copyQuotation() {
+    setShareOpen(true);
+  }
+
+  async function copyToClipboardOnly() {
     try {
       await navigator.clipboard.writeText(quotationText);
       dialog.toast("Quotation copied", "success");
     } catch {
       dialog.toast("Could not copy quotation", "error");
     }
+  }
+
+  async function shareBySystem() {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Azael quotation",
+          text: quotationText,
+        });
+        dialog.toast("Quotation shared", "success");
+        setShareOpen(false);
+        return;
+      }
+      window.open(`https://wa.me/?text=${encodeURIComponent(quotationText)}`, "_blank", "noopener,noreferrer");
+      dialog.toast("Opened share option", "success");
+      setShareOpen(false);
+    } catch {
+      dialog.toast("Could not open share", "error");
+    }
+  }
+
+  function openExternalShare(platform) {
+    const encoded = encodeURIComponent(quotationText);
+    const targets = {
+      whatsapp: `https://wa.me/?text=${encoded}`,
+      telegram: `https://t.me/share/url?text=${encoded}`,
+      email: `mailto:?subject=${encodeURIComponent("Azael quotation")}&body=${encoded}`,
+    };
+    const url = targets[platform];
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
+    dialog.toast("Opened external share", "success");
+    setShareOpen(false);
   }
 
   async function quotationSent() {
@@ -272,6 +311,7 @@ Note:
         accountNumber: f.accountNumber,
       });
       dialog.toast(`Quotation sent ${job?.jobNo ? `for AZ-${String(job.jobNo).padStart(4, "0")}` : ""}`, "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent to finance." });
       navigate(role === "CS" ? "/app/cs/jobs" : "/app/admin/jobs");
     } catch (e) {
       dialog.toast(e?.response?.data?.message || "Failed to create job", "error");
@@ -374,7 +414,10 @@ Note:
               </div>
               <div>
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">Machine</div>
-                <input className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm" value={machine?.name || ""} disabled />
+                <select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={f.machineId} onChange={(e) => update("machineId", e.target.value)}>
+                  <option value="">Select machine</option>
+                  {machines.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                </select>
               </div>
             </div>
 
@@ -479,6 +522,27 @@ Note:
           <div className="text-zinc-500 font-semibold text-xs sm:text-sm">Quotation Preview</div>
           <pre className="mt-2 p-3 rounded-xl bg-bgLight border border-zinc-200 text-[11px] sm:text-xs whitespace-pre-wrap overflow-auto">{quotationText}</pre>
         </div>
+
+        {shareOpen && (
+          <div className="fixed inset-0 z-50">
+            <div className="absolute inset-0 bg-black/30" onClick={() => setShareOpen(false)} />
+            <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[520px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-lg">
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-semibold text-primary text-base sm:text-lg">Share quotation</div>
+                <button onClick={() => setShareOpen(false)} className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight">Close</button>
+              </div>
+              <div className="mt-3 text-xs sm:text-sm font-semibold text-zinc-500">Send the quotation through an external app instead of only copying to clipboard.</div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <button onClick={shareBySystem} className="px-4 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition">System Share</button>
+                <button onClick={() => openExternalShare("whatsapp")} className="px-4 py-3 rounded-xl border border-zinc-200 text-sm font-semibold text-primary hover:bg-bgLight transition">WhatsApp</button>
+                <button onClick={() => openExternalShare("telegram")} className="px-4 py-3 rounded-xl border border-zinc-200 text-sm font-semibold text-primary hover:bg-bgLight transition">Telegram</button>
+                <button onClick={() => openExternalShare("email")} className="px-4 py-3 rounded-xl border border-zinc-200 text-sm font-semibold text-primary hover:bg-bgLight transition">Email</button>
+                <button onClick={copyToClipboardOnly} className="sm:col-span-2 px-4 py-3 rounded-xl border border-zinc-200 text-sm font-semibold text-primary hover:bg-bgLight transition">Copy to clipboard only</button>
+              </div>
+              <pre className="mt-4 max-h-[180px] overflow-auto rounded-xl border border-zinc-200 bg-bgLight p-3 text-[11px] sm:text-xs whitespace-pre-wrap">{quotationText}</pre>
+            </div>
+          </div>
+        )}
 
         {modal && (
           <div className="fixed inset-0 z-50">

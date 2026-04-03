@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import { triggerNotificationAlert } from "../../../utils/notificationSound";
 import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
 import {
   actionBtnClass,
@@ -58,6 +59,7 @@ export default function FinanceDoneTracking() {
     try {
       await financeAction(jobId, "FINANCE_APPROVE_DELIVERY");
       dialog.toast("Delivery approved", "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent." });
       load();
     } catch (e) {
       dialog.toast(e?.response?.data?.message || "Failed", "error");

@@ -4,7 +4,7 @@ import { useAuth } from "../../app/providers/AuthProvider";
 import { useDialog } from "../common/DialogProvider";
 import NotificationsPanel from "../app/NotificationsPanel";
 import { http } from "../../pages/api/http";
-import { emitAppToast, playNotificationSound } from "../../utils/notificationSound";
+import { triggerNotificationAlert } from "../../utils/notificationSound";
 import { useInterval } from "../../app/hooks/useInterval";
 
 function cn(...xs) {

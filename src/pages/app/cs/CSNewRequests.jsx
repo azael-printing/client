@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import { triggerNotificationAlert } from "../../../utils/notificationSound";
 import {
   roleActionClass,
   rolePageCardClass,
@@ -44,6 +45,7 @@ export default function CSNewRequests() {
     try {
       await csWorkflow(jobId, "CS_SEND_TO_DESIGNER");
       dialog.toast("Sent to designer", "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent to designer." });
       load();
     } catch (e) {
       dialog.toast(e?.response?.data?.message || "Failed", "error");
@@ -54,6 +56,7 @@ export default function CSNewRequests() {
     try {
       await csWorkflow(jobId, "CS_SEND_TO_OPERATOR");
       dialog.toast("Sent to operator", "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent to operator." });
       load();
     } catch (e) {
       dialog.toast(e?.response?.data?.message || "Failed", "error");

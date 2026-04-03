@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import { triggerNotificationAlert } from "../../../utils/notificationSound";
 import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
 import {
   roleActionClass,
@@ -73,6 +74,7 @@ export default function CSInDesign() {
     try {
       await csWorkflow(jobId, "CS_SEND_TO_OPERATOR");
       dialog.toast("Approved to production", "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent to operator." });
       await load();
     } catch (e) {
       dialog.toast(e?.response?.data?.message || "Failed", "error");

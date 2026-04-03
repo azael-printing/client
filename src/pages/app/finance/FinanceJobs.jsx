@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import { triggerNotificationAlert } from "../../../utils/notificationSound";
 import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
 import {
   actionBtnClass,
@@ -45,11 +46,13 @@ export default function FinanceJobs() {
   useEffect(() => { load(); }, []);
 
   async function setWaiting(jobId) {
-    try { await financeAction(jobId, "FINANCE_SET_WAITING"); dialog.toast("Set waiting", "success"); load(); }
+    try { await financeAction(jobId, "FINANCE_SET_WAITING"); dialog.toast("Set waiting", "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent." }); load(); }
     catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); }
   }
   async function approve(jobId) {
-    try { await financeAction(jobId, "FINANCE_APPROVE"); dialog.toast("Approved", "success"); load(); }
+    try { await financeAction(jobId, "FINANCE_APPROVE"); dialog.toast("Approved", "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent." }); load(); }
     catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); }
   }
 

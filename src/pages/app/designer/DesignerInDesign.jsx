@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import { triggerNotificationAlert } from "../../../utils/notificationSound";
 import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
 import {
   actionBtnClass,
@@ -45,6 +46,7 @@ export default function DesignerInDesign() {
     try {
       await designerWorkflow(jobId, "DESIGNER_COMPLETE");
       dialog.toast("Design completed", "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent to customer service." });
       load();
     } catch (e) {
       dialog.toast(e?.response?.data?.message || "Failed", "error");

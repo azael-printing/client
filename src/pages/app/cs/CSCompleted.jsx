@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import { triggerNotificationAlert } from "../../../utils/notificationSound";
 import { http } from "../../api/http";
 import {
   roleActionClass,
@@ -51,6 +52,7 @@ export default function CSCompleted() {
     try {
       await csWorkflow(jobId, "CS_MARK_DELIVERED");
       dialog.toast("Marked delivered", "success");
+      triggerNotificationAlert({ direction: "sent", message: "One notification has been sent." });
       load();
     } catch (e) {
       dialog.toast(e?.response?.data?.message || "Failed", "error");
