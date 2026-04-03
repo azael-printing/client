@@ -2,18 +2,32 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Pagination from "../../../components/common/Pagination";
 import FinanceStatCard from "../../../components/common/FinanceStatCard";
-import { fetchFinanceCollection, getAmount, money, toInvoiceRows } from "./financeShared";
+import {
+  roleActionClass,
+  rolePageCardClass,
+  roleSubtitleClass,
+  roleTableClass,
+  roleTableWrapClass,
+  roleTdClass,
+  roleThClass,
+  roleTheadClass,
+  roleTitleClass,
+} from "../../../components/common/rolePageUi";
+import {
+  fetchFinanceCollection,
+  getAmount,
+  money,
+  toInvoiceRows,
+} from "./financeShared";
 
 function SideAmountCard({ title, value, subtitle }) {
   return (
-    <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/20">
-      <div className="text-zinc-900 font-extrabold text-[16px] leading-tight">
-        {title}
-      </div>
-      <div className="mt-1 text-primary font-extrabold text-[30px] leading-none tracking-tight">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-lg">
+      <div className="text-[13px] font-semibold text-zinc-500">{title}</div>
+      <div className="mt-2 text-[28px] font-semibold leading-none text-primary">
         {value}
       </div>
-      <div className="mt-1 text-zinc-500 font-semibold text-sm">{subtitle}</div>
+      <div className="mt-2 text-sm font-semibold text-zinc-400">{subtitle}</div>
     </div>
   );
 }
@@ -31,29 +45,28 @@ function StatusBadge({ status }) {
   }
 
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-bold ${cls}`}>
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${cls}`}>
       {status || "Unknown"}
     </span>
   );
 }
 
-
 export default function FinanceDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const basePath = location.pathname.startsWith("/app/admin/finance") ? "/app/admin/finance" : "/app/finance";
+  const basePath = location.pathname.startsWith("/app/admin/finance")
+    ? "/app/admin/finance"
+    : "/app/finance";
   const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
   const [tablePage, setTablePage] = useState(1);
   const tablePageSize = 10;
 
-
   async function load() {
     try {
       setErr("");
       setLoading(true);
-
       const unique = await fetchFinanceCollection();
       setJobs(unique);
     } catch (e) {
@@ -67,30 +80,28 @@ export default function FinanceDashboard() {
     load();
   }, []);
 
-
-
   const summary = useMemo(() => {
     const deliveredLike = jobs.filter(
-      (j) => j.status === "READY_FOR_DELIVERY" || j.status === "DELIVERED",
+      (job) => job.status === "READY_FOR_DELIVERY" || job.status === "DELIVERED",
     );
 
-    const monthRevenue = deliveredLike.reduce((sum, j) => {
-      const paid = getAmount(j, ["paid", "paidAmount", "amountPaid"], 0);
-      const total = getAmount(j, ["total", "totalAmount", "grandTotal"], 0);
+    const monthRevenue = deliveredLike.reduce((sum, job) => {
+      const paid = getAmount(job, ["paid", "paidAmount", "amountPaid"], 0);
+      const total = getAmount(job, ["total", "totalAmount", "grandTotal"], 0);
       return sum + (paid || total || 0);
     }, 0);
 
-    const monthExpenses = jobs.reduce((sum, j) => {
-      const expense = getAmount(j, ["expense", "expenseTotal", "cost"], 0);
+    const monthExpenses = jobs.reduce((sum, job) => {
+      const expense = getAmount(job, ["expense", "expenseTotal", "cost"], 0);
       return sum + expense;
     }, 0);
 
-    const customerCredit = jobs.reduce((sum, j) => {
-      const total = getAmount(j, ["total", "totalAmount", "grandTotal"], 0);
-      const paid = getAmount(j, ["paid", "paidAmount", "amountPaid"], 0);
+    const customerCredit = jobs.reduce((sum, job) => {
+      const total = getAmount(job, ["total", "totalAmount", "grandTotal"], 0);
+      const paid = getAmount(job, ["paid", "paidAmount", "amountPaid"], 0);
       const balance =
-        j.balance !== undefined && j.balance !== null
-          ? Number(j.balance || 0)
+        job.balance !== undefined && job.balance !== null
+          ? Number(job.balance || 0)
           : Math.max(total - paid, 0);
 
       return sum + balance;
@@ -109,167 +120,135 @@ export default function FinanceDashboard() {
   }, [jobs]);
 
   const invoiceRows = useMemo(() => toInvoiceRows(jobs), [jobs]);
-
   const tableTotalPages = Math.max(1, Math.ceil(invoiceRows.length / tablePageSize));
   const tablePageSafe = Math.min(tablePage, tableTotalPages);
-  const pagedInvoiceRows = useMemo(() => {
-    return invoiceRows.slice(
-      (tablePageSafe - 1) * tablePageSize,
-      tablePageSafe * tablePageSize,
-    );
-  }, [invoiceRows, tablePageSafe]);
+  const pagedInvoiceRows = useMemo(
+    () =>
+      invoiceRows.slice(
+        (tablePageSafe - 1) * tablePageSize,
+        tablePageSafe * tablePageSize,
+      ),
+    [invoiceRows, tablePageSafe],
+  );
 
   return (
     <div className="grid gap-5">
-            {err && (
-              <div className="text-red-600 font-semibold text-sm">{err}</div>
-            )}
+      {err ? <div className="text-sm font-semibold text-red-600">{err}</div> : null}
 
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <FinanceStatCard
-                title="Monthly Revenue"
-                value={money(summary.monthRevenue)}
-                subtitle="payment received"
-                onClick={() => navigate(`${basePath}/revenue/overview`)}
-              />
-              <FinanceStatCard
-                title="Monthly Expenses"
-                value={money(summary.monthExpenses)}
-                subtitle="tracked from job costs"
-                onClick={() => navigate(`${basePath}/expenses/overview`)}
-              />
-              <FinanceStatCard
-                title="Customer credit"
-                value={money(summary.customerCredit)}
-                subtitle="unpaid balance"
-                onClick={() => navigate(`${basePath}/revenue/invoice`)}
-              />
-              <FinanceStatCard
-                title="Monthly Net income"
-                value={money(summary.monthNetIncome)}
-                subtitle="revenue minus cost"
-                onClick={() => navigate(`${basePath}/revenue/overview`)}
-              />
-            </div>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <FinanceStatCard
+          title="Monthly Revenue"
+          value={money(summary.monthRevenue)}
+          subtitle="Payment received"
+          onClick={() => navigate(`${basePath}/revenue/overview`)}
+        />
+        <FinanceStatCard
+          title="Monthly Expenses"
+          value={money(summary.monthExpenses)}
+          subtitle="Tracked from job costs"
+          onClick={() => navigate(`${basePath}/expenses/overview`)}
+        />
+        <FinanceStatCard
+          title="Customer Credit"
+          value={money(summary.customerCredit)}
+          subtitle="Unpaid balance"
+          onClick={() => navigate(`${basePath}/revenue/invoice`)}
+        />
+        <FinanceStatCard
+          title="Monthly Net Income"
+          value={money(summary.monthNetIncome)}
+          subtitle="Revenue minus cost"
+          onClick={() => navigate(`${basePath}/revenue/overview`)}
+        />
+      </div>
 
-            <div className="bg-white border border-zinc-200 rounded-[24px] p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/10">
-              <div className="grid grid-cols-[1fr_230px] gap-6 items-start">
-                <div>
-                  <h2 className="text-primary text-[28px] font-extrabold leading-none">
-                    Invoices & jobs
-                  </h2>
-                  <p className="mt-1 text-zinc-500 font-semibold text-sm">
-                    Finance-only view tab.
-                  </p>
-
-                  <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-100">
-                    <table className="w-full text-sm">
-                      <thead className="bg-zinc-50 text-zinc-900">
-                        <tr className="text-left">
-                          <th className="px-4 py-3 font-extrabold">Invoices</th>
-                          <th className="px-4 py-3 font-extrabold">JobID</th>
-                          <th className="px-4 py-3 font-extrabold">Customer</th>
-                          <th className="px-4 py-3 font-extrabold">Total</th>
-                          <th className="px-4 py-3 font-extrabold">Paid</th>
-                          <th className="px-4 py-3 font-extrabold">Balance</th>
-                          <th className="px-4 py-3 font-extrabold">Status</th>
-                        </tr>
-                      </thead>
-
-                      <tbody className="bg-white">
-                        {loading ? (
-                          <tr>
-                            <td
-                              colSpan="7"
-                              className="px-4 py-6 text-zinc-500 font-semibold"
-                            >
-                              Loading finance data...
-                            </td>
-                          </tr>
-                        ) : invoiceRows.length === 0 ? (
-                          <tr>
-                            <td
-                              colSpan="7"
-                              className="px-4 py-6 text-zinc-500 font-semibold"
-                            >
-                              No invoice data found.
-                            </td>
-                          </tr>
-                        ) : (
-                          pagedInvoiceRows.map((row) => (
-                            <tr
-                              key={row.id}
-                              className="border-t border-zinc-100 hover:bg-zinc-50/70 transition-colors"
-                            >
-                              <td className="px-4 py-3 font-medium text-zinc-800">
-                                {row.invoiceNo}
-                              </td>
-                              <td className="px-4 py-3 font-medium text-zinc-800">
-                                {row.jobId}
-                              </td>
-                              <td className="px-4 py-3 font-medium text-zinc-800">
-                                {row.customerName}
-                              </td>
-                              <td className="px-4 py-3 font-medium text-zinc-800">
-                                {Number(row.total || 0).toLocaleString()}
-                              </td>
-                              <td className="px-4 py-3 font-medium text-zinc-800">
-                                {Number(row.paid || 0).toLocaleString()}
-                              </td>
-                              <td className="px-4 py-3 font-medium text-zinc-800">
-                                {Number(row.balance || 0).toLocaleString()}
-                              </td>
-                              <td className="px-4 py-3">
-                                <StatusBadge status={row.status} />
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="mt-5 flex gap-3">
-                    <Link
-                      to="/app/finance/revenue/overview"
-                      className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-zinc-50 transition"
-                    >
-                      Revenue Page
-                    </Link>
-
-                    <Link
-                      to="/app/finance/jobs/waiting"
-                      className="px-5 py-3 rounded-2xl bg-primary text-white font-extrabold hover:opacity-90 transition"
-                    >
-                      Waiting Approval
-                    </Link>
-
-                    <Link
-                      to="/app/finance/jobs/done"
-                      className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-zinc-50 transition"
-                    >
-                      Done Tracking
-                    </Link>
-
-                    <Link
-                      to="/app/finance/expenses/report"
-                      className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-zinc-50 transition"
-                    >
-                      Expense Report
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="pt-[52px]">
-                  <SideAmountCard
-                    title="Paid This Month"
-                    value={money(summary.paidThisMonth)}
-                    subtitle="Cash Received"
-                  />
-                </div>
-                <Pagination page={tablePageSafe} totalPages={tableTotalPages} onChange={setTablePage} />
+      <div className={rolePageCardClass}>
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className={roleTitleClass}>Invoices & Jobs</h2>
+                <p className={roleSubtitleClass}>
+                  Finance-only summary with cleaner spacing and tighter table alignment.
+                </p>
               </div>
+              <button onClick={load} className={roleActionClass("neutral")}>
+                Refresh
+              </button>
             </div>
+
+            <div className={roleTableWrapClass}>
+              <table className={roleTableClass}>
+                <thead className={roleTheadClass}>
+                  <tr>
+                    <th className={`${roleThClass} w-[150px]`}>Invoice</th>
+                    <th className={`${roleThClass} w-[120px]`}>JobID</th>
+                    <th className={`${roleThClass} w-[210px]`}>Customer</th>
+                    <th className={`${roleThClass} w-[140px]`}>Total</th>
+                    <th className={`${roleThClass} w-[140px]`}>Paid</th>
+                    <th className={`${roleThClass} w-[140px]`}>Balance</th>
+                    <th className={roleThClass}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="px-4 py-6 text-sm font-semibold text-zinc-500">
+                        Loading finance data...
+                      </td>
+                    </tr>
+                  ) : invoiceRows.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="px-4 py-6 text-sm font-semibold text-zinc-500">
+                        No invoice data found.
+                      </td>
+                    </tr>
+                  ) : (
+                    pagedInvoiceRows.map((row) => (
+                      <tr key={row.id} className="border-t border-zinc-200 transition-colors hover:bg-zinc-50">
+                        <td className={roleTdClass}>{row.invoiceNo}</td>
+                        <td className={`${roleTdClass} text-primary`}>{row.jobId}</td>
+                        <td className={`${roleTdClass} truncate`}>{row.customerName}</td>
+                        <td className={roleTdClass}>{Number(row.total || 0).toLocaleString()}</td>
+                        <td className={roleTdClass}>{Number(row.paid || 0).toLocaleString()}</td>
+                        <td className={roleTdClass}>{Number(row.balance || 0).toLocaleString()}</td>
+                        <td className={roleTdClass}>
+                          <StatusBadge status={row.status} />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link to={`${basePath}/revenue/overview`} className={roleActionClass("outline")}>
+                Revenue Page
+              </Link>
+              <Link to={`${basePath}/jobs/waiting`} className={roleActionClass("primary")}>
+                Waiting Approval
+              </Link>
+              <Link to={`${basePath}/jobs/done`} className={roleActionClass("outline")}>
+                Done Tracking
+              </Link>
+              <Link to={`${basePath}/expenses/report`} className={roleActionClass("outline")}>
+                Expense Report
+              </Link>
+            </div>
+          </div>
+
+          <div className="min-w-0 xl:pt-8">
+            <SideAmountCard
+              title="Paid This Month"
+              value={money(summary.paidThisMonth)}
+              subtitle="Cash received"
+            />
+          </div>
+        </div>
+
+        <Pagination page={tablePageSafe} totalPages={tableTotalPages} onChange={setTablePage} />
+      </div>
     </div>
   );
 }

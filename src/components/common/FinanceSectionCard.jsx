@@ -1,10 +1,14 @@
 export default function FinanceSectionCard({ title, subtitle, action, className = "", children }) {
   return (
-    <div className={`bg-white border border-zinc-200 rounded-[24px] p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/10 ${className}`.trim()}>
+    <div
+      className={`rounded-[24px] border border-zinc-200 bg-white p-5 sm:p-6 shadow-sm transition-all duration-300 hover:border-primary/15 hover:shadow-md ${className}`.trim()}
+    >
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-primary text-[30px] font-extrabold leading-none">{title}</h2>
-          {subtitle ? <p className="mt-1 text-zinc-500 font-semibold text-sm">{subtitle}</p> : null}
+          <h2 className="text-[26px] font-semibold leading-none text-primary">{title}</h2>
+          {subtitle ? (
+            <p className="mt-1 text-sm font-semibold text-zinc-500">{subtitle}</p>
+          ) : null}
         </div>
         {action ? <div>{action}</div> : null}
       </div>

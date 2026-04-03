@@ -1,42 +1,35 @@
 import { Link } from "react-router-dom";
 import NotificationsPanel from "../../../components/app/NotificationsPanel";
+import {
+  roleActionClass,
+  rolePageCardClass,
+  roleSubtitleClass,
+  roleTitleClass,
+} from "../../../components/common/rolePageUi";
 
 export default function OperatorDashboard() {
   return (
-    <div className="grid gap-4">
-      <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-        <h2 className="text-2xl font-extrabold text-primary">
-          Operator Dashboard
-        </h2>
-        <p className="mt-2 text-zinc-700">
-          Only CS-approved production jobs appear in New Requests.
-        </p>
+    <div className="grid gap-5">
+      <div className={rolePageCardClass}>
+        <div className="max-w-3xl">
+          <h2 className={roleTitleClass}>Operator Dashboard</h2>
+          <p className={roleSubtitleClass}>
+            Handle only approved production work, keep progress updates tight, and push completed jobs back to CS fast.
+          </p>
+        </div>
 
-        <div className="mt-5 flex gap-3 flex-wrap">
-          <Link
-            to="/app/operator-requests"
-            className="px-5 py-3 rounded-2xl bg-primary text-white font-extrabold hover:opacity-90 transition"
-          >
-            New Requests
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link to="/app/operator/queue" className={roleActionClass("primary")}>
+            Queue
           </Link>
-          {/* <Link
-            to="/app/in-production"
-            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-bgLight transition"
-          >
+          <Link to="/app/operator/in-production" className={roleActionClass("outline")}>
             In Production
-          </Link> */}
-
-          {/* <Link
-            to="/app/operator-requiest"
-            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-bgLight transition"
-          >
-            Operator In Request
-          </Link> */}
-          <Link
-            to="/app/operator-in-production"
-            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-extrabold hover:bg-bgLight transition"
-          >
-            Operator in Production
+          </Link>
+          <Link to="/app/operator/completed" className={roleActionClass("outline")}>
+            Completed
+          </Link>
+          <Link to="/app/operator/audit" className={roleActionClass("outline")}>
+            Audit
           </Link>
         </div>
       </div>

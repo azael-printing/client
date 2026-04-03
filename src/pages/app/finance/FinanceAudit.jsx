@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
-import FinanceSectionCard from "../../../components/common/FinanceSectionCard";
-import FinanceTableShell from "../../../components/common/FinanceTableShell";
+import {
+  roleActionClass,
+  rolePageCardClass,
+  roleTableClass,
+  roleTableWrapClass,
+  roleTdClass,
+  roleThClass,
+  roleTheadClass,
+  roleTitleClass,
+} from "../../../components/common/rolePageUi";
 import { http } from "../../api/http";
 import { formatJobId } from "../../../utils/jobFormatting";
 import { exportTableToPdf } from "../../../utils/exportPdf";
@@ -31,7 +39,9 @@ export default function FinanceAudit() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   function exportPdf() {
     exportTableToPdf({
@@ -53,37 +63,68 @@ export default function FinanceAudit() {
   const slice = rows.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
 
   return (
-    <FinanceSectionCard
-      title="History Log"
-      action={<div className="flex items-center gap-3"><button onClick={exportPdf} className="px-3 py-2 rounded-xl bg-primary text-white font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Export PDF</button><button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button></div>}
-    >
-      {err && <div className="mt-3 text-zinc-600 font-bold">{err}</div>}
-      <FinanceTableShell
-        minWidth={1160}
-        rowCount={slice.length}
-        emptyText="No records."
-        headers={[
-          { key: "time", label: "Time" },
-          { key: "job", label: "Job" },
-          { key: "actor", label: "Actor" },
-          { key: "action", label: "Action" },
-          { key: "status", label: "From → To" },
-          { key: "note", label: "Note" },
-        ]}
-        colSpan={6}
-      >
-        {slice.map((r, index) => (
-          <tr key={r.id} className="border-t border-zinc-200 hover:bg-zinc-50 transition-colors">
-            <td className="py-3 px-4 whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
-            <td className="py-3 px-4 font-bold text-primary whitespace-nowrap">{displayEntryId(r, index, (pageSafe - 1) * pageSize)}</td>
-            <td className="py-3 px-4">{r.actorRole || "-"}</td>
-            <td className="py-3 px-4 font-bold whitespace-nowrap">{r.action}</td>
-            <td className="py-3 px-4">{r.fromStatus || "-"} → {r.toStatus || "-"}</td>
-            <td className="py-3 px-4">{r.note || "-"}</td>
-          </tr>
-        ))}
-      </FinanceTableShell>
+    <div className={rolePageCardClass}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className={roleTitleClass}>History Log</h2>
+          <p className="mt-1 text-sm font-semibold text-zinc-500">
+            Uniform table spacing and export controls for finance-side history.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={exportPdf} className={roleActionClass("primary")}>
+            Export PDF
+          </button>
+          <button onClick={load} className={roleActionClass("neutral")}>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {err ? <div className="mt-3 text-sm font-semibold text-red-600">{err}</div> : null}
+
+      <div className={roleTableWrapClass}>
+        <table className={roleTableClass}>
+          <thead className={roleTheadClass}>
+            <tr>
+              <th className={`${roleThClass} w-[210px]`}>Time</th>
+              <th className={`${roleThClass} w-[120px]`}>Job</th>
+              <th className={`${roleThClass} w-[140px]`}>Actor</th>
+              <th className={`${roleThClass} w-[220px]`}>Action</th>
+              <th className={roleThClass}>From → To</th>
+              <th className={roleThClass}>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {slice.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-6 text-sm font-semibold text-zinc-500">
+                  No records.
+                </td>
+              </tr>
+            ) : (
+              slice.map((row, index) => (
+                <tr key={row.id} className="border-t border-zinc-200 transition-colors hover:bg-zinc-50">
+                  <td className={roleTdClass}>{new Date(row.createdAt).toLocaleString()}</td>
+                  <td className={`${roleTdClass} text-primary`}>
+                    {displayEntryId(row, index, (pageSafe - 1) * pageSize)}
+                  </td>
+                  <td className={roleTdClass}>{row.actorRole || "-"}</td>
+                  <td className={`${roleTdClass} font-semibold text-zinc-900`}>
+                    {row.action || "-"}
+                  </td>
+                  <td className={roleTdClass}>
+                    {row.fromStatus || "-"} → {row.toStatus || "-"}
+                  </td>
+                  <td className={roleTdClass}>{row.note || "-"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
       <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
-    </FinanceSectionCard>
+    </div>
   );
 }

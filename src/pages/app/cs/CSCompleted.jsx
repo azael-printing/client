@@ -2,6 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
 import { http } from "../../api/http";
+import {
+  roleActionClass,
+  rolePageCardClass,
+  roleTableClass,
+  roleTableWrapClass,
+  roleTdClass,
+  roleThClass,
+  roleTheadClass,
+  roleTitleClass,
+} from "../../../components/common/rolePageUi";
 import { formatJobId } from "../../../utils/jobFormatting";
 import { csWorkflow, listJobsByStatus } from "../../api/cs.api";
 
@@ -29,10 +39,13 @@ export default function CSCompleted() {
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load completed jobs");
       setApprovedIds([]);
+      setJobs([]);
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function markDelivered(jobId) {
     try {
@@ -50,10 +63,81 @@ export default function CSCompleted() {
   const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
-      <div className="flex items-center justify-between"><h2 className="text-2xl font-bold text-primary">Completed</h2><button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button></div>
-      {err && <div className="mt-3 text-red-600 font-bold">{err}</div>}
-      <div className="mt-4 overflow-auto rounded-2xl border border-zinc-200"><table className="min-w-[1080px] w-full table-fixed text-sm"><thead className="text-left text-zinc-500 bg-bgLight"><tr><th className="py-3 px-4 w-[110px] whitespace-nowrap">Job#</th><th className="py-3 px-4 w-[180px] whitespace-nowrap">Customer</th><th className="py-3 px-4 w-[160px] whitespace-nowrap">Work</th><th className="py-3 px-4 w-[180px] whitespace-nowrap">Status</th><th className="py-3 px-4 whitespace-nowrap">Action</th></tr></thead><tbody>{slice.map((j)=>{const isApproved=approvedSet.has(j.id); return <tr key={j.id} className="border-t border-zinc-200 hover:bg-zinc-50 transition-colors"><td className="py-3 px-4 font-bold text-primary whitespace-nowrap">{formatJobId(j.jobNo)}</td><td className="py-3 px-4 whitespace-nowrap truncate">{j.customerName}</td><td className="py-3 px-4 whitespace-nowrap truncate">{j.workType}</td><td className="py-3 px-4 font-bold whitespace-nowrap">{j.status === "DELIVERED" ? "DELIVERED" : isApproved ? "DELIVERY APPROVED" : j.status}</td><td className="py-3 px-4 whitespace-nowrap">{j.status === "READY_FOR_DELIVERY" && isApproved ? <button onClick={() => markDelivered(j.id)} className="inline-flex items-center justify-center min-w-[120px] px-3 py-2 rounded-xl bg-success text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Delivered</button> : j.status === "DELIVERED" ? <span className="inline-flex items-center justify-center min-w-[120px] px-3 py-2 rounded-xl bg-green-100 text-green-700 font-semibold">Delivered</span> : <span className="inline-flex items-center justify-center min-w-[120px] px-3 py-2 rounded-xl bg-bgLight text-zinc-600 font-semibold">Waiting finance</span>}</td></tr>})}{slice.length===0&&<tr><td colSpan={5} className="py-4 px-3 text-zinc-500">No completed jobs.</td></tr>}</tbody></table></div>
+    <div className={rolePageCardClass}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className={roleTitleClass}>Completed</h2>
+          <p className="mt-1 text-sm font-semibold text-zinc-500">
+            Delivery-ready and delivered jobs, with cleaner approval visibility.
+          </p>
+        </div>
+        <button onClick={load} className={roleActionClass("neutral")}>
+          Refresh
+        </button>
+      </div>
+
+      {err ? <div className="mt-3 text-sm font-semibold text-red-600">{err}</div> : null}
+
+      <div className={roleTableWrapClass}>
+        <table className={roleTableClass}>
+          <thead className={roleTheadClass}>
+            <tr>
+              <th className={`${roleThClass} w-[110px]`}>Job#</th>
+              <th className={`${roleThClass} w-[180px]`}>Customer</th>
+              <th className={`${roleThClass} w-[160px]`}>Work</th>
+              <th className={`${roleThClass} w-[180px]`}>Status</th>
+              <th className={roleThClass}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {slice.map((job) => {
+              const isApproved = approvedSet.has(job.id);
+              return (
+                <tr key={job.id} className="border-t border-zinc-200 transition-colors hover:bg-zinc-50">
+                  <td className={`${roleTdClass} font-semibold text-primary`}>
+                    {formatJobId(job.jobNo)}
+                  </td>
+                  <td className={`${roleTdClass} truncate`}>{job.customerName}</td>
+                  <td className={`${roleTdClass} truncate`}>{job.workType}</td>
+                  <td className={`${roleTdClass} font-semibold`}>
+                    {job.status === "DELIVERED"
+                      ? "DELIVERED"
+                      : isApproved
+                        ? "DELIVERY APPROVED"
+                        : job.status}
+                  </td>
+                  <td className={roleTdClass}>
+                    {job.status === "READY_FOR_DELIVERY" && isApproved ? (
+                      <button
+                        onClick={() => markDelivered(job.id)}
+                        className={roleActionClass("primary")}
+                      >
+                        Delivered
+                      </button>
+                    ) : job.status === "DELIVERED" ? (
+                      <span className="inline-flex min-w-[132px] items-center justify-center rounded-xl bg-green-100 px-4 py-2.5 text-[13px] font-semibold text-green-700">
+                        Delivered
+                      </span>
+                    ) : (
+                      <span className="inline-flex min-w-[132px] items-center justify-center rounded-xl bg-bgLight px-4 py-2.5 text-[13px] font-semibold text-zinc-600">
+                        Waiting finance
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            {slice.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-sm font-semibold text-zinc-500">
+                  No completed jobs.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
       <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
     </div>
   );

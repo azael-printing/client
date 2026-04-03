@@ -3,11 +3,13 @@ export default function FinanceStatCard({ title, value, subtitle, onClick }) {
   return (
     <Tag
       onClick={onClick}
-      className="w-full text-left bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/20"
+      className="w-full rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-lg"
     >
-      <div className="text-zinc-900 font-extrabold text-[16px] leading-tight">{title}</div>
-      <div className="mt-2 text-primary font-extrabold text-[30px] leading-none tracking-tight">{value}</div>
-      <div className="mt-2 text-zinc-500 font-semibold text-sm">{subtitle}</div>
+      <div className="text-[13px] font-semibold text-zinc-500">{title}</div>
+      <div className="mt-2 text-[28px] font-semibold leading-none text-primary">
+        {value}
+      </div>
+      <div className="mt-2 text-sm font-semibold text-zinc-400">{subtitle}</div>
     </Tag>
   );
 }

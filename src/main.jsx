@@ -92,6 +92,14 @@ function RoleJobsRedirect() {
   return <Navigate to="/" replace />;
 }
 
+function RoleCreateOrderRedirect() {
+  const { user } = useAuth();
+  const role = String(user?.role || "").toUpperCase();
+  if (role === "ADMIN") return <Navigate to="/app/admin/create-order" replace />;
+  if (role === "CS") return <Navigate to="/app/cs/create-order" replace />;
+  return <Navigate to="/app/cs/create-order" replace />;
+}
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -144,7 +152,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   <Route path="expenses/register" element={<FinanceRegisterExpense />} />
                   <Route path="expenses/report" element={<FinanceExpensesDashboard />} />
                   <Route path="jobs" element={<Navigate to="/app/admin/finance/jobs/list" replace />} />
-                  <Route path="jobs/list" element={<FinanceJobs />} />
+                  <Route path="jobs/list" element={<JobsList />} />
                   <Route path="jobs/waiting" element={<FinanceWaiting />} />
                   <Route path="jobs/done" element={<FinanceDoneTracking />} />
                   <Route path="history" element={<FinanceAudit />} />
@@ -228,12 +236,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="expenses/register" element={<FinanceRegisterExpense />} />
                 <Route path="expenses/report" element={<FinanceExpensesDashboard />} />
                 <Route path="jobs" element={<Navigate to="/app/finance/jobs/list" replace />} />
-                <Route path="jobs/list" element={<FinanceJobs />} />
+                <Route path="jobs/list" element={<JobsList />} />
                 <Route path="jobs/waiting" element={<FinanceWaiting />} />
                 <Route path="jobs/done" element={<FinanceDoneTracking />} />
                 <Route path="history" element={<FinanceAudit />} />
                 <Route path="audit" element={<Navigate to="/app/finance/history" replace />} />
               </Route>
+              <Route path="create-order" element={<RoleCreateOrderRedirect />} />
+              <Route path="cs-new-requests" element={<Navigate to="/app/cs/new" replace />} />
+              <Route path="cs-design-completed" element={<Navigate to="/app/cs/design" replace />} />
+              <Route path="cs-in-production" element={<Navigate to="/app/cs/production" replace />} />
+              <Route path="cs-production-completed" element={<Navigate to="/app/cs/completed" replace />} />
+              <Route path="designer-assigned" element={<Navigate to="/app/designer/queue" replace />} />
+              <Route path="designer-in-design" element={<Navigate to="/app/designer/in-design" replace />} />
+              <Route path="operator-requests" element={<Navigate to="/app/operator/queue" replace />} />
+              <Route path="operator-in-production" element={<Navigate to="/app/operator/in-production" replace />} />
+              <Route path="in-production" element={<Navigate to="/app/operator/in-production" replace />} />
               <Route path="jobs" element={<RoleJobsRedirect />} />
 
               {/* ==== */}

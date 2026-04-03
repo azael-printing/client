@@ -1,51 +1,38 @@
 import { Link } from "react-router-dom";
 import NotificationsPanel from "../../../components/app/NotificationsPanel";
+import {
+  roleActionClass,
+  rolePageCardClass,
+  roleSubtitleClass,
+  roleTitleClass,
+} from "../../../components/common/rolePageUi";
 
 export default function CSDashboard() {
   return (
-    <div className="grid gap-4">
-      <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
-        <h2 className="text-2xl font-bold text-primary">
-          Customer Service Dashboard
-        </h2>
-        <p className="mt-2 text-zinc-700">
-          Approve jobs and control the handoff between design and production.
-        </p>
+    <div className="grid gap-5">
+      <div className={rolePageCardClass}>
+        <div className="max-w-3xl">
+          <h2 className={roleTitleClass}>Customer Service Dashboard</h2>
+          <p className={roleSubtitleClass}>
+            Control the full handoff from quotation to design, production, and delivery.
+          </p>
+        </div>
 
-        <div className="mt-5 flex gap-3 flex-wrap">
-          <Link
-            to="/app/create-order"
-            className="px-5 py-3 rounded-2xl bg-primary text-white font-bold hover:opacity-90 transition"
-          >
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link to="/app/cs/create-order" className={roleActionClass("primary")}>
             + Create Order
           </Link>
-
-          <Link
-            to="/app/cs-new-requests"
-            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-bold hover:bg-bgLight transition"
-          >
+          <Link to="/app/cs/new" className={roleActionClass("outline")}>
             New Requests
           </Link>
-
-          <Link
-            to="/app/cs-design-completed"
-            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-bold hover:bg-bgLight transition"
-          >
-            Design Completed
+          <Link to="/app/cs/design" className={roleActionClass("outline")}>
+            In Design
           </Link>
-
-          <Link
-            to="/app/cs-in-production"
-            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-bold hover:bg-bgLight transition"
-          >
+          <Link to="/app/cs/production" className={roleActionClass("outline")}>
             In Production
           </Link>
-
-          <Link
-            to="/app/cs-production-completed"
-            className="px-5 py-3 rounded-2xl bg-white border border-zinc-200 text-primary font-bold hover:bg-bgLight transition"
-          >
-            Production Completed
+          <Link to="/app/cs/completed" className={roleActionClass("outline")}>
+            Completed
           </Link>
         </div>
       </div>

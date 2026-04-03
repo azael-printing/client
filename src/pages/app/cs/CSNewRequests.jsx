@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import {
+  roleActionClass,
+  rolePageCardClass,
+  roleTableClass,
+  roleTableWrapClass,
+  roleTdClass,
+  roleThClass,
+  roleTheadClass,
+  roleTitleClass,
+} from "../../../components/common/rolePageUi";
 import { formatJobId } from "../../../utils/jobFormatting";
 import { csWorkflow, listJobsByStatus } from "../../api/cs.api";
 
@@ -14,22 +24,40 @@ export default function CSNewRequests() {
   async function load() {
     try {
       setErr("");
-      const a = await listJobsByStatus("NEW_REQUEST");
-      const b = await listJobsByStatus("FINANCE_WAITING_APPROVAL");
-      const c = await listJobsByStatus("FINANCE_APPROVED");
+      const [a, b, c] = await Promise.all([
+        listJobsByStatus("NEW_REQUEST"),
+        listJobsByStatus("FINANCE_WAITING_APPROVAL"),
+        listJobsByStatus("FINANCE_APPROVED"),
+      ]);
       setJobs([...a, ...b, ...c].sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt)));
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load new requests");
+      setJobs([]);
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function sendDesigner(jobId) {
-    try { await csWorkflow(jobId, "CS_SEND_TO_DESIGNER"); dialog.toast("Sent to designer", "success"); load(); } catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); }
+    try {
+      await csWorkflow(jobId, "CS_SEND_TO_DESIGNER");
+      dialog.toast("Sent to designer", "success");
+      load();
+    } catch (e) {
+      dialog.toast(e?.response?.data?.message || "Failed", "error");
+    }
   }
+
   async function sendOperator(jobId) {
-    try { await csWorkflow(jobId, "CS_SEND_TO_OPERATOR"); dialog.toast("Sent to operator", "success"); load(); } catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); }
+    try {
+      await csWorkflow(jobId, "CS_SEND_TO_OPERATOR");
+      dialog.toast("Sent to operator", "success");
+      load();
+    } catch (e) {
+      dialog.toast(e?.response?.data?.message || "Failed", "error");
+    }
   }
 
   const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize));
@@ -37,10 +65,75 @@ export default function CSNewRequests() {
   const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
-      <div className="flex items-center justify-between"><h2 className="text-2xl font-extrabold text-primary">New Requests</h2><button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button></div>
-      {err && <div className="mt-3 text-red-600 font-bold">{err}</div>}
-      <div className="mt-4 overflow-auto rounded-2xl border border-zinc-200"><table className="min-w-full text-sm"><thead className="text-left text-zinc-500 bg-bgLight"><tr><th className="py-2 px-3">Job#</th><th className="py-2 px-3">Customer</th><th className="py-2 px-3">Work</th><th className="py-2 px-3">Status</th><th className="py-2 px-3">Actions</th></tr></thead><tbody>{slice.map((j)=><tr key={j.id} className="border-t border-zinc-200 hover:bg-zinc-50 transition-colors"><td className="py-2 px-3 font-extrabold text-primary">{formatJobId(j.jobNo)}</td><td className="py-2 px-3">{j.customerName}</td><td className="py-2 px-3">{j.workType}</td><td className="py-2 px-3 font-bold">{j.status}</td><td className="py-2 px-3 flex gap-2 flex-wrap">{j.status === 'FINANCE_APPROVED' && j.designerRequired && <button onClick={()=>sendDesigner(j.id)} className="px-3 py-2 rounded-xl bg-primary text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Send Designer</button>}{((j.status === 'FINANCE_APPROVED' && !j.designerRequired) || j.status === 'DESIGN_DONE') && <button onClick={()=>sendOperator(j.id)} className="px-3 py-2 rounded-xl bg-success text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Send Operator</button>}</td></tr>)}{slice.length===0&&<tr><td colSpan={5} className="py-4 px-3 text-zinc-500">No new requests.</td></tr>}</tbody></table></div>
+    <div className={rolePageCardClass}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className={roleTitleClass}>New Requests</h2>
+          <p className="mt-1 text-sm font-semibold text-zinc-500">
+            Finance-cleared work waiting for the next handoff.
+          </p>
+        </div>
+        <button onClick={load} className={roleActionClass("neutral")}>
+          Refresh
+        </button>
+      </div>
+
+      {err ? <div className="mt-3 text-sm font-semibold text-red-600">{err}</div> : null}
+
+      <div className={roleTableWrapClass}>
+        <table className={roleTableClass}>
+          <thead className={roleTheadClass}>
+            <tr>
+              <th className={`${roleThClass} w-[110px]`}>Job#</th>
+              <th className={`${roleThClass} w-[200px]`}>Customer</th>
+              <th className={`${roleThClass} w-[200px]`}>Work</th>
+              <th className={`${roleThClass} w-[180px]`}>Status</th>
+              <th className={roleThClass}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {slice.map((job) => (
+              <tr key={job.id} className="border-t border-zinc-200 transition-colors hover:bg-zinc-50">
+                <td className={`${roleTdClass} font-semibold text-primary`}>
+                  {formatJobId(job.jobNo)}
+                </td>
+                <td className={`${roleTdClass} truncate`}>{job.customerName}</td>
+                <td className={`${roleTdClass} truncate`}>{job.workType}</td>
+                <td className={`${roleTdClass} font-semibold`}>{job.status}</td>
+                <td className={roleTdClass}>
+                  <div className="flex flex-wrap gap-2">
+                    {job.status === "FINANCE_APPROVED" && job.designerRequired ? (
+                      <button
+                        onClick={() => sendDesigner(job.id)}
+                        className={roleActionClass("primary")}
+                      >
+                        Send Designer
+                      </button>
+                    ) : null}
+                    {((job.status === "FINANCE_APPROVED" && !job.designerRequired) ||
+                      job.status === "DESIGN_DONE") ? (
+                      <button
+                        onClick={() => sendOperator(job.id)}
+                        className={roleActionClass("primary")}
+                      >
+                        Send Operator
+                      </button>
+                    ) : null}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {slice.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-sm font-semibold text-zinc-500">
+                  No new requests.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
       <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
     </div>
   );

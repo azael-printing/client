@@ -3,7 +3,11 @@ import Pagination from "../../../components/common/Pagination";
 import FinanceSectionCard from "../../../components/common/FinanceSectionCard";
 import FinanceSidePanel from "../../../components/common/FinanceSidePanel";
 import FinanceTableShell from "../../../components/common/FinanceTableShell";
-import { financePrimaryBtnClass } from "../../../components/common/financeUi";
+import {
+  financePrimaryBtnClass,
+  financeSecondaryBtnClass,
+} from "../../../components/common/financeUi";
+import { exportRowsToCsv } from "../../../utils/exportCsv";
 import { fetchFinanceCollection, isOlderThan30Days, money, toInvoiceRows } from "./financeShared";
 
 export default function FinanceRevenueOverdue() {
@@ -39,15 +43,35 @@ export default function FinanceRevenueOverdue() {
   const pageRows = rows.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
   const overdueTotal = rows.reduce((sum, row) => sum + Number(row.balance || 0), 0);
 
+  function exportCsv() {
+    exportRowsToCsv(
+      "finance-overdue.csv",
+      ["Invoice", "JobID", "Customer", "Total", "Balance", "Created"],
+      rows.map((row) => [
+        row.invoiceNo,
+        row.displayJobId,
+        row.customerName || "-",
+        row.total || 0,
+        row.balance || 0,
+        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-",
+      ]),
+    );
+  }
+
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <FinanceSectionCard
-        title="Overdue invoices"
+        title="Overdue Invoices"
         subtitle="Invoices older than 30 days with unpaid balance."
         action={
-          <button onClick={load} className={financePrimaryBtnClass}>
-            Refresh
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={load} className={financeSecondaryBtnClass}>
+              Refresh
+            </button>
+            <button onClick={exportCsv} className={financePrimaryBtnClass}>
+              Export CSV
+            </button>
+          </div>
         }
       >
         {err ? <div className="mt-4 text-sm font-semibold text-red-600">{err}</div> : null}
@@ -68,13 +92,13 @@ export default function FinanceRevenueOverdue() {
           colSpan={6}
         >
           {pageRows.map((row) => (
-            <tr key={row.id} className="border-t border-zinc-100 transition-colors hover:bg-zinc-50/70">
-              <td className="whitespace-nowrap px-4 py-3 font-medium text-zinc-800">{row.invoiceNo}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-extrabold text-primary">{row.displayJobId}</td>
-              <td className="truncate px-4 py-3 font-medium text-zinc-800">{row.customerName || "-"}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-medium text-zinc-800">{Number(row.total || 0).toLocaleString()}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-bold text-red-600">{Number(row.balance || 0).toLocaleString()}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-medium text-zinc-800">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}</td>
+            <tr key={row.id} className="border-t border-zinc-200 transition-colors hover:bg-zinc-50">
+              <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-zinc-800">{row.invoiceNo}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-primary">{row.displayJobId}</td>
+              <td className="truncate px-4 py-3 text-sm font-semibold text-zinc-800">{row.customerName || "-"}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-zinc-800">{Number(row.total || 0).toLocaleString()}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-red-600">{Number(row.balance || 0).toLocaleString()}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-zinc-800">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}</td>
             </tr>
           ))}
         </FinanceTableShell>
@@ -82,23 +106,19 @@ export default function FinanceRevenueOverdue() {
         <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
       </FinanceSectionCard>
 
-      <FinanceSidePanel title="Collections Focus" subtitle="Top things finance should hit first.">
+      <FinanceSidePanel title="Collections Focus" subtitle="Hit the oldest money first.">
         <div className="space-y-6 text-[14px] leading-[1.45] text-zinc-900">
           <div>
-            <div className="font-extrabold text-zinc-900">Overdue balance</div>
-            <div className="mt-1 text-[28px] font-extrabold text-primary">{money(overdueTotal)}</div>
+            <div className="font-semibold text-zinc-900">Overdue balance</div>
+            <div className="mt-1 text-[28px] font-semibold text-primary">{money(overdueTotal)}</div>
           </div>
           <div>
-            <div className="font-extrabold text-zinc-900">Overdue jobs</div>
-            <div className="mt-1 text-zinc-700">Call or message customers for invoices older than 30 days. Start with the biggest balance first.</div>
+            <div className="font-semibold text-zinc-900">Big balance first</div>
+            <div className="mt-1 text-zinc-700">Call or message the largest overdue balances before you waste time on tiny accounts.</div>
           </div>
           <div>
-            <div className="font-extrabold text-zinc-900">Telegram / Text reminders</div>
-            <div className="mt-1 text-zinc-700">Send automatic payment reminder templates for Unpaid and Partial jobs and ask for transfer receipts.</div>
-          </div>
-          <div>
-            <div className="font-extrabold text-zinc-900">Daily close check</div>
-            <div className="mt-1 text-zinc-700">Match cash and bank slips with logged payments before the owner sees the final report.</div>
+            <div className="font-semibold text-zinc-900">Reminder proof</div>
+            <div className="mt-1 text-zinc-700">Ask for transfer receipts immediately and match them against the invoice log the same day.</div>
           </div>
         </div>
       </FinanceSidePanel>

@@ -4,26 +4,57 @@ import FinanceSectionCard from "../../../components/common/FinanceSectionCard";
 import FinanceSidePanel from "../../../components/common/FinanceSidePanel";
 import FinanceStatCard from "../../../components/common/FinanceStatCard";
 import FinanceTableShell from "../../../components/common/FinanceTableShell";
-import { financePrimaryBtnClass } from "../../../components/common/financeUi";
-import { fetchFinanceCollection, money, toExpenseRows } from "./financeShared";
+import {
+  financePrimaryBtnClass,
+  financeSecondaryBtnClass,
+} from "../../../components/common/financeUi";
+import { exportRowsToCsv } from "../../../utils/exportCsv";
+import { getExpenseDashboard } from "../../api/finance.api";
+
+function money(value) {
+  return `ETB ${Number(value || 0).toLocaleString()}`;
+}
 
 export default function FinanceExpensesDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const basePath = location.pathname.startsWith("/app/admin/finance") ? "/app/admin/finance" : "/app/finance";
-  const [jobs, setJobs] = useState([]);
+  const basePath = location.pathname.startsWith("/app/admin/finance")
+    ? "/app/admin/finance"
+    : "/app/finance";
+
+  const [rows, setRows] = useState([]);
+  const [summary, setSummary] = useState({
+    totalVariableExpenses: 0,
+    totalFixedExpenses: 0,
+    governmentObligations: 0,
+    grandTotalMonthlyExpense: 0,
+  });
+  const [reminders, setReminders] = useState([]);
+  const [insights, setInsights] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
-
 
   async function load() {
     try {
       setErr("");
       setLoading(true);
-      const unique = await fetchFinanceCollection();
-      setJobs(unique);
+      const data = await getExpenseDashboard();
+      setRows(data?.expenses || []);
+      setSummary(
+        data?.summary || {
+          totalVariableExpenses: 0,
+          totalFixedExpenses: 0,
+          governmentObligations: 0,
+          grandTotalMonthlyExpense: 0,
+        },
+      );
+      setReminders(data?.reminders || []);
+      setInsights(data?.insights || []);
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load expense dashboard");
+      setRows([]);
+      setReminders([]);
+      setInsights([]);
     } finally {
       setLoading(false);
     }
@@ -33,84 +64,135 @@ export default function FinanceExpensesDashboard() {
     load();
   }, []);
 
+  const exportRows = useMemo(
+    () => rows.map((row) => [row.date ? new Date(row.date).toLocaleDateString() : "-", row.category, row.description, row.qty, row.unitPrice, row.total, row.purchasedBy, row.receipt ? "YES" : "NO"]),
+    [rows],
+  );
 
-
-  const expenseRows = useMemo(() => toExpenseRows(jobs), [jobs]);
-
-  const summary = useMemo(() => {
-    const totalVariableExpenses = expenseRows.reduce((sum, row) => sum + Number(row.total || 0), 0);
-    const totalFixedExpenses = 0;
-    const governmentObligations = 0;
-    const grandTotalMonthlyExpense = totalVariableExpenses + totalFixedExpenses + governmentObligations;
-    return { totalVariableExpenses, totalFixedExpenses, governmentObligations, grandTotalMonthlyExpense };
-  }, [expenseRows]);
+  function exportCsv() {
+    exportRowsToCsv(
+      "finance-expenses.csv",
+      ["Date", "Category", "Description", "Qty", "Unit Price", "Total", "Paid By", "Receipt"],
+      exportRows,
+    );
+  }
 
   return (
     <div className="grid gap-5">
-            {err && <div className="text-red-600 font-semibold text-sm">{err}</div>}
+      {err ? <div className="text-sm font-semibold text-red-600">{err}</div> : null}
 
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <FinanceStatCard title="Total Variable Expenses" value={money(summary.totalVariableExpenses)} subtitle="from recorded job costs" onClick={() => navigate(`${basePath}/expenses/report`)} />
-              <FinanceStatCard title="Total Fixed Expenses" value={money(summary.totalFixedExpenses)} subtitle="not connected yet" onClick={() => navigate(`${basePath}/expenses/overview`)} />
-              <FinanceStatCard title="Government Obligations" value={money(summary.governmentObligations)} subtitle="not connected yet" onClick={() => navigate(`${basePath}/expenses/overview`)} />
-              <FinanceStatCard title="Grand Total Monthly Expense" value={money(summary.grandTotalMonthlyExpense)} subtitle="current tracked total" onClick={() => navigate(`${basePath}/expenses/report`)} />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <FinanceStatCard
+          title="Variable Expenses"
+          value={money(summary.totalVariableExpenses)}
+          subtitle="Saved backend expenses"
+          onClick={() => navigate(`${basePath}/expenses/report`)}
+        />
+        <FinanceStatCard
+          title="Fixed Expenses"
+          value={money(summary.totalFixedExpenses)}
+          subtitle="Not connected yet"
+          onClick={() => navigate(`${basePath}/expenses/overview`)}
+        />
+        <FinanceStatCard
+          title="Gov Obligations"
+          value={money(summary.governmentObligations)}
+          subtitle="Not connected yet"
+          onClick={() => navigate(`${basePath}/expenses/overview`)}
+        />
+        <FinanceStatCard
+          title="Monthly Total"
+          value={money(summary.grandTotalMonthlyExpense)}
+          subtitle="Current tracked total"
+          onClick={() => navigate(`${basePath}/expenses/report`)}
+        />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <FinanceSectionCard
+          title="Expense Report"
+          subtitle="Saved expenses from the register form."
+          action={
+            <div className="flex flex-wrap gap-3">
+              <button type="button" onClick={load} className={financeSecondaryBtnClass}>
+                Refresh
+              </button>
+              <button type="button" onClick={exportCsv} className={financePrimaryBtnClass}>
+                Export CSV
+              </button>
             </div>
+          }
+        >
+          <FinanceTableShell
+            minWidth={1040}
+            loading={loading}
+            rowCount={rows.length}
+            emptyText="No saved expenses found yet."
+            headers={[
+              { key: "date", label: "Date", className: "w-[120px]" },
+              { key: "category", label: "Category", className: "w-[120px]" },
+              { key: "description", label: "Description" },
+              { key: "qty", label: "Qty", className: "w-[80px]" },
+              { key: "unitPrice", label: "Unit Price", className: "w-[110px]" },
+              { key: "total", label: "Total", className: "w-[110px]" },
+              { key: "paidBy", label: "Paid By", className: "w-[120px]" },
+              { key: "receipt", label: "Receipt", className: "w-[100px]" },
+            ]}
+            colSpan={8}
+          >
+            {rows.map((row) => (
+              <tr key={row.id} className="border-t border-zinc-200 transition-colors hover:bg-zinc-50">
+                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.date ? new Date(row.date).toLocaleDateString() : "-"}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.category}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.description}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.qty}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{Number(row.unitPrice || 0).toLocaleString()}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{Number(row.total || 0).toLocaleString()}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.purchasedBy}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.receipt ? "YES" : "NO"}</td>
+              </tr>
+            ))}
+          </FinanceTableShell>
 
-            <div className="grid grid-cols-[1fr_320px] gap-6">
-              <FinanceSectionCard title="Expense report" subtitle="Filter by payer, category or description.">
-                <FinanceTableShell
-                  minWidth={860}
-                  loading={loading}
-                  rowCount={expenseRows.length}
-                  emptyText="No tracked expense data found from backend rows."
-                  headers={[
-                    { key: "description", label: "Description" },
-                    { key: "qty", label: "Qty", className: "w-[90px]" },
-                    { key: "total", label: "Total (ETB)", className: "w-[120px]" },
-                    { key: "buyer", label: "Purchased By", className: "w-[140px]" },
-                    { key: "category", label: "Category", className: "w-[140px]" },
-                  ]}
-                  colSpan={5}
-                >
-                  {expenseRows.map((row) => (
-                    <tr key={row.id} className="border-t border-zinc-100 hover:bg-zinc-50/70 transition-colors">
-                      <td className="px-5 py-3 font-medium text-zinc-800">{row.description}</td>
-                      <td className="px-4 py-3 font-medium text-zinc-800">{row.qty}</td>
-                      <td className="px-4 py-3 font-medium text-zinc-800">{Number(row.total || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 font-medium text-zinc-800">{row.purchasedBy}</td>
-                      <td className="px-4 py-3 font-medium text-zinc-800">{row.category}</td>
-                    </tr>
-                  ))}
-                </FinanceTableShell>
+          <div className="mt-5 flex items-center justify-between rounded-2xl border border-zinc-200 bg-bgLight px-5 py-4">
+            <div className="text-[15px] font-semibold text-zinc-800">Grand total</div>
+            <div className="text-[20px] font-semibold text-primary">{money(summary.totalVariableExpenses)}</div>
+          </div>
 
-                <div className="mt-6 flex items-center justify-between rounded-full bg-zinc-100 px-5 py-4">
-                  <div className="text-primary font-extrabold text-[18px]">Grand total (filtered)</div>
-                  <div className="text-primary font-extrabold text-[20px]">{money(summary.totalVariableExpenses)}</div>
-                </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              className={financePrimaryBtnClass}
+              onClick={() => navigate(`${basePath}/expenses/register`)}
+            >
+              + Add Expense
+            </button>
+            <button type="button" className={financeSecondaryBtnClass} onClick={exportCsv}>
+              Export CSV
+            </button>
+          </div>
+        </FinanceSectionCard>
 
-                <div className="mt-8 flex flex-wrap gap-4">
-                  <button type="button" className={financePrimaryBtnClass} onClick={() => navigate(`${basePath}/expenses/register`)}>+Add Expense</button>
-                  <button type="button" className={financePrimaryBtnClass}>Export to excel</button>
-                </div>
-              </FinanceSectionCard>
+        <FinanceSidePanel title="Tax & Compliance" subtitle="Now backed by real saved expenses.">
+          <div className="space-y-4 text-[14px] leading-[1.45] text-zinc-900">
+            {reminders.map((item) => (
+              <div key={item.title}>
+                <div className="font-semibold">{item.title}</div>
+                <div className="mt-1 text-zinc-700">{item.body}</div>
+              </div>
+            ))}
+          </div>
 
-              <FinanceSidePanel title="Tax & Compliance Reminders" subtitle="Keep monthly finance work from slipping.">
-                <div className="space-y-3 text-[14px] leading-[1.45] text-zinc-900">
-                  <div><div className="font-extrabold">VAT Payment</div><div>Due by 30th of the month.</div></div>
-                  <div><div className="font-extrabold">Salary Income Tax</div><div>Due within first 10 days of next month.</div></div>
-                  <div><div className="font-extrabold">Pension Contribution</div><div>Align with salary payment date.</div></div>
-                  <div><div className="font-extrabold">Check</div><div>All tax payments should have receipts attached in the finance records.</div></div>
-                </div>
-                <div className="mt-7 border-t border-zinc-100 pt-5">
-                  <h4 className="text-[18px] font-extrabold text-primary">Insights</h4>
-                  <ul className="mt-4 list-disc pl-5 space-y-2 text-[14px] leading-[1.45] text-zinc-900">
-                    <li>Track costs on every job record consistently.</li>
-                    <li>Move fixed monthly expenses into a dedicated backend table.</li>
-                    <li>Add tax, pension, and utility records to get a true monthly expense total.</li>
-                  </ul>
-                </div>
-              </FinanceSidePanel>
-            </div>
+          <div className="mt-7 border-t border-zinc-100 pt-5">
+            <h4 className="text-[17px] font-semibold text-primary">Insights</h4>
+            <ul className="mt-4 list-disc space-y-2 pl-5 text-[14px] leading-[1.45] text-zinc-900">
+              {insights.map((item, idx) => (
+                <li key={`${idx}-${item}`}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </FinanceSidePanel>
+      </div>
     </div>
   );
 }
