@@ -63,8 +63,8 @@ function SidebarSection({ label, icon, open, setOpen, active, children }) {
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-extrabold transition text-left",
-          active ? "bg-bgLight text-primary" : "text-zinc-900 hover:bg-bgLight",
+          "w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-[13px] transition-all duration-300 text-left",
+          active ? "bg-bgLight text-primary" : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
         )}
       >
         <span className="text-primary"><Icon name={icon} /></span>
@@ -83,8 +83,8 @@ function NavItem({ to, icon, label, badge, onClick }) {
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-3 px-4 py-3 rounded-2xl font-extrabold transition",
-          isActive ? "bg-bgLight text-primary" : "text-zinc-900 hover:bg-bgLight",
+          "flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-[13px] transition-all duration-300",
+          isActive ? "bg-bgLight text-primary" : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
         )
       }
       end
@@ -160,7 +160,7 @@ export default function FinanceLayout() {
 
       <NavItem to="/app/finance/history" icon="log" label="History Log" badge={counts.audit || 0} onClick={() => closeOnClick && setSidebarOpen(false)} />
 
-      <button onClick={handleLogout} className="mt-8 w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-extrabold text-red-600 hover:bg-red-50 transition">
+      <button onClick={handleLogout} className="mt-8 w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-[13px] text-red-600 transition-all duration-300 hover:bg-red-50 hover:-translate-y-0.5 hover:shadow-sm">
         <Icon name="logout" className="w-5 h-5" />
         Logout
       </button>
@@ -171,33 +171,33 @@ export default function FinanceLayout() {
     <div className="min-h-screen bg-bgLight">
       <div className="sticky top-0 z-40 h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-3 sm:px-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen((v) => !v)} className="w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center hover:bg-bgLight transition" aria-label="Open menu">
+          <button onClick={() => setSidebarOpen((v) => !v)} className="w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center transition-all duration-300 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm" aria-label="Open menu">
             <Icon name="menu" />
           </button>
           <img src="/logo.png" alt="Azael" className="h-10 w-auto" />
         </div>
         <div className="text-primary font-extrabold tracking-wide text-base sm:text-xl">FINANCE DASHBOARD</div>
         <div className="flex items-center gap-5">
-          <button onClick={() => setNotifOpen(true)} className="relative w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center hover:bg-bgLight transition" aria-label="Notifications">
+          <button onClick={() => setNotifOpen(true)} className="relative w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center transition-all duration-300 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm" aria-label="Notifications">
             <Icon name="bell" />
             {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-primary text-white text-[10px] font-extrabold flex items-center justify-center">{unread}</span>}
           </button>
           <div className="text-right leading-tight">
             <div className="font-extrabold text-zinc-900">{user?.role || "Finance"}</div>
-            <button onClick={handleLogout} className="text-red-600 font-bold hover:underline">Logout</button>
+            <button onClick={handleLogout} className="text-red-600 font-bold transition-all duration-300 hover:underline">Logout</button>
           </div>
         </div>
       </div>
 
       <div className="flex flex-1 min-h-0">
-        <aside className="w-72 bg-white border-r border-zinc-200 min-h-[calc(100vh-64px)] p-4 hidden md:block">
+        <aside className="w-72 bg-white border-r border-zinc-200 min-h-[calc(100vh-64px)] p-4 overflow-y-auto overflow-x-hidden hidden md:block">
           {sidebarContent(false)}
         </aside>
 
         {sidebarOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
             <div className="absolute inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
-            <div className="absolute left-0 top-0 h-full w-72 bg-white border-r border-zinc-200 p-4">
+            <div className="absolute left-0 top-0 h-full w-72 bg-white border-r border-zinc-200 p-4 overflow-y-auto overflow-x-hidden">
               <div className="flex items-center justify-between">
                 <img src="/logo.png" alt="Azael" className="h-10 w-auto" />
                 <button onClick={() => setSidebarOpen(false)} className="px-3 py-2 rounded-xl border border-zinc-200 font-bold">Close</button>
@@ -215,7 +215,7 @@ export default function FinanceLayout() {
       {notifOpen && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/30" onClick={() => setNotifOpen(false)} />
-          <div className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-white border-l border-zinc-200 p-4 overflow-auto">
+          <div className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-white border-l border-zinc-200 p-4 overflow-y-auto overflow-x-hidden">
             <div className="flex items-center justify-between">
               <div className="font-extrabold text-primary text-xl">Notifications</div>
               <button onClick={() => setNotifOpen(false)} className="px-3 py-2 rounded-xl border border-zinc-200 font-bold hover:bg-bgLight">Close</button>

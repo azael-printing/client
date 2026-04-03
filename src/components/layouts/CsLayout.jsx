@@ -234,7 +234,7 @@ export default function CSLayout() {
               setSidebarOpen((v) => !v);
               setDesktopSideOpen((v) => !v);
             }}
-            className="w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center hover:bg-bgLight transition"
+            className="w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center transition-all duration-300 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm"
             aria-label="Open menu"
           >
             <Icon name="menu" />
@@ -258,7 +258,7 @@ export default function CSLayout() {
         <div className="flex items-center gap-5">
           <button
             onClick={() => setNotifOpen(true)}
-            className="relative w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center hover:bg-bgLight transition"
+            className="relative w-11 h-11 rounded-xl border border-zinc-200 bg-white flex items-center justify-center transition-all duration-300 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm"
             aria-label="Notifications"
           >
             <Icon name="bell" />
@@ -275,7 +275,7 @@ export default function CSLayout() {
             </div>
             <button
               onClick={handleLogout}
-              className="text-red-600 font-bold hover:underline"
+              className="text-red-600 font-bold transition-all duration-300 hover:underline"
             >
               Logout
             </button>
@@ -288,7 +288,7 @@ export default function CSLayout() {
         {/* SIDEBAR (sticky) */}
         <aside
           className={cn(
-            "bg-white border-r border-zinc-200 p-4 w-72 shrink-0",
+            "bg-white border-r border-zinc-200 p-4 w-72 shrink-0 overflow-y-auto overflow-x-hidden",
             "hidden md:block",
             desktopSidebarOpen ? "md:block" : "md:hidden",
           )}
@@ -300,10 +300,10 @@ export default function CSLayout() {
                 to={it.to}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition",
+                    "flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-[13px] transition-all duration-300",
                     isActive
                       ? "bg-bgLight text-primary"
-                      : "text-zinc-900 hover:bg-bgLight",
+                      : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
                   )
                 }
               >
@@ -332,7 +332,7 @@ export default function CSLayout() {
               className="absolute inset-0 bg-black/30"
               onClick={() => setSidebarOpen(false)}
             />
-            <div className="absolute left-0 top-0 h-full w-72 bg-white border-r border-zinc-200 p-4">
+            <div className="absolute left-0 top-0 h-full w-72 bg-white border-r border-zinc-200 p-4 overflow-y-auto overflow-x-hidden">
               <div className="flex items-center justify-between">
                 <img src="/logo.png" alt="Azael" className="h-10 w-auto" />
                 <button
@@ -351,10 +351,10 @@ export default function CSLayout() {
                     onClick={() => setSidebarOpen(false)}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition",
+                        "flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-[13px] transition-all duration-300",
                         isActive
                           ? "bg-bgLight text-primary"
-                          : "text-zinc-900 hover:bg-bgLight",
+                          : "text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm",
                       )
                     }
                   >
@@ -403,7 +403,7 @@ export default function CSLayout() {
             className="absolute inset-0 bg-black/30"
             onClick={() => setNotifOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-white border-l border-zinc-200 p-4 overflow-auto">
+          <div className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-white border-l border-zinc-200 p-4 overflow-y-auto overflow-x-hidden">
             <div className="flex items-center justify-between">
               <div className="font-bold text-primary text-xl">
                 Notifications

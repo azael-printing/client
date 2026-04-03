@@ -55,7 +55,6 @@ export function useLiveDashboardMeta(role) {
             completed: countByStatuses(jobs, [
               "PRODUCTION_DONE",
               "READY_FOR_DELIVERY",
-              "DELIVERY_APPROVED",
               "DELIVERED",
             ]),
             audit: 0,
@@ -75,7 +74,6 @@ export function useLiveDashboardMeta(role) {
               "IN_PRODUCTION",
               "PRODUCTION_DONE",
               "READY_FOR_DELIVERY",
-              "DELIVERY_APPROVED",
               "DELIVERED",
             ]),
             jobs: (jobs || []).length,

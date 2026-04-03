@@ -1,25 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { listFinanceJobs } from "../../api/finance.api";
+import { useLocation, useNavigate } from "react-router-dom";
 import Pagination from "../../../components/common/Pagination";
-
-function money(v) {
-  return `ETB ${Number(v || 0).toLocaleString()}`;
-}
-
-function StatCard({ title, value, subtitle, onClick }) {
-  return (
-    <button onClick={onClick} className="text-left bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/20 w-full">
-      <div className="text-zinc-900 font-extrabold text-[16px] leading-tight">
-        {title}
-      </div>
-      <div className="mt-3 text-primary font-extrabold text-[30px] leading-none tracking-tight">
-        {value}
-      </div>
-      <div className="mt-2 text-zinc-500 font-semibold text-sm">{subtitle}</div>
-    </button>
-  );
-}
+import FinanceStatCard from "../../../components/common/FinanceStatCard";
+import { fetchFinanceCollection, isOlderThan30Days, money, toInvoiceRows } from "./financeShared";
 
 function StatusBadge({ status }) {
   const s = String(status || "").toLowerCase();
@@ -37,56 +20,11 @@ function StatusBadge({ status }) {
   );
 }
 
-function getAmount(row, keys, fallback = 0) {
-  for (const key of keys) {
-    const val = row?.[key];
-    if (val !== undefined && val !== null && val !== "") {
-      return Number(val || 0);
-    }
-  }
-  return fallback;
-}
-
-function getPaymentStatus(job) {
-  const explicit =
-    job?.paymentStatus ||
-    job?.financeStatus ||
-    job?.invoiceStatus ||
-    job?.statusLabel;
-
-  if (explicit) {
-    const text = String(explicit).toLowerCase();
-    if (text.includes("partial")) return "Partial";
-    if (text.includes("credit")) return "Credit";
-    if (text.includes("unpaid")) return "Unpaid";
-    if (text.includes("paid")) return "Paid";
-  }
-
-  const total = getAmount(job, ["total", "totalAmount", "grandTotal"], 0);
-  const paid = getAmount(job, ["paid", "paidAmount", "amountPaid"], 0);
-  const balance =
-    job.balance !== undefined && job.balance !== null
-      ? Number(job.balance || 0)
-      : Math.max(total - paid, 0);
-
-  if (balance <= 0 && total > 0) return "Paid";
-  if (paid > 0 && balance > 0) return "Partial";
-  if (balance > 0) return "Unpaid";
-  return "Paid";
-}
-
-function isOlderThan30Days(dateValue) {
-  if (!dateValue) return false;
-  const created = new Date(dateValue);
-  if (Number.isNaN(created.getTime())) return false;
-  const now = new Date();
-  const diffMs = now.getTime() - created.getTime();
-  const days = diffMs / (1000 * 60 * 60 * 24);
-  return days > 30;
-}
 
 export default function FinanceRevenue() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith("/app/admin/finance") ? "/app/admin/finance" : "/app/finance";
 
   const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
@@ -106,27 +44,7 @@ export default function FinanceRevenue() {
       setErr("");
       setLoading(true);
 
-      const [newReq, waiting, approved, readyForDelivery, delivered] =
-        await Promise.all([
-          listFinanceJobs("NEW_REQUEST").catch(() => []),
-          listFinanceJobs("FINANCE_WAITING_APPROVAL").catch(() => []),
-          listFinanceJobs("FINANCE_APPROVED").catch(() => []),
-          listFinanceJobs("READY_FOR_DELIVERY").catch(() => []),
-          listFinanceJobs("DELIVERED").catch(() => []),
-        ]);
-
-      const merged = [
-        ...newReq,
-        ...waiting,
-        ...approved,
-        ...readyForDelivery,
-        ...delivered,
-      ];
-
-      const unique = Array.from(
-        new Map(merged.map((item) => [item.id, item])).values(),
-      ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+      const unique = await fetchFinanceCollection();
       setJobs(unique);
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load revenue page");
@@ -169,30 +87,7 @@ export default function FinanceRevenue() {
     };
   }, [jobs, loading, err]);
 
-  const rows = useMemo(() => {
-    return jobs.map((j) => {
-      const total = getAmount(j, ["total", "totalAmount", "grandTotal"], 0);
-      const paid = getAmount(j, ["paid", "paidAmount", "amountPaid"], 0);
-      const balance =
-        j.balance !== undefined && j.balance !== null
-          ? Number(j.balance || 0)
-          : Math.max(total - paid, 0);
-
-      const status = getPaymentStatus(j);
-
-      return {
-        id: j.id,
-        invoiceNo: j.invoiceNo || j.invoiceNumber || `INV-${j.jobNo || j.id}`,
-        jobId: j.jobNo || j.jobId || j.id,
-        customerName: j.customerName || "-",
-        total,
-        paid,
-        balance,
-        status,
-        createdAt: j.createdAt,
-      };
-    });
-  }, [jobs]);
+  const rows = useMemo(() => toInvoiceRows(jobs), [jobs]);
 
   const tableTotalPages = Math.max(1, Math.ceil(rows.length / tablePageSize));
   const tablePageSafe = Math.min(tablePage, tableTotalPages);
@@ -258,30 +153,30 @@ export default function FinanceRevenue() {
               <div className="text-red-600 font-semibold text-sm">{err}</div>
             )}
 
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <FinanceStatCard
                 title="Paid This Month"
                 value={money(summary.paidThisMonth)}
                 subtitle="payment received"
-                onClick={() => navigate("/app/finance/revenue/overview")}
+                onClick={() => navigate(`${basePath}/revenue/invoice`)}
               />
-              <StatCard
+              <FinanceStatCard
                 title="Unpaid"
                 value={money(summary.unpaid)}
                 subtitle="Invoiced, not settled"
-                onClick={() => navigate("/app/finance/revenue/overview")}
+                onClick={() => navigate(`${basePath}/revenue/invoice`)}
               />
-              <StatCard
+              <FinanceStatCard
                 title="Overdue"
                 value={money(summary.overdue)}
                 subtitle="> 30 days"
-                onClick={() => navigate("/app/finance/revenue/overview")}
+                onClick={() => navigate(`${basePath}/revenue/overdue`)}
               />
-              <StatCard
+              <FinanceStatCard
                 title="Credit"
                 value={money(summary.credit)}
                 subtitle="Credit holdings"
-                onClick={() => navigate("/app/finance/revenue/overview")}
+                onClick={() => navigate(`${basePath}/revenue/invoice`)}
               />
             </div>
 

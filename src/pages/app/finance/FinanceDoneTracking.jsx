@@ -1,21 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
+import {
+  actionBtnClass,
+  selectedRowClass,
+  workPageCardClass,
+  workRowClass,
+  workTableClass,
+  workTableWrapClass,
+  workTdClass,
+  workThClass,
+  workTheadClass,
+} from "../../../components/common/worklistUi";
+import { http } from "../../api/http";
 import { formatJobId } from "../../../utils/jobFormatting";
 import { financeAction, listFinanceJobs } from "../../api/finance.api";
-import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
 
-function money(v) {
-  return `ETB ${Number(v || 0).toLocaleString()}`;
-}
-
-function cn(...xs) {
-  return xs.filter(Boolean).join(" ");
-}
+function money(v) { return `ETB ${Number(v || 0).toLocaleString()}`; }
+function cn(...xs) { return xs.filter(Boolean).join(" "); }
 
 export default function FinanceDoneTracking() {
   const dialog = useDialog();
   const [jobs, setJobs] = useState([]);
+  const [approvedIds, setApprovedIds] = useState([]);
   const [selected, setSelected] = useState(null);
   const [err, setErr] = useState("");
   const [page, setPage] = useState(1);
@@ -24,15 +32,22 @@ export default function FinanceDoneTracking() {
   async function load() {
     try {
       setErr("");
-      const a = await listFinanceJobs("READY_FOR_DELIVERY");
-      const b = await listFinanceJobs("DELIVERY_APPROVED").catch(() => []);
-      const c = await listFinanceJobs("DELIVERED");
-      const all = [...a, ...b, ...c].sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
+      const [ready, delivered, historyRes] = await Promise.all([
+        listFinanceJobs("READY_FOR_DELIVERY"),
+        listFinanceJobs("DELIVERED"),
+        http.get("/api/history?limit=500").catch(() => ({ data: { items: [] } })),
+      ]);
+      const approved = (historyRes.data.items || [])
+        .filter((item) => item.action === "FINANCE_APPROVE_DELIVERY")
+        .map((item) => item.jobId);
+      const all = [...ready, ...delivered].sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
+      setApprovedIds(approved);
       setJobs(all);
       setSelected((prev) => all.find((x) => x.id === prev?.id) || all[0] || null);
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load done jobs");
       setJobs([]);
+      setApprovedIds([]);
       setSelected(null);
     }
   }
@@ -49,52 +64,52 @@ export default function FinanceDoneTracking() {
     }
   }
 
+  const approvedSet = useMemo(() => new Set(approvedIds), [approvedIds]);
   const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize));
   const pageSafe = Math.min(page, totalPages);
   const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-      <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-extrabold text-primary">Finance — Done Tracking</h2>
-          <button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button>
+    <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+      <div className={workPageCardClass}>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl font-semibold text-primary">Finance — Done Tracking</h2>
+          <button onClick={load} className={actionBtnClass("neutral")}>Refresh</button>
         </div>
-
-        {err && <div className="mt-3 text-red-600 font-bold">{err}</div>}
-
-        <div className="mt-4 overflow-auto rounded-2xl border border-zinc-200">
-          <table className="min-w-[1160px] w-full table-fixed text-sm">
-            <thead className="text-left text-zinc-600 bg-bgLight">
+        {err ? <div className="mt-3 text-sm font-semibold text-red-600">{err}</div> : null}
+        <div className={workTableWrapClass}>
+          <table className={workTableClass}>
+            <thead className={workTheadClass}>
               <tr>
-                <th className="py-3 px-4 w-[110px] whitespace-nowrap">Job#</th>
-                <th className="py-3 px-4 w-[180px] whitespace-nowrap">Customer</th>
-                <th className="py-3 px-4 w-[160px] whitespace-nowrap">Work</th>
-                <th className="py-3 px-4 w-[120px] whitespace-nowrap">Total</th>
-                <th className="py-3 px-4 w-[170px] whitespace-nowrap">Status</th>
-                <th className="py-3 px-4 whitespace-nowrap">Actions</th>
+                <th className={`${workThClass} w-[120px]`}>Job#</th>
+                <th className={`${workThClass} w-[200px]`}>Customer</th>
+                <th className={`${workThClass} w-[190px]`}>Work</th>
+                <th className={`${workThClass} w-[140px]`}>Total</th>
+                <th className={`${workThClass} w-[180px]`}>Status</th>
+                <th className={workThClass}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {slice.map((j) => (
-                <tr key={j.id} onClick={() => setSelected(j)} className={cn("border-t border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors", selected?.id === j.id ? "bg-bgLight" : "") }>
-                  <td className="py-3 px-4 font-bold text-primary whitespace-nowrap">{formatJobId(j.jobNo)}</td>
-                  <td className="py-3 px-4 whitespace-nowrap truncate">{j.customerName}</td>
-                  <td className="py-3 px-4 whitespace-nowrap truncate">{j.workType}</td>
-                  <td className="py-3 px-4 whitespace-nowrap">{money(j.total || j.totalAmount || j.grandTotal || 0)}</td>
-                  <td className="py-3 px-4 whitespace-nowrap font-semibold">{j.status}</td>
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2 flex-nowrap">
-                      {j.status === "READY_FOR_DELIVERY" ? (
-                        <button onClick={(e) => { e.stopPropagation(); approveDelivery(j.id); }} className="inline-flex items-center justify-center min-w-[150px] px-3 py-2 rounded-xl bg-success text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Approve Delivery</button>
-                      ) : null}
-                      {j.status === "DELIVERY_APPROVED" ? <span className="inline-flex items-center justify-center min-w-[150px] px-3 py-2 rounded-xl bg-bgLight text-primary font-semibold">Approved</span> : null}
-                      {j.status === "DELIVERED" ? <span className="inline-flex items-center justify-center min-w-[150px] px-3 py-2 rounded-xl bg-green-100 text-green-700 font-semibold">Delivered</span> : null}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {slice.length === 0 && <tr><td colSpan={6} className="py-4 px-3 text-zinc-600">No done jobs yet.</td></tr>}
+              {slice.map((job) => {
+                const isApproved = approvedSet.has(job.id);
+                return (
+                  <tr key={job.id} onClick={() => setSelected(job)} className={cn(workRowClass, selected?.id === job.id && selectedRowClass)}>
+                    <td className={`${workTdClass} font-extrabold text-primary`}>{formatJobId(job.jobNo)}</td>
+                    <td className={`${workTdClass} truncate`}>{job.customerName}</td>
+                    <td className={`${workTdClass} truncate`}>{job.workType}</td>
+                    <td className={workTdClass}>{money(job.total || job.totalAmount || job.grandTotal || 0)}</td>
+                    <td className={`${workTdClass} font-semibold`}>{job.status === "DELIVERED" ? "DELIVERED" : isApproved ? "DELIVERY APPROVED" : job.status}</td>
+                    <td className={workTdClass}>
+                      <div className="flex items-center gap-2 flex-nowrap">
+                        {job.status === "READY_FOR_DELIVERY" && !isApproved ? <button onClick={(e) => { e.stopPropagation(); approveDelivery(job.id); }} className={actionBtnClass("success", true)}>Approve Delivery</button> : null}
+                        {job.status === "READY_FOR_DELIVERY" && isApproved ? <span className={actionBtnClass("neutral", true)}>Approved</span> : null}
+                        {job.status === "DELIVERED" ? <span className={actionBtnClass("done", true)}>Delivered</span> : null}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {slice.length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-sm font-semibold text-zinc-500">No done jobs yet.</td></tr> : null}
             </tbody>
           </table>
         </div>
@@ -102,12 +117,12 @@ export default function FinanceDoneTracking() {
       </div>
 
       <JobDetailActionPanel selected={selected}>
-        {selected?.status === "READY_FOR_DELIVERY" ? (
-          <button onClick={() => approveDelivery(selected.id)} className="flex-1 px-4 py-3 rounded-xl bg-success text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Approve Delivery</button>
-        ) : selected?.status === "DELIVERY_APPROVED" ? (
-          <div className="flex-1 px-4 py-3 rounded-xl bg-bgLight text-primary font-semibold text-center">Delivery approved - waiting assistant confirmation</div>
+        {selected?.status === "READY_FOR_DELIVERY" && !approvedSet.has(selected.id) ? (
+          <button onClick={() => approveDelivery(selected.id)} className={actionBtnClass("success", true)}>Approve Delivery</button>
+        ) : selected?.status === "READY_FOR_DELIVERY" && approvedSet.has(selected.id) ? (
+          <div className={actionBtnClass("neutral", true)}>Delivery approved - waiting assistant confirmation</div>
         ) : selected?.status === "DELIVERED" ? (
-          <div className="flex-1 px-4 py-3 rounded-xl bg-green-100 text-green-700 font-semibold text-center">Delivered</div>
+          <div className={actionBtnClass("done", true)}>Delivered</div>
         ) : null}
       </JobDetailActionPanel>
     </div>

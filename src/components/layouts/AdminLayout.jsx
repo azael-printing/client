@@ -150,6 +150,9 @@ export default function AdminLayout() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [financeOpen, setFinanceOpen] = useState(false);
+  const [financeRevenueOpen, setFinanceRevenueOpen] = useState(false);
+  const [financeExpenseOpen, setFinanceExpenseOpen] = useState(false);
+  const [financeJobsOpen, setFinanceJobsOpen] = useState(false);
   const [csOpen, setCsOpen] = useState(false);
   const [designerOpen, setDesignerOpen] = useState(false);
   const [operatorOpen, setOperatorOpen] = useState(false);
@@ -164,6 +167,9 @@ export default function AdminLayout() {
 
   useEffect(() => {
     if (location.pathname.startsWith("/app/admin/finance")) setFinanceOpen(true);
+    if (location.pathname.includes("/app/admin/finance/revenue")) setFinanceRevenueOpen(true);
+    if (location.pathname.includes("/app/admin/finance/expenses")) setFinanceExpenseOpen(true);
+    if (location.pathname.includes("/app/admin/finance/jobs")) setFinanceJobsOpen(true);
     if (location.pathname.startsWith("/app/admin/cs")) setCsOpen(true);
     if (location.pathname.startsWith("/app/admin/designer")) setDesignerOpen(true);
     if (location.pathname.startsWith("/app/admin/operator")) setOperatorOpen(true);
@@ -291,16 +297,27 @@ export default function AdminLayout() {
       {financeOpen && (
         <div className="ml-5 mt-1 space-y-1">
           <NavLink to="/app/admin/finance/overview" className={navClass} end><span className="text-primary shrink-0"><Icon name="dash" /></span><span className="truncate">Overview</span></NavLink>
-          <NavLink to="/app/admin/finance/revenue/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="trend" /></span><span className="truncate">Revenue Overview</span></NavLink>
-          <NavLink to="/app/admin/finance/revenue/invoice" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">Invoice</span></NavLink>
-          <NavLink to="/app/admin/finance/revenue/overdue" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Overdue</span></NavLink>
-          <NavLink to="/app/admin/finance/expenses/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">Expense Overview</span></NavLink>
-          <NavLink to="/app/admin/finance/expenses/register" className={navClass}><span className="text-primary shrink-0"><Icon name="create" /></span><span className="truncate">Register Expenses</span></NavLink>
-          <NavLink to="/app/admin/finance/expenses/report" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Expense Report</span></NavLink>
-          <NavLink to="/app/admin/finance/jobs/list" className={navClass}><span className="text-primary shrink-0"><Icon name="jobs" /></span><span className="truncate">Job List</span></NavLink>
-          <NavLink to="/app/admin/finance/jobs/waiting" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Waiting Approval</span></NavLink>
-          <NavLink to="/app/admin/finance/jobs/done" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Done Tracking</span></NavLink>
-          <NavLink to="/app/admin/finance/history" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">History Log</span></NavLink>
+
+          <button onClick={() => setFinanceRevenueOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-bold text-[13px] text-left text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm">
+            <span className="text-primary shrink-0"><Icon name="trend" /></span>
+            <span className="flex-1 truncate">Revenue</span>
+            <Icon name={financeRevenueOpen ? "chevronDown" : "chevronRight"} className="w-4 h-4 text-zinc-400" />
+          </button>
+          {financeRevenueOpen && <div className="ml-5 space-y-1"><NavLink to="/app/admin/finance/revenue/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="dash" /></span><span className="truncate">Overview</span></NavLink><NavLink to="/app/admin/finance/revenue/invoice" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">Invoice</span></NavLink><NavLink to="/app/admin/finance/revenue/overdue" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Overdue</span></NavLink></div>}
+
+          <button onClick={() => setFinanceExpenseOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-bold text-[13px] text-left text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm">
+            <span className="text-primary shrink-0"><Icon name="receipt" /></span>
+            <span className="flex-1 truncate">Expense</span>
+            <Icon name={financeExpenseOpen ? "chevronDown" : "chevronRight"} className="w-4 h-4 text-zinc-400" />
+          </button>
+          {financeExpenseOpen && <div className="ml-5 space-y-1"><NavLink to="/app/admin/finance/expenses/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="dash" /></span><span className="truncate">Overview</span></NavLink><NavLink to="/app/admin/finance/expenses/register" className={navClass}><span className="text-primary shrink-0"><Icon name="create" /></span><span className="truncate">Register Expenses</span></NavLink><NavLink to="/app/admin/finance/expenses/report" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Expense Report</span></NavLink></div>}
+
+          <button onClick={() => setFinanceJobsOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-bold text-[13px] text-left text-zinc-900 hover:bg-bgLight hover:-translate-y-0.5 hover:shadow-sm">
+            <span className="text-primary shrink-0"><Icon name="jobs" /></span>
+            <span className="flex-1 truncate">Jobs</span>
+            <Icon name={financeJobsOpen ? "chevronDown" : "chevronRight"} className="w-4 h-4 text-zinc-400" />
+          </button>
+          {financeJobsOpen && <div className="ml-5 space-y-1"><NavLink to="/app/admin/finance/jobs/waiting" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Waiting Approval</span></NavLink><NavLink to="/app/admin/finance/jobs/done" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Done Tracking</span></NavLink></div>}
         </div>
       )}
 
@@ -325,13 +342,10 @@ export default function AdminLayout() {
       {csOpen && (
         <div className="ml-5 mt-1 space-y-1">
           <NavLink to="/app/admin/cs/overview" className={navClass}><span className="text-primary shrink-0"><Icon name="dash" /></span><span className="truncate">Overview</span></NavLink>
-          <NavLink to="/app/admin/cs/create-order" className={navClass}><span className="text-primary shrink-0"><Icon name="create" /></span><span className="truncate">Create Order</span></NavLink>
-          <NavLink to="/app/admin/cs/jobs" className={navClass}><span className="text-primary shrink-0"><Icon name="jobs" /></span><span className="truncate">Jobs Dashboard</span></NavLink>
           <NavLink to="/app/admin/cs/new" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">New Requests</span></NavLink>
           <NavLink to="/app/admin/cs/design" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">In Design</span></NavLink>
           <NavLink to="/app/admin/cs/production" className={navClass}><span className="text-primary shrink-0"><Icon name="receipt" /></span><span className="truncate">In Production</span></NavLink>
           <NavLink to="/app/admin/cs/completed" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Completed</span></NavLink>
-          <NavLink to="/app/admin/cs/audit" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Audit Log</span></NavLink>
         </div>
       )}
 
@@ -359,7 +373,6 @@ export default function AdminLayout() {
           <NavLink to="/app/admin/designer/queue" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Queue</span></NavLink>
           <NavLink to="/app/admin/designer/in-design" className={navClass}><span className="text-primary shrink-0"><Icon name="trend" /></span><span className="truncate">In Design</span></NavLink>
           <NavLink to="/app/admin/designer/completed" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Completed</span></NavLink>
-          <NavLink to="/app/admin/designer/audit" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Audit Log</span></NavLink>
         </div>
       )}
 
@@ -387,9 +400,15 @@ export default function AdminLayout() {
           <NavLink to="/app/admin/operator/queue" className={navClass}><span className="text-primary shrink-0"><Icon name="clock" /></span><span className="truncate">Queue</span></NavLink>
           <NavLink to="/app/admin/operator/in-production" className={navClass}><span className="text-primary shrink-0"><Icon name="trend" /></span><span className="truncate">In Production</span></NavLink>
           <NavLink to="/app/admin/operator/completed" className={navClass}><span className="text-primary shrink-0"><Icon name="check" /></span><span className="truncate">Completed</span></NavLink>
-          <NavLink to="/app/admin/operator/audit" className={navClass}><span className="text-primary shrink-0"><Icon name="audit" /></span><span className="truncate">Audit Log</span></NavLink>
         </div>
       )}
+
+      <NavLink to="/app/admin/history" className={navClass}>
+        <span className="text-primary shrink-0">
+          <Icon name="audit" />
+        </span>
+        <span className="truncate">History Log</span>
+      </NavLink>
 
       <button
         onClick={handleLogout}
@@ -463,7 +482,7 @@ export default function AdminLayout() {
       <div className="flex h-[calc(100vh-48px)] sm:h-[calc(100vh-56px)]">
         <aside
           className={cn(
-            "hidden lg:block bg-white border-r border-zinc-200 h-full overflow-hidden transition-all duration-300",
+            "hidden lg:block bg-white border-r border-zinc-200 h-full overflow-y-auto overflow-x-hidden transition-all duration-300",
             desktopSidebarOpen
               ? "w-[220px] xl:w-[232px] p-2.5"
               : "w-0 p-0 border-r-0",
@@ -506,7 +525,7 @@ export default function AdminLayout() {
 
         <aside
           className={cn(
-            "absolute left-0 top-0 h-full w-[228px] sm:w-[240px] bg-white border-r border-zinc-200 p-2.5 shadow-2xl transition-transform duration-300",
+            "absolute left-0 top-0 h-full w-[228px] sm:w-[240px] bg-white border-r border-zinc-200 p-2.5 shadow-2xl overflow-y-auto transition-transform duration-300",
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >

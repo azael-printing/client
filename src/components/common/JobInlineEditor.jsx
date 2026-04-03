@@ -17,6 +17,9 @@ export default function JobInlineEditor({
   statusOptions = [],
   canEditPayment = false,
   paymentNote,
+  statusLabel = "Status",
+  paymentOptions = PAYMENT_OPTIONS,
+  showPaymentPanel = canEditPayment,
 }) {
   const totals = computeJobDraftTotals(draft);
 
@@ -100,7 +103,7 @@ export default function JobInlineEditor({
           </select>
         </div>
         <div>
-          <div className="mb-1 text-xs sm:text-sm font-semibold text-zinc-700">Status</div>
+          <div className="mb-1 text-xs sm:text-sm font-semibold text-zinc-700">{statusLabel}</div>
           <select className={fieldClass()} value={draft.status} onChange={(e) => patch("status", e.target.value)}>
             {statusOptions.map((status) => (
               <option key={status} value={status}>
@@ -137,13 +140,13 @@ export default function JobInlineEditor({
         Designer required
       </label>
 
-      {canEditPayment ? (
+      {showPaymentPanel ? (
         <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <div className="mb-1 text-xs sm:text-sm font-semibold text-zinc-700">Payment status</div>
               <select className={fieldClass()} value={draft.paymentStatus} onChange={(e) => patch("paymentStatus", e.target.value)}>
-                {PAYMENT_OPTIONS.map((status) => (
+                {paymentOptions.map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>

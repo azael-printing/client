@@ -1,9 +1,20 @@
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
+import {
+  actionBtnClass,
+  selectedRowClass,
+  workPageCardClass,
+  workRowClass,
+  workTableClass,
+  workTableWrapClass,
+  workTdClass,
+  workThClass,
+  workTheadClass,
+} from "../../../components/common/worklistUi";
 import { formatJobId } from "../../../utils/jobFormatting";
 import { financeAction, listFinanceJobs } from "../../api/finance.api";
-import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
 
 function money(v) { return `ETB ${Number(v || 0).toLocaleString()}`; }
 function cn(...xs) { return xs.filter(Boolean).join(" "); }
@@ -34,15 +45,69 @@ export default function FinanceJobs() {
   useEffect(() => { load(); }, []);
 
   async function setWaiting(jobId) {
-    try { await financeAction(jobId, "FINANCE_SET_WAITING"); dialog.toast("Set waiting", "success"); load(); } catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); }
+    try { await financeAction(jobId, "FINANCE_SET_WAITING"); dialog.toast("Set waiting", "success"); load(); }
+    catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); }
   }
   async function approve(jobId) {
-    try { await financeAction(jobId, "FINANCE_APPROVE"); dialog.toast("Approved", "success"); load(); } catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); }
+    try { await financeAction(jobId, "FINANCE_APPROVE"); dialog.toast("Approved", "success"); load(); }
+    catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); }
   }
 
   const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize));
   const pageSafe = Math.min(page, totalPages);
   const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
 
-  return <div className="grid gap-4 lg:grid-cols-[1fr_360px]"><div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20"><div className="flex items-center justify-between"><h2 className="text-2xl font-extrabold text-primary">Jobs — Waiting Approval</h2><button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button></div>{err && <div className="mt-3 text-red-600 font-bold">{err}</div>}<div className="mt-4 overflow-auto rounded-2xl border border-zinc-200"><table className="min-w-[1160px] w-full table-fixed text-sm"><thead className="text-left text-zinc-500 bg-bgLight"><tr><th className="py-3 px-4 w-[110px] whitespace-nowrap">Job#</th><th className="py-3 px-4 w-[180px] whitespace-nowrap">Customer</th><th className="py-3 px-4 w-[160px] whitespace-nowrap">Work</th><th className="py-3 px-4 w-[120px] whitespace-nowrap">Total</th><th className="py-3 px-4 w-[170px] whitespace-nowrap">Status</th><th className="py-3 px-4 whitespace-nowrap">Actions</th></tr></thead><tbody>{slice.map((j)=><tr key={j.id} onClick={() => setSelected(j)} className={cn("border-t border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors", selected?.id===j.id ? "bg-bgLight":"")}><td className="py-3 px-4 font-extrabold text-primary whitespace-nowrap">{formatJobId(j.jobNo)}</td><td className="py-3 px-4 whitespace-nowrap truncate">{j.customerName}</td><td className="py-3 px-4 whitespace-nowrap truncate">{j.workType}</td><td className="py-3 px-4 whitespace-nowrap">{money(j.total || 0)}</td><td className="py-3 px-4 font-bold whitespace-nowrap">{j.status}</td><td className="py-3 px-4 whitespace-nowrap"><div className="flex items-center gap-2 flex-nowrap">{j.status === 'NEW_REQUEST' && <button onClick={(e)=>{e.stopPropagation();setWaiting(j.id);}} className="inline-flex items-center justify-center min-w-[118px] px-3 py-2 rounded-xl bg-warning text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Set Waiting</button>}<button onClick={(e)=>{e.stopPropagation();approve(j.id);}} className="inline-flex items-center justify-center min-w-[118px] px-3 py-2 rounded-xl bg-success text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Approve</button></div></td></tr>)}{slice.length===0&&<tr><td colSpan={6} className="py-4 px-3 text-zinc-500">No pending jobs.</td></tr>}</tbody></table></div><Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} /></div><JobDetailActionPanel selected={selected}>{selected ? <>{selected.status === 'NEW_REQUEST' ? <button onClick={() => setWaiting(selected.id)} className="flex-1 px-4 py-3 rounded-xl bg-warning text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Set Waiting</button> : null}<button onClick={() => approve(selected.id)} className="flex-1 px-4 py-3 rounded-xl bg-success text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Approve</button></> : null}</JobDetailActionPanel></div>;
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+      <div className={workPageCardClass}>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl font-semibold text-primary">Jobs — Waiting Approval</h2>
+          <button onClick={load} className={actionBtnClass("neutral")}>Refresh</button>
+        </div>
+        {err ? <div className="mt-3 text-sm font-semibold text-red-600">{err}</div> : null}
+        <div className={workTableWrapClass}>
+          <table className={workTableClass}>
+            <thead className={workTheadClass}>
+              <tr>
+                <th className={`${workThClass} w-[120px]`}>Job#</th>
+                <th className={`${workThClass} w-[200px]`}>Customer</th>
+                <th className={`${workThClass} w-[190px]`}>Work</th>
+                <th className={`${workThClass} w-[140px]`}>Total</th>
+                <th className={`${workThClass} w-[180px]`}>Status</th>
+                <th className={workThClass}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {slice.map((job) => (
+                <tr key={job.id} onClick={() => setSelected(job)} className={cn(workRowClass, selected?.id === job.id && selectedRowClass)}>
+                  <td className={`${workTdClass} font-extrabold text-primary`}>{formatJobId(job.jobNo)}</td>
+                  <td className={`${workTdClass} truncate`}>{job.customerName}</td>
+                  <td className={`${workTdClass} truncate`}>{job.workType}</td>
+                  <td className={workTdClass}>{money(job.total || 0)}</td>
+                  <td className={`${workTdClass} font-semibold`}>{job.status}</td>
+                  <td className={workTdClass}>
+                    <div className="flex items-center gap-2 flex-nowrap">
+                      {job.status === "NEW_REQUEST" ? <button onClick={(e) => { e.stopPropagation(); setWaiting(job.id); }} className={actionBtnClass("warning")}>Set Waiting</button> : null}
+                      <button onClick={(e) => { e.stopPropagation(); approve(job.id); }} className={actionBtnClass("success")}>Approve</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {slice.length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-sm font-semibold text-zinc-500">No pending jobs.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+        <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
+      </div>
+
+      <JobDetailActionPanel selected={selected}>
+        {selected ? (
+          <>
+            {selected.status === "NEW_REQUEST" ? <button onClick={() => setWaiting(selected.id)} className={actionBtnClass("warning")}>Set Waiting</button> : null}
+            <button onClick={() => approve(selected.id)} className={actionBtnClass("success")}>Approve</button>
+          </>
+        ) : null}
+      </JobDetailActionPanel>
+    </div>
+  );
 }

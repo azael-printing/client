@@ -1,19 +1,124 @@
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { useDialog } from "../../../components/common/DialogProvider";
+import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
+import {
+  actionBtnClass,
+  selectedRowClass,
+  workPageCardClass,
+  workRowClass,
+  workTableClass,
+  workTableWrapClass,
+  workTdClass,
+  workThClass,
+  workTheadClass,
+} from "../../../components/common/worklistUi";
 import { formatJobId } from "../../../utils/jobFormatting";
 import { listOperatorJobsByStatus, operatorWorkflow } from "../../api/operator.api";
-import JobDetailActionPanel from "../../../components/common/JobDetailActionPanel";
 
 function cn(...xs) { return xs.filter(Boolean).join(" "); }
 
 export default function OperatorQueue() {
   const dialog = useDialog();
-  const [jobs, setJobs] = useState([]); const [selected, setSelected] = useState(null); const [err, setErr] = useState(""); const [page, setPage] = useState(1); const pageSize = 10;
-  async function load() { try { setErr(""); const [a,b,c] = await Promise.all([listOperatorJobsByStatus("PRODUCTION_READY"), listOperatorJobsByStatus("PRODUCTION_PENDING"), listOperatorJobsByStatus("PRODUCTION_WAITING")]); const all = [...a,...b,...c].sort((x,y)=>new Date(y.createdAt)-new Date(x.createdAt)); setJobs(all); if (selected) setSelected(all.find((x)=>x.id===selected.id)||null); } catch (e) { setErr(e?.response?.data?.message || "Failed to load queue"); } }
+  const [jobs, setJobs] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [err, setErr] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  async function load() {
+    try {
+      setErr("");
+      const [a, b, c] = await Promise.all([
+        listOperatorJobsByStatus("PRODUCTION_READY"),
+        listOperatorJobsByStatus("PRODUCTION_PENDING"),
+        listOperatorJobsByStatus("PRODUCTION_WAITING"),
+      ]);
+      const all = [...a, ...b, ...c].sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
+      setJobs(all);
+      setSelected((prev) => all.find((x) => x.id === prev?.id) || all[0] || null);
+    } catch (e) {
+      setErr(e?.response?.data?.message || "Failed to load queue");
+      setJobs([]);
+      setSelected(null);
+    }
+  }
+
   useEffect(() => { load(); }, []);
-  async function markWaiting(jobId) { try { await operatorWorkflow(jobId, "OPERATOR_SET_WAITING"); dialog.toast("Marked waiting", "success"); load(); } catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); } }
-  async function start(jobId) { try { await operatorWorkflow(jobId, "OPERATOR_START"); dialog.toast("Production started", "success"); load(); } catch (e) { dialog.toast(e?.response?.data?.message || "Failed", "error"); } }
-  const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize)); const pageSafe = Math.min(page, totalPages); const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
-  return <div className="grid gap-4 lg:grid-cols-[1fr_360px]"><div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20"><div className="flex items-center justify-between"><h2 className="text-2xl font-extrabold text-primary">Production Queue</h2><button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button></div>{err && <div className="mt-3 text-red-600 font-bold">{err}</div>}<div className="mt-4 overflow-auto rounded-2xl border border-zinc-200"><table className="min-w-full text-sm"><thead className="text-left text-zinc-500 bg-bgLight"><tr><th className="py-2 px-3">Job#</th><th className="py-2 px-3">Customer</th><th className="py-2 px-3">Work</th><th className="py-2 px-3">Status</th><th className="py-2 px-3">Actions</th></tr></thead><tbody>{slice.map((j)=><tr key={j.id} onClick={() => setSelected(j)} className={cn("border-t border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors", selected?.id===j.id ? "bg-bgLight":"")}><td className="py-2 px-3 font-extrabold text-primary">{formatJobId(j.jobNo)}</td><td className="py-2 px-3">{j.customerName}</td><td className="py-2 px-3">{j.workType}</td><td className="py-2 px-3 font-bold">{j.status}</td><td className="py-2 px-3 flex gap-2 flex-wrap"><button onClick={(e)=>{e.stopPropagation();markWaiting(j.id);}} className="px-3 py-2 rounded-xl bg-warning text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Mark Waiting</button><button onClick={(e)=>{e.stopPropagation();start(j.id);}} className="px-3 py-2 rounded-xl bg-primary text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Start Production</button></td></tr>)}{slice.length===0&&<tr><td colSpan={5} className="py-4 px-3 text-zinc-500">No queued jobs.</td></tr>}</tbody></table></div><Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} /></div><JobDetailActionPanel selected={selected}>{selected ? <><button onClick={() => markWaiting(selected.id)} className="flex-1 px-4 py-3 rounded-xl bg-warning text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Mark Waiting</button><button onClick={() => start(selected.id)} className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Start Production</button></> : null}</JobDetailActionPanel></div>;
+
+  async function markWaiting(jobId) {
+    try {
+      await operatorWorkflow(jobId, "OPERATOR_SET_WAITING");
+      dialog.toast("Marked waiting", "success");
+      load();
+    } catch (e) {
+      dialog.toast(e?.response?.data?.message || "Failed", "error");
+    }
+  }
+
+  async function start(jobId) {
+    try {
+      await operatorWorkflow(jobId, "OPERATOR_START");
+      dialog.toast("Production started", "success");
+      load();
+    } catch (e) {
+      dialog.toast(e?.response?.data?.message || "Failed", "error");
+    }
+  }
+
+  const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize));
+  const pageSafe = Math.min(page, totalPages);
+  const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+      <div className={workPageCardClass}>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl font-semibold text-primary">Production Queue</h2>
+          <button onClick={load} className={actionBtnClass("neutral")}>Refresh</button>
+        </div>
+        {err ? <div className="mt-3 text-sm font-semibold text-red-600">{err}</div> : null}
+        <div className={workTableWrapClass}>
+          <table className={workTableClass}>
+            <thead className={workTheadClass}>
+              <tr>
+                <th className={`${workThClass} w-[120px]`}>Job#</th>
+                <th className={`${workThClass} w-[200px]`}>Customer</th>
+                <th className={`${workThClass} w-[190px]`}>Work</th>
+                <th className={`${workThClass} w-[170px]`}>Status</th>
+                <th className={workThClass}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {slice.map((job) => (
+                <tr key={job.id} onClick={() => setSelected(job)} className={cn(workRowClass, selected?.id === job.id && selectedRowClass)}>
+                  <td className={`${workTdClass} font-extrabold text-primary`}>{formatJobId(job.jobNo)}</td>
+                  <td className={`${workTdClass} truncate`}>{job.customerName}</td>
+                  <td className={`${workTdClass} truncate`}>{job.workType}</td>
+                  <td className={`${workTdClass} font-semibold`}>{job.status}</td>
+                  <td className={workTdClass}>
+                    <div className="flex items-center gap-2 flex-nowrap">
+                      <button onClick={(e) => { e.stopPropagation(); markWaiting(job.id); }} className={actionBtnClass("warning")}>Mark Waiting</button>
+                      <button onClick={(e) => { e.stopPropagation(); start(job.id); }} className={actionBtnClass("primary", true)}>Start Production</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {slice.length === 0 ? <tr><td colSpan={5} className="px-4 py-6 text-sm font-semibold text-zinc-500">No queued jobs.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+        <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
+      </div>
+
+      <JobDetailActionPanel selected={selected}>
+        {selected ? (
+          <>
+            <button onClick={() => markWaiting(selected.id)} className={actionBtnClass("warning")}>Mark Waiting</button>
+            <button onClick={() => start(selected.id)} className={actionBtnClass("primary", true)}>Start Production</button>
+          </>
+        ) : null}
+      </JobDetailActionPanel>
+    </div>
+  );
 }

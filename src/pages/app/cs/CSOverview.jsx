@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { listJobsByStatus } from "../../api/cs.api";
 import CSJobControlPanel from "./CSJobControlPanel";
 
@@ -18,6 +18,8 @@ function Card({ title, value, sub, onClick }) {
 
 export default function CSOverview() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith("/app/admin/cs") ? "/app/admin/cs" : "/app/cs";
   const [all, setAll] = useState([]);
 
   useEffect(() => {
@@ -43,11 +45,11 @@ export default function CSOverview() {
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="Total Jobs" value={stats.total} sub="All CS jobs" onClick={() => navigate('/app/cs/jobs')} />
-        <Card title="Finance Waiting" value={stats.waitingFinance} sub="Pending approval" onClick={() => navigate('/app/cs/new')} />
-        <Card title="In Design" value={stats.inDesign} sub="Design pipeline" onClick={() => navigate('/app/cs/design')} />
-        <Card title="In Production" value={stats.inProduction} sub="Production pipeline" onClick={() => navigate('/app/cs/production')} />
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card title="Total Jobs" value={stats.total} sub="All CS jobs" onClick={() => navigate(`${basePath}/jobs`)} />
+        <Card title="Finance Waiting" value={stats.waitingFinance} sub="Pending approval" onClick={() => navigate(`${basePath}/new`)} />
+        <Card title="In Design" value={stats.inDesign} sub="Design pipeline" onClick={() => navigate(`${basePath}/design`)} />
+        <Card title="In Production" value={stats.inProduction} sub="Production pipeline" onClick={() => navigate(`${basePath}/production`)} />
       </div>
       <div className="grid grid-cols-1">
         <CSJobControlPanel />

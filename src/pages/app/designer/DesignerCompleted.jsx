@@ -1,12 +1,71 @@
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
+import {
+  actionBtnClass,
+  workPageCardClass,
+  workTableClass,
+  workTableWrapClass,
+  workTdClass,
+  workThClass,
+  workTheadClass,
+} from "../../../components/common/worklistUi";
 import { formatJobId } from "../../../utils/jobFormatting";
 import { listDesignerJobsByStatus } from "../../api/designer.api";
 
 export default function DesignerCompleted() {
-  const [jobs, setJobs] = useState([]); const [err, setErr] = useState(""); const [page, setPage] = useState(1); const pageSize = 10;
-  async function load() { try { setErr(""); const a = await listDesignerJobsByStatus("DESIGN_DONE"); setJobs((a || []).sort((x,y)=>new Date(y.createdAt)-new Date(x.createdAt))); } catch (e) { setErr(e?.response?.data?.message || "Failed to load completed designs"); } }
+  const [jobs, setJobs] = useState([]);
+  const [err, setErr] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  async function load() {
+    try {
+      setErr("");
+      const rows = await listDesignerJobsByStatus("DESIGN_DONE");
+      setJobs((rows || []).sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt)));
+    } catch (e) {
+      setErr(e?.response?.data?.message || "Failed to load completed designs");
+      setJobs([]);
+    }
+  }
+
   useEffect(() => { load(); }, []);
-  const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize)); const pageSafe = Math.min(page, totalPages); const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
-  return <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20"><div className="flex items-center justify-between"><h2 className="text-2xl font-extrabold text-primary">Completed Designs</h2><button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button></div>{err && <div className="mt-3 text-red-600 font-bold">{err}</div>}<div className="mt-4 overflow-auto rounded-2xl border border-zinc-200"><table className="min-w-full text-sm"><thead className="text-left text-zinc-500 bg-bgLight"><tr><th className="py-2 px-3">Job#</th><th className="py-2 px-3">Customer</th><th className="py-2 px-3">Work</th><th className="py-2 px-3">Status</th></tr></thead><tbody>{slice.map((j)=><tr key={j.id} className="border-t border-zinc-200 hover:bg-zinc-50 transition-colors"><td className="py-2 px-3 font-extrabold text-primary">{formatJobId(j.jobNo)}</td><td className="py-2 px-3">{j.customerName}</td><td className="py-2 px-3">{j.workType}</td><td className="py-2 px-3 font-bold">{j.status}</td></tr>)}{slice.length===0&&<tr><td colSpan={4} className="py-4 px-3 text-zinc-500">No completed items.</td></tr>}</tbody></table></div><Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} /></div>;
+
+  const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize));
+  const pageSafe = Math.min(page, totalPages);
+  const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
+
+  return (
+    <div className={workPageCardClass}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-2xl font-semibold text-primary">Completed Designs</h2>
+        <button onClick={load} className={actionBtnClass("neutral")}>Refresh</button>
+      </div>
+      {err ? <div className="mt-3 text-sm font-semibold text-red-600">{err}</div> : null}
+      <div className={workTableWrapClass}>
+        <table className={workTableClass}>
+          <thead className={workTheadClass}>
+            <tr>
+              <th className={`${workThClass} w-[120px]`}>Job#</th>
+              <th className={`${workThClass} w-[200px]`}>Customer</th>
+              <th className={`${workThClass} w-[190px]`}>Work</th>
+              <th className={`${workThClass} w-[170px]`}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {slice.map((job) => (
+              <tr key={job.id} className="border-t border-zinc-200 transition-colors hover:bg-zinc-50">
+                <td className={`${workTdClass} font-extrabold text-primary`}>{formatJobId(job.jobNo)}</td>
+                <td className={`${workTdClass} truncate`}>{job.customerName}</td>
+                <td className={`${workTdClass} truncate`}>{job.workType}</td>
+                <td className={`${workTdClass} font-semibold`}>{job.status}</td>
+              </tr>
+            ))}
+            {slice.length === 0 ? <tr><td colSpan={4} className="px-4 py-6 text-sm font-semibold text-zinc-500">No completed items.</td></tr> : null}
+          </tbody>
+        </table>
+      </div>
+      <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
+    </div>
+  );
 }

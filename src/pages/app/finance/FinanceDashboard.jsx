@@ -1,25 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { listFinanceJobs } from "../../api/finance.api";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Pagination from "../../../components/common/Pagination";
-
-function money(v) {
-  return `ETB ${Number(v || 0).toLocaleString()}`;
-}
-
-function FinanceStatCard({ title, value, subtitle, onClick }) {
-  return (
-    <button onClick={onClick} className="w-full text-left bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/20">
-      <div className="text-zinc-900 font-extrabold text-[16px] leading-tight">
-        {title}
-      </div>
-      <div className="mt-2 text-primary font-extrabold text-[30px] leading-none tracking-tight">
-        {value}
-      </div>
-      <div className="mt-2 text-zinc-500 font-semibold text-sm">{subtitle}</div>
-    </button>
-  );
-}
+import FinanceStatCard from "../../../components/common/FinanceStatCard";
+import { fetchFinanceCollection, getAmount, money, toInvoiceRows } from "./financeShared";
 
 function SideAmountCard({ title, value, subtitle }) {
   return (
@@ -54,18 +37,11 @@ function StatusBadge({ status }) {
   );
 }
 
-function getAmount(row, keys, fallback = 0) {
-  for (const key of keys) {
-    const val = row?.[key];
-    if (val !== undefined && val !== null && val !== "") {
-      return Number(val || 0);
-    }
-  }
-  return fallback;
-}
 
 export default function FinanceDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith("/app/admin/finance") ? "/app/admin/finance" : "/app/finance";
   const [jobs, setJobs] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
@@ -84,27 +60,7 @@ export default function FinanceDashboard() {
       setErr("");
       setLoading(true);
 
-      const [newReq, waiting, approved, readyForDelivery, delivered] =
-        await Promise.all([
-          listFinanceJobs("NEW_REQUEST").catch(() => []),
-          listFinanceJobs("FINANCE_WAITING_APPROVAL").catch(() => []),
-          listFinanceJobs("FINANCE_APPROVED").catch(() => []),
-          listFinanceJobs("READY_FOR_DELIVERY").catch(() => []),
-          listFinanceJobs("DELIVERED").catch(() => []),
-        ]);
-
-      const merged = [
-        ...newReq,
-        ...waiting,
-        ...approved,
-        ...readyForDelivery,
-        ...delivered,
-      ];
-
-      const unique = Array.from(
-        new Map(merged.map((item) => [item.id, item])).values(),
-      ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+      const unique = await fetchFinanceCollection();
       setJobs(unique);
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load finance dashboard");
@@ -186,27 +142,7 @@ export default function FinanceDashboard() {
     };
   }, [jobs]);
 
-  const invoiceRows = useMemo(() => {
-    return jobs.map((j) => {
-      const total = getAmount(j, ["total", "totalAmount", "grandTotal"], 0);
-      const paid = getAmount(j, ["paid", "paidAmount", "amountPaid"], 0);
-      const balance =
-        j.balance !== undefined && j.balance !== null
-          ? Number(j.balance || 0)
-          : Math.max(total - paid, 0);
-
-      return {
-        id: j.id,
-        invoiceNo: j.invoiceNo || j.invoiceNumber || `INV-${j.jobNo || j.id}`,
-        jobId: j.jobNo || j.jobId || j.id,
-        customerName: j.customerName || "-",
-        total,
-        paid,
-        balance,
-        status: j.paymentStatus || j.status || "-",
-      };
-    });
-  }, [jobs]);
+  const invoiceRows = useMemo(() => toInvoiceRows(jobs), [jobs]);
 
   const tableTotalPages = Math.max(1, Math.ceil(invoiceRows.length / tablePageSize));
   const tablePageSafe = Math.min(tablePage, tableTotalPages);
@@ -236,26 +172,30 @@ export default function FinanceDashboard() {
               <div className="text-red-600 font-semibold text-sm">{err}</div>
             )}
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               <FinanceStatCard
                 title="Monthly Revenue"
                 value={money(summary.monthRevenue)}
                 subtitle="payment received"
+                onClick={() => navigate(`${basePath}/revenue/overview`)}
               />
               <FinanceStatCard
                 title="Monthly Expenses"
                 value={money(summary.monthExpenses)}
                 subtitle="tracked from job costs"
+                onClick={() => navigate(`${basePath}/expenses/overview`)}
               />
               <FinanceStatCard
                 title="Customer credit"
                 value={money(summary.customerCredit)}
                 subtitle="unpaid balance"
+                onClick={() => navigate(`${basePath}/revenue/invoice`)}
               />
               <FinanceStatCard
                 title="Monthly Net income"
                 value={money(summary.monthNetIncome)}
                 subtitle="revenue minus cost"
+                onClick={() => navigate(`${basePath}/revenue/overview`)}
               />
             </div>
 

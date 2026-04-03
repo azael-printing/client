@@ -61,6 +61,7 @@ import FinanceRegisterExpense from "./pages/app/finance/FinanceRegisterExpense";
 //
 import AdminProforma from "./pages/app/admin/AdminProforma";
 import AdminInvoice from "./pages/app/admin/AdminInvoice";
+import AdminHistoryLog from "./pages/app/admin/AdminHistoryLog";
 //
 import AdminLayout from "./components/layouts/AdminLayout";
 //
@@ -118,6 +119,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="create-order" element={<CreateOrder />} />
                 <Route path="proforma" element={<AdminProforma />} />
                 <Route path="invoice" element={<AdminInvoice />} />
+                <Route path="history" element={<AdminHistoryLog />} />
                 <Route path="finance">
                   <Route index element={<Navigate to="overview" replace />} />
                   <Route path="overview" element={<FinanceDashboard />} />

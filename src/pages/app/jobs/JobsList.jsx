@@ -35,6 +35,9 @@ const STATUS_OPTIONS = [
   "CANCELLED",
 ];
 
+const QUOTATION_STATUS_OPTIONS = ["QUOTATION_APPROVED", "QUOTATION_DENIED"];
+const QUOTE_PAYMENT_OPTIONS = ["PAID", "PARTIAL", "UNPAID"];
+
 const CANCEL_REASONS = [
   "Quotation does not approved",
   "Customer replay as price expensive",
@@ -72,6 +75,7 @@ export default function JobsList() {
   const dialog = useDialog();
   const role = user?.role;
   const canManage = role === "ADMIN" || role === "CS";
+  const isTopLevelAdminJobs = location.pathname === "/app/admin/jobs";
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const [jobs, setJobs] = useState([]);
@@ -80,6 +84,7 @@ export default function JobsList() {
   const [selected, setSelected] = useState(null);
   const [editingId, setEditingId] = useState("");
   const [draft, setDraft] = useState(null);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelJobId, setCancelJobId] = useState("");
   const [cancelReason, setCancelReason] = useState("");
@@ -170,11 +175,13 @@ export default function JobsList() {
     setSelected(job);
     setEditingId(job.id);
     setDraft(buildJobDraft(job));
+    if (isTopLevelAdminJobs) setUpdateModalOpen(true);
   }
 
   function stopEditing() {
     setEditingId("");
     setDraft(null);
+    setUpdateModalOpen(false);
   }
 
   function openCancelModal() {
@@ -204,7 +211,25 @@ export default function JobsList() {
   async function submitUpdate() {
     if (!selected || !draft) return;
 
-    const payload = toUpdatePayload(draft, { includePayment: role === "ADMIN" });
+    if (isTopLevelAdminJobs && draft.status === "QUOTATION_DENIED") {
+      try {
+        await cancelJob(selected.id, "Quotation denied", "");
+        dialog.toast("Quotation denied and job cancelled", "success");
+        stopEditing();
+        setSelected(null);
+        await load();
+      } catch (e) {
+        dialog.toast(e?.response?.data?.message || "Update failed", "error");
+      }
+      return;
+    }
+
+    const payload = toUpdatePayload(
+      isTopLevelAdminJobs
+        ? { ...draft, status: selected.status === "CANCELLED" ? "NEW_REQUEST" : selected.status }
+        : draft,
+      { includePayment: role === "ADMIN" },
+    );
 
     if (!payload.customerName || !payload.machine || !payload.workType || !payload.qty || !payload.unitPrice) {
       return dialog.alert("Customer, machine, work type, quantity, and unit price are required");
@@ -329,12 +354,12 @@ export default function JobsList() {
       <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0 lg:sticky lg:top-4 self-start transition-all duration-300 hover:shadow-md hover:border-primary/20">
         {!selected ? (
           <div className="text-zinc-500 text-sm font-semibold text-center mt-8">No job selected — select a job to see details</div>
-        ) : editingId === selected.id && draft ? (
+        ) : editingId === selected.id && draft && !isTopLevelAdminJobs ? (
           <div className="grid gap-4">
             <div>
-              <div className="text-zinc-500 text-xs sm:text-sm font-semibold">Inline Edit</div>
+              <div className="text-zinc-500 text-xs sm:text-sm font-semibold">{isTopLevelAdminJobs ? "Update Job" : "Inline Edit"}</div>
               <div className="text-primary font-semibold text-base sm:text-lg leading-tight">{formatJobId(selected.jobNo)} — {selected.workType}</div>
-              <div className="text-xs text-zinc-500 font-semibold mt-1">Edit directly here. No popup update box.</div>
+              <div className="text-xs text-zinc-500 font-semibold mt-1">{isTopLevelAdminJobs ? "Update the selected job here, then save or cancel." : "Edit directly here. No popup update box."}</div>
             </div>
 
             <JobInlineEditor
@@ -370,13 +395,44 @@ export default function JobsList() {
             </div>
             {canManage ? (
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => startEditing(selected)} className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Edit Inline</button>
-                <button onClick={openCancelModal} className="px-4 py-2.5 rounded-xl bg-danger text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Cancel Job</button>
+                <button onClick={() => startEditing(selected)} className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">{isTopLevelAdminJobs ? "Update" : "Edit Inline"}</button>
+                <button onClick={openCancelModal} className="px-4 py-2.5 rounded-xl bg-danger text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">{isTopLevelAdminJobs ? "Cancel" : "Cancel Job"}</button>
               </div>
             ) : null}
           </div>
         )}
       </div>
+
+      {updateModalOpen && editingId === selected?.id && draft && isTopLevelAdminJobs && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" onClick={stopEditing} />
+          <div className="absolute left-1/2 top-1/2 w-[96%] max-w-[980px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-3xl p-4 sm:p-5 shadow-2xl max-h-[88vh] overflow-auto">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold text-primary text-base sm:text-lg">Update Job</div>
+                <div className="text-xs sm:text-sm font-semibold text-zinc-500 mt-1">{formatJobId(selected.jobNo)} — {selected.workType}</div>
+              </div>
+              <button onClick={stopEditing} className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight">Close</button>
+            </div>
+
+            <div className="mt-4">
+              <JobInlineEditor
+                draft={draft}
+                setDraft={setDraft}
+                machineOptions={machineOptions}
+                statusOptions={STATUS_OPTIONS}
+                canEditPayment={role === "ADMIN"}
+                paymentNote="Payment status is editable only for Admin."
+              />
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button onClick={submitUpdate} className="flex-1 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Update Job</button>
+              <button onClick={stopEditing} className="px-4 py-2.5 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight transition">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {cancelOpen && (
         <div className="fixed inset-0 z-50">
