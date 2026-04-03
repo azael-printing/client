@@ -1,15 +1,28 @@
 let lastPlayAt = 0;
 
-function createBeep(ctx, startAt, duration = 0.34, peak = 0.12, fromHz = 1046, toHz = 784) {
+function createBeep(
+  ctx,
+  startAt,
+  duration = 0.34,
+  peak = 0.12,
+  fromHz = 1046,
+  toHz = 784,
+) {
   const oscillator = ctx.createOscillator();
   const gainNode = ctx.createGain();
 
   oscillator.type = "triangle";
   oscillator.frequency.setValueAtTime(fromHz, startAt);
-  oscillator.frequency.exponentialRampToValueAtTime(toHz, startAt + duration * 0.85);
+  oscillator.frequency.exponentialRampToValueAtTime(
+    toHz,
+    startAt + duration * 0.85,
+  );
 
   gainNode.gain.setValueAtTime(0.0001, startAt);
-  gainNode.gain.exponentialRampToValueAtTime(Math.max(0.08, peak), startAt + 0.03);
+  gainNode.gain.exponentialRampToValueAtTime(
+    Math.max(0.08, peak),
+    startAt + 0.03,
+  );
   gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
 
   oscillator.connect(gainNode);
@@ -47,7 +60,11 @@ export function playNotificationSound({ durationMs = 3000, loud = true } = {}) {
 }
 
 export function vibrateNotification() {
-  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+  if (
+    typeof navigator === "undefined" ||
+    typeof navigator.vibrate !== "function"
+  )
+    return;
   try {
     navigator.vibrate([110, 70, 170, 70, 110, 70, 170]);
   } catch {}
@@ -67,13 +84,19 @@ export function speakNotification(text) {
 
 export function emitAppToast(message, tone = "info") {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("app-toast", { detail: { message, tone } }));
+  window.dispatchEvent(
+    new CustomEvent("app-toast", { detail: { message, tone } }),
+  );
 }
 
-export function triggerNotificationAlert({ direction = "received", message = "" } = {}) {
-  const spoken = direction === "sent"
-    ? "One notification has been sent."
-    : "One notification has been received. Please check out.";
+export function triggerNotificationAlert({
+  direction = "received",
+  message = "",
+} = {}) {
+  const spoken =
+    direction === "sent"
+      ? "One job notification has been sent."
+      : "One job notification has been received. Please check out.";
 
   playNotificationSound({ durationMs: 3000, loud: true });
   vibrateNotification();
