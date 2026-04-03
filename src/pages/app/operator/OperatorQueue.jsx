@@ -71,7 +71,7 @@ export default function OperatorQueue() {
   const slice = jobs.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_348px]">
       <div className={workPageCardClass}>
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-2xl font-semibold text-primary">Production Queue</h2>

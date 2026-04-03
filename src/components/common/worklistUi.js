@@ -1,11 +1,11 @@
 export const workPageCardClass =
-  "bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20";
+  "bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20 min-w-0";
 
 export const workTableWrapClass =
-  "mt-4 overflow-auto rounded-2xl border border-zinc-200";
+  "mt-4 overflow-auto rounded-2xl border border-zinc-200 bg-white";
 
 export const workTableClass =
-  "min-w-[1160px] w-full table-fixed text-sm";
+  "min-w-[1080px] w-full table-fixed text-sm";
 
 export const workTheadClass =
   "bg-bgLight text-left text-zinc-500";

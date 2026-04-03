@@ -248,7 +248,7 @@ export default function JobsList() {
   const selectedTotal = Number(selected?.total || 0);
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_348px]">
       <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/20">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h2 className="text-lg sm:text-xl font-semibold text-primary">Jobs</h2>
@@ -351,7 +351,7 @@ export default function JobsList() {
         <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
       </div>
 
-      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0 lg:sticky lg:top-4 self-start transition-all duration-300 hover:shadow-md hover:border-primary/20">
+      <div className="bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-sm min-w-0 lg:sticky lg:top-5 self-start transition-all duration-300 hover:shadow-md hover:border-primary/20 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
         {!selected ? (
           <div className="text-zinc-500 text-sm font-semibold text-center mt-8">No job selected — select a job to see details</div>
         ) : editingId === selected.id && draft && !isTopLevelAdminJobs ? (
@@ -371,9 +371,9 @@ export default function JobsList() {
               paymentNote="Payment status is editable only for Admin."
             />
 
-            <div className="flex flex-wrap gap-2">
-              <button onClick={submitUpdate} className="flex-1 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Update Job</button>
-              <button onClick={stopEditing} className="px-4 py-2.5 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight transition">Cancel</button>
+            <div className="grid gap-2">
+              <button onClick={submitUpdate} className="w-full rounded-xl border border-primary bg-white px-4 py-2.5 text-xs font-semibold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-bgLight hover:shadow-sm sm:text-sm">Update Job</button>
+              <button onClick={stopEditing} className="w-full rounded-xl border border-red-500 bg-white px-4 py-2.5 text-xs font-semibold text-red-600 transition-all duration-300 hover:-translate-y-0.5 hover:bg-red-50 hover:text-white hover:shadow-sm hover:[background-color:#ef4444] sm:text-sm">Cancel</button>
             </div>
           </div>
         ) : (
@@ -394,9 +394,19 @@ export default function JobsList() {
               <div className="flex justify-between gap-2"><span className="text-zinc-500 font-semibold">Outstanding</span><span className="text-red-600 font-semibold">{Math.round(Number(selected.remainingBalance || 0)).toLocaleString()}</span></div>
             </div>
             {canManage ? (
-              <div className="flex flex-wrap gap-2">
-                <button onClick={() => startEditing(selected)} className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">{isTopLevelAdminJobs ? "Update" : "Edit Inline"}</button>
-                <button onClick={openCancelModal} className="px-4 py-2.5 rounded-xl bg-danger text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">{isTopLevelAdminJobs ? "Cancel" : "Cancel Job"}</button>
+              <div className="mt-2 grid gap-2">
+                <button
+                  onClick={() => startEditing(selected)}
+                  className="w-full rounded-xl border border-primary bg-white px-4 py-2.5 text-xs font-semibold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-bgLight hover:shadow-sm sm:text-sm"
+                >
+                  {isTopLevelAdminJobs ? "Update" : "Edit Inline"}
+                </button>
+                <button
+                  onClick={openCancelModal}
+                  className="w-full rounded-xl border border-red-500 bg-white px-4 py-2.5 text-xs font-semibold text-red-600 transition-all duration-300 hover:-translate-y-0.5 hover:bg-red-50 hover:text-white hover:shadow-sm hover:[background-color:#ef4444] sm:text-sm"
+                >
+                  {isTopLevelAdminJobs ? "Cancel" : "Cancel Job"}
+                </button>
               </div>
             ) : null}
           </div>

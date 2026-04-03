@@ -130,7 +130,7 @@ export default function RoleShellLayout({ title, navNodes, unread = 0, userLabel
   const closeMobile = () => setSidebarOpen(false);
 
   return (
-    <div className="h-screen overflow-hidden bg-bgLight">
+    <div className="flex h-screen flex-col overflow-hidden bg-bgLight">
       <div className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-3 shadow-sm sm:px-6">
         <div className="flex items-center gap-3">
           <button
@@ -166,7 +166,7 @@ export default function RoleShellLayout({ title, navNodes, unread = 0, userLabel
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside
           className={cn(
             "hidden min-h-[calc(100vh-64px)] overflow-y-auto overflow-x-hidden border-r border-zinc-200 bg-white transition-all duration-300 md:block",
@@ -209,8 +209,10 @@ export default function RoleShellLayout({ title, navNodes, unread = 0, userLabel
           </div>
         ) : null}
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-4 sm:p-6">
-          <Outlet />
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden scroll-smooth">
+          <div className="mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 sm:py-6">
+            <Outlet />
+          </div>
         </main>
       </div>
 

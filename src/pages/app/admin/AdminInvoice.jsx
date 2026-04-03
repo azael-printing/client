@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { listJobs } from "../../api/jobs.api";
 import { exVatAmount } from "../../../utils/jobFormatting";
-import logo from "../../../assets/logo.png";
-import seal from "../../../assets/azaelCompanySeal-01.png";
-// import invoiceTemplate from "../../../assets/invoice-template.png";
+import DocumentExactSheet from "./DocumentExactSheet";
 
 function onlyNumberLike(v) {
   return String(v || "").replace(/[^\d.]/g, "");
@@ -125,199 +123,23 @@ function InvoiceSheet({
   bankName,
   accountNumber,
 }) {
-  const rowCount = Math.max(1, rows.length);
-  const tableTop = 38;
-  const headerH = 4.4;
-  const maxTableBody = 28;
-  const rowH = Math.min(5.8, maxTableBody / rowCount);
-  const totalsTop = tableTop + headerH + rowCount * rowH + 0.9;
-  const paymentTop = totalsTop + 7.2;
-
   return (
-    <div className="sheet-page relative overflow-hidden bg-white text-[#1f2937]">
-      <div className="absolute left-[1.5%] top-[1.8%] h-[14%] w-[53%] rounded-br-[3.8rem] bg-[#1679bf]" />
-      <img
-        src={logo}
-        alt="Azael"
-        className="absolute left-[5%] top-[3.3%] w-[44%]"
-      />
-      <div className="absolute left-[20.5%] top-[15.2%] text-[2.7%] tracking-[0.14em] text-black font-semibold">
-        INVOICE
-      </div>
-
-      <div className="absolute right-0 top-[3.1%] h-[1.4%] w-[16%] rounded-l-full bg-[#1679bf]" />
-      <div className="absolute right-0 top-[6.2%] h-[1.4%] w-[11%] rounded-l-full bg-[#1679bf]" />
-
-      <div className="absolute right-[5.8%] top-[18.5%] text-right text-[1.95%] leading-[1.55] text-[#4169b2] font-semibold">
-        <div>
-          TIN <span className="text-[#111111] font-medium">0082555133</span>
-        </div>
-        <div>
-          VAT REG{" "}
-          <span className="text-[#111111] font-medium">19889750816</span>
-        </div>
-        <div>
-          INVOICE NUMBER{" "}
-          <span className="text-[#111111] font-medium">{docNumber}</span>
-        </div>
-        <div>
-          DATE{" "}
-          <span className="text-[#111111] font-medium">{todayDisplay()}</span>
-        </div>
-      </div>
-
-      <div className="absolute left-[7%] top-[28.2%] text-[2.35%] font-semibold text-[#1679bf]">
-        PRICING QUATATION TO:
-      </div>
-      <div className="absolute left-[35%] top-[29.2%] h-[0.18%] w-[42%] bg-[#4f7cc3]" />
-      <div className="absolute left-[46%] top-[27.95%] max-w-[28%] text-center overflow-hidden whitespace-nowrap text-ellipsis bg-white px-[2px] text-[1.9%] text-[#111111] font-semibold">
-        {customerName}
-      </div>
-
-      <div className="absolute left-[28.8%] top-[31.25%] text-[2.35%] font-semibold text-[#4f7cc3]">
-        TIN :
-      </div>
-      <div className="absolute left-[35%] top-[32.35%] h-[0.18%] w-[42%] bg-[#4f7cc3]" />
-      <div className="absolute left-[46%] top-[31.1%] max-w-[28%] text-center overflow-hidden whitespace-nowrap text-ellipsis bg-white px-[2px] text-[1.9%] text-[#111111] font-semibold">
-        {tin}
-      </div>
-
-      <div className="absolute left-[4%] top-[36%] w-[91.3%] text-[2%] text-[#1679bf] font-semibold">
-        <div
-          className="grid grid-cols-[5%_47%_20%_13%_15%] bg-[#1679bf] text-white border border-[#1679bf]"
-          style={{ height: `${headerH}%` }}
-        >
-          <div className="flex items-center justify-center border-r border-white/30">
-            NO
-          </div>
-          <div className="flex items-center px-[3%] py-[3%] border-r border-white/30">
-            Description
-          </div>
-          <div className="flex items-center justify-center border-r border-white/30">
-            QTY
-          </div>
-          <div className="flex items-center justify-center border-r border-white/30">
-            Unit Price
-          </div>
-          <div className="flex items-center justify-center">Total Price</div>
-        </div>
-
-        {Array.from({ length: rowCount }).map((_, idx) => {
-          const row = rows[idx] || {
-            no: "",
-            description: "",
-            qty: "",
-            unitPrice: "",
-            total: "",
-          };
-
-          return (
-            <div
-              key={row.id || idx}
-              className="grid grid-cols-[5%_47%_20%_13%_15%] border-x border-b border-[#1679bf]"
-              style={{ height: `${rowH}%` }}
-            >
-              <div className="flex items-center justify-center border-r border-[#1679bf] text-[1.9%] text-[#111111] font-semibold">
-                {row.no}
-              </div>
-              <div className="flex items-center px-[2.2%] border-r border-[#1679bf] text-[1.9%] text-[#111111] font-semibold overflow-hidden whitespace-nowrap text-ellipsis">
-                {row.description}
-              </div>
-              <div className="flex items-center justify-center px-[1%] border-r border-[#1679bf] text-[1.9%] text-[#111111] font-semibold overflow-hidden whitespace-nowrap text-ellipsis">
-                {row.qty}
-              </div>
-              <div className="flex items-center justify-end px-[5%] border-r border-[#1679bf] text-[1.9%] text-[#111111] font-semibold">
-                {row.unitPrice}
-              </div>
-              <div className="flex items-center justify-end px-[5%] text-[1.9%] text-[#111111] font-semibold">
-                {row.total}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div
-        className="absolute right-[4.7%] w-[33%] text-[2%]"
-        style={{ top: `${totalsTop}%` }}
-      >
-        {[
-          ["Sub total", formatMoney(totals.subTotal)],
-          ["VAT 15%", formatMoney(totals.vat15)],
-          ["Total", formatMoney(totals.total)],
-        ].map(([label, value]) => (
-          <div key={label} className="grid grid-cols-[48%_52%] h-[2.7%]">
-            <div className="bg-[#1679bf] text-white flex items-center justify-end pr-[6%] border border-[#1679bf]">
-              {label}
-            </div>
-            <div className="bg-white text-[#111111] flex items-center justify-end pr-[6%] border-y border-r border-[#1679bf]">
-              {value}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div
-        className="absolute left-[7.2%] text-[2.35%] font-semibold text-[#4169b2]"
-        style={{ top: `${paymentTop}%` }}
-      >
-        Payment Instructions
-      </div>
-
-      <div
-        className="absolute left-[7.2%] text-[1.95%] leading-[1.6] font-semibold text-[#4169b2]"
-        style={{ top: `${paymentTop + 4}%` }}
-      >
-        <div>
-          Account Name: <span className="text-[#5f6f92]">{accountName}</span>
-        </div>
-        <div>
-          Bank Name: <span className="text-[#5f6f92]">{bankName}</span>
-        </div>
-        <div>
-          Account Number:{" "}
-          <span className="text-[#5f6f92]">{accountNumber}</span>
-        </div>
-      </div>
-
-      <div
-        className="absolute left-[7.2%] text-[1.85%] leading-[1.55] font-semibold text-[#4169b2]"
-        style={{ top: `${paymentTop + 12}%` }}
-      >
-        <div>• Please complete payment via bank transfer</div>
-        <div>
-          &nbsp;&nbsp;and send the transaction receipt for verification.
-        </div>
-        <div>
-          • Your official receipt will be issued once payment is confirmed.
-        </div>
-      </div>
-
-      <img
-        src={seal}
-        alt="Seal"
-        className="absolute left-[65%] bottom-[9.5%] w-[13%] opacity-95"
-      />
-      <div className="absolute right-[4.8%] bottom-[9.8%] text-right text-[1.95%] leading-[1.22] font-semibold text-[#4169b2]">
-        <div>Fikadesselassie Ayana</div>
-        <div>General manager</div>
-      </div>
-
-      <div className="absolute left-0 right-0 bottom-0 h-[6.9%] bg-[#1679bf]" />
-      <div className="absolute bottom-[3.4%] left-0 right-0 text-center text-[1.85%] text-white font-semibold">
-        ስልክ
-      </div>
-      <div className="absolute bottom-[1.8%] left-0 right-0 text-center text-[1.65%] text-white">
-        0941413132 | 0944781211
-      </div>
-      <div className="absolute bottom-[0.5%] left-0 right-0 text-center text-[1.35%] text-white">
-        info@azaelprinting.com &nbsp;&nbsp; www.azaelprinting.com
-      </div>
-    </div>
+    <DocumentExactSheet
+      type="invoice"
+      docNumber={docNumber}
+      customerName={customerName}
+      tin={tin}
+      rows={rows}
+      totals={totals}
+      accountName={accountName}
+      bankName={bankName}
+      accountNumber={accountNumber}
+    />
   );
 }
 
 export default function AdminInvoice() {
+
   const [docNumber] = useState(() =>
     getNextDocNumber("azael_invoice_counter", "AZ-INV-"),
   );

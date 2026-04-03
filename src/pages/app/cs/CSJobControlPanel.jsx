@@ -236,7 +236,7 @@ export default function CSJobControlPanel() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_348px]">
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
         <div className="text-2xl font-bold text-primary leading-tight">Job Control Panel</div>
         <div className="text-zinc-400 font-normal text-sm">Overview of Orders and Quotations</div>

@@ -7,7 +7,7 @@ export default function JobDetailActionPanel({
   children,
 }) {
   return (
-    <div className="bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-sm w-full lg:w-[360px] self-start lg:sticky lg:top-4 transition-all duration-300 hover:shadow-md hover:border-primary/20 overflow-hidden text-[13px] font-semibold">
+    <div className="bg-white border border-zinc-200 rounded-2xl p-4 sm:p-5 shadow-sm w-full lg:w-[320px] xl:w-[348px] self-start lg:sticky lg:top-5 transition-all duration-300 hover:shadow-md hover:border-primary/20 overflow-hidden lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto text-[13px] font-semibold">
       {!selected ? (
         <div className="text-zinc-500 font-bold text-center mt-10">{emptyText}</div>
       ) : (
@@ -24,7 +24,7 @@ export default function JobDetailActionPanel({
             {selected.description || "-"}
           </div>
           <div className="text-[13px] text-zinc-700 font-bold">Qty: <span className="font-medium">{selected.qty} {selected.unitType}</span></div>
-          {children ? <div className="flex flex-wrap gap-2 pt-1">{children}</div> : null}
+          {children ? <div className="grid gap-2 pt-1">{children}</div> : null}
         </div>
       )}
     </div>
