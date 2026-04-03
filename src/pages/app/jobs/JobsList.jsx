@@ -75,6 +75,7 @@ export default function JobsList() {
   const dialog = useDialog();
   const role = user?.role;
   const canManage = role === "ADMIN" || role === "CS";
+  const canFinanceUpdatePayment = role === "FINANCE";
   const isTopLevelAdminJobs = location.pathname === "/app/admin/jobs";
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
@@ -85,6 +86,8 @@ export default function JobsList() {
   const [editingId, setEditingId] = useState("");
   const [draft, setDraft] = useState(null);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [financePaymentModalOpen, setFinancePaymentModalOpen] = useState(false);
+  const [financePaymentDraft, setFinancePaymentDraft] = useState({ paymentStatus: "UNPAID", depositAmount: "" });
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelJobId, setCancelJobId] = useState("");
   const [cancelReason, setCancelReason] = useState("");
@@ -192,6 +195,19 @@ export default function JobsList() {
     setCancelOpen(true);
   }
 
+  function openFinancePaymentModal() {
+    if (!selected) return dialog.alert("Select a job first");
+    setFinancePaymentDraft({
+      paymentStatus: selected.paymentStatus || "UNPAID",
+      depositAmount: selected.depositAmount ? String(selected.depositAmount) : "",
+    });
+    setFinancePaymentModalOpen(true);
+  }
+
+  function closeFinancePaymentModal() {
+    setFinancePaymentModalOpen(false);
+  }
+
   async function confirmCancel() {
     const finalReason = cancelReason === "Other" ? cancelOther.trim() : cancelReason;
     if (!finalReason) return dialog.alert("Select a cancellation reason");
@@ -205,6 +221,32 @@ export default function JobsList() {
       await load();
     } catch (e) {
       dialog.toast(e?.response?.data?.message || "Cancel failed", "error");
+    }
+  }
+
+  async function submitFinancePaymentUpdate() {
+    if (!selected) return;
+
+    const paymentStatus = String(financePaymentDraft.paymentStatus || "").toUpperCase();
+    const payload = { paymentStatus };
+
+    if (!paymentStatus) return dialog.alert("Select a payment status");
+
+    if (paymentStatus === "PARTIAL") {
+      const depositValue = Number(financePaymentDraft.depositAmount || 0);
+      if (!depositValue || depositValue <= 0) {
+        return dialog.alert("Enter the received amount for partial payment");
+      }
+      payload.depositAmount = depositValue;
+    }
+
+    try {
+      await updateJob(selected.id, payload);
+      dialog.toast("Payment status updated", "success");
+      closeFinancePaymentModal();
+      await load();
+    } catch (e) {
+      dialog.toast(e?.response?.data?.message || "Payment update failed", "error");
     }
   }
 
@@ -398,6 +440,15 @@ export default function JobsList() {
                 <button onClick={() => startEditing(selected)} className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">{isTopLevelAdminJobs ? "Update" : "Edit Inline"}</button>
                 <button onClick={openCancelModal} className="px-4 py-2.5 rounded-xl bg-danger text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">{isTopLevelAdminJobs ? "Cancel" : "Cancel Job"}</button>
               </div>
+            ) : canFinanceUpdatePayment ? (
+              <div className="grid gap-2">
+                <button
+                  onClick={openFinancePaymentModal}
+                  className="w-full px-4 py-2.5 rounded-xl border border-primary bg-white text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-bgLight hover:shadow-sm"
+                >
+                  Update Payment Status
+                </button>
+              </div>
             ) : null}
           </div>
         )}
@@ -431,6 +482,60 @@ export default function JobsList() {
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               <button onClick={submitUpdate} className="flex-1 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Update Job</button>
               <button onClick={stopEditing} className="px-4 py-2.5 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight transition">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {financePaymentModalOpen && selected && canFinanceUpdatePayment && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" onClick={closeFinancePaymentModal} />
+          <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[460px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-3xl p-4 sm:p-5 shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold text-primary text-base sm:text-lg">Update Payment Status</div>
+                <div className="text-xs sm:text-sm font-semibold text-zinc-500 mt-1">{formatJobId(selected.jobNo)} — {selected.customerName}</div>
+              </div>
+              <button onClick={closeFinancePaymentModal} className="px-3 py-2 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight">Close</button>
+            </div>
+
+            <div className="mt-4 grid gap-4">
+              <div>
+                <div className="text-[11px] sm:text-xs font-semibold text-primary mb-1">Payment Status</div>
+                <select
+                  value={financePaymentDraft.paymentStatus}
+                  onChange={(e) => setFinancePaymentDraft((prev) => ({ ...prev, paymentStatus: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm transition-all duration-300 hover:border-primary/30 focus:border-primary/40 outline-none"
+                >
+                  {PAYMENT_OPTIONS.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+
+              {financePaymentDraft.paymentStatus === "PARTIAL" ? (
+                <div>
+                  <div className="text-[11px] sm:text-xs font-semibold text-primary mb-1">Received Amount</div>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={financePaymentDraft.depositAmount}
+                    onChange={(e) => setFinancePaymentDraft((prev) => ({ ...prev, depositAmount: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm transition-all duration-300 hover:border-primary/30 focus:border-primary/40 outline-none"
+                    placeholder="Enter received amount"
+                  />
+                </div>
+              ) : null}
+
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs sm:text-sm font-semibold text-zinc-600">
+                Finance can update only the payment status here. Other job details stay locked.
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-2">
+              <button onClick={submitFinancePaymentUpdate} className="w-full px-4 py-2.5 rounded-xl border border-primary bg-white text-primary text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-bgLight hover:shadow-sm">Update Payment Status</button>
+              <button onClick={closeFinancePaymentModal} className="w-full px-4 py-2.5 rounded-xl border border-red-300 bg-white text-red-600 text-xs sm:text-sm font-semibold transition-all duration-300 hover:bg-red-50 hover:text-white hover:border-red-400">Cancel</button>
             </div>
           </div>
         </div>
