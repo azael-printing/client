@@ -8,12 +8,8 @@ import {
   financePrimaryBtnClass,
   financeSecondaryBtnClass,
 } from "../../../components/common/financeUi";
-import { exportRowsToCsv } from "../../../utils/exportCsv";
 import { getExpenseDashboard } from "../../api/finance.api";
-
-function money(value) {
-  return `ETB ${Number(value || 0).toLocaleString()}`;
-}
+import { fetchFinanceCollection, getAmount, money } from "./financeShared";
 
 export default function FinanceExpensesDashboard() {
   const navigate = useNavigate();
@@ -22,39 +18,37 @@ export default function FinanceExpensesDashboard() {
     ? "/app/admin/finance"
     : "/app/finance";
 
-  const [rows, setRows] = useState([]);
-  const [summary, setSummary] = useState({
-    totalVariableExpenses: 0,
-    totalFixedExpenses: 0,
-    governmentObligations: 0,
-    grandTotalMonthlyExpense: 0,
-  });
-  const [reminders, setReminders] = useState([]);
-  const [insights, setInsights] = useState([]);
-  const [err, setErr] = useState("");
+  const [jobs, setJobs] = useState([]);
+  const [expenseRows, setExpenseRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [routeMissing, setRouteMissing] = useState(false);
 
   async function load() {
     try {
-      setErr("");
       setLoading(true);
-      const data = await getExpenseDashboard();
-      setRows(data?.expenses || []);
-      setSummary(
-        data?.summary || {
-          totalVariableExpenses: 0,
-          totalFixedExpenses: 0,
-          governmentObligations: 0,
-          grandTotalMonthlyExpense: 0,
-        },
-      );
-      setReminders(data?.reminders || []);
-      setInsights(data?.insights || []);
+      setErr("");
+      setRouteMissing(false);
+
+      const financeRows = await fetchFinanceCollection();
+      setJobs(financeRows || []);
+
+      try {
+        const data = await getExpenseDashboard();
+        setExpenseRows(data?.expenses || []);
+      } catch (e) {
+        if (e?.response?.status === 404) {
+          setRouteMissing(true);
+          setExpenseRows([]);
+        } else {
+          setErr(e?.response?.data?.message || "Failed to load expense dashboard");
+          setExpenseRows([]);
+        }
+      }
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load expense dashboard");
-      setRows([]);
-      setReminders([]);
-      setInsights([]);
+      setJobs([]);
+      setExpenseRows([]);
     } finally {
       setLoading(false);
     }
@@ -64,18 +58,58 @@ export default function FinanceExpensesDashboard() {
     load();
   }, []);
 
-  const exportRows = useMemo(
-    () => rows.map((row) => [row.date ? new Date(row.date).toLocaleDateString() : "-", row.category, row.description, row.qty, row.unitPrice, row.total, row.purchasedBy, row.receipt ? "YES" : "NO"]),
-    [rows],
-  );
+  const fallbackRows = useMemo(() => {
+    return jobs
+      .filter((job) => getAmount(job, ["expense", "expenseTotal", "cost"], 0) > 0)
+      .slice(0, 12)
+      .map((job) => {
+        const cost = getAmount(job, ["expense", "expenseTotal", "cost"], 0);
+        return {
+          id: job.id,
+          description: job.description || job.workType || "-",
+          qty: Number(job.qty || 1),
+          unitPrice: cost,
+          total: cost,
+          receipt: "-",
+          purchasedBy: job.customerName || "-",
+          category: job.machine || "-",
+        };
+      });
+  }, [jobs]);
 
-  function exportCsv() {
-    exportRowsToCsv(
-      "finance-expenses.csv",
-      ["Date", "Category", "Description", "Qty", "Unit Price", "Total", "Paid By", "Receipt"],
-      exportRows,
+  const rows = useMemo(() => {
+    if (expenseRows.length) {
+      return expenseRows.map((row) => ({
+        id: row.id,
+        description: row.description || "-",
+        qty: row.qty || 0,
+        unitPrice: row.unitPrice || 0,
+        total: row.total || 0,
+        receipt: row.receipt ? "yes" : "no",
+        purchasedBy: row.purchasedBy || row.createdByName || "-",
+        category: row.category || row.categoryLabel || "-",
+      }));
+    }
+    return fallbackRows;
+  }, [expenseRows, fallbackRows]);
+
+  const summary = useMemo(() => {
+    const totalVariableExpenses = rows.reduce(
+      (sum, row) => sum + Number(row.total || 0),
+      0,
     );
-  }
+    const totalFixedExpenses = 0;
+    const governmentObligations = 0;
+    const grandTotalMonthlyExpense =
+      totalVariableExpenses + totalFixedExpenses + governmentObligations;
+
+    return {
+      totalVariableExpenses,
+      totalFixedExpenses,
+      governmentObligations,
+      grandTotalMonthlyExpense,
+    };
+  }, [rows]);
 
   return (
     <div className="grid gap-5">
@@ -85,7 +119,7 @@ export default function FinanceExpensesDashboard() {
         <FinanceStatCard
           title="Variable Expenses"
           value={money(summary.totalVariableExpenses)}
-          subtitle="Saved backend expenses"
+          subtitle={routeMissing ? "fallback from tracked job costs" : "saved backend expenses"}
           onClick={() => navigate(`${basePath}/expenses/report`)}
         />
         <FinanceStatCard
@@ -108,87 +142,93 @@ export default function FinanceExpensesDashboard() {
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <FinanceSectionCard
           title="Expense Report"
-          subtitle="Saved expenses from the register form."
+          subtitle={routeMissing ? "Backend expense route missing — showing fallback tracked costs instead." : "Saved expenses from the register form."}
           action={
             <div className="flex flex-wrap gap-3">
               <button type="button" onClick={load} className={financeSecondaryBtnClass}>
                 Refresh
               </button>
-              <button type="button" onClick={exportCsv} className={financePrimaryBtnClass}>
-                Export CSV
+              <button
+                type="button"
+                onClick={() => navigate(`${basePath}/expenses/register`)}
+                className={financePrimaryBtnClass}
+              >
+                + Add Expense
               </button>
             </div>
           }
         >
+          {routeMissing ? (
+            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+              The expense API route is still missing on Railway, so this page is using fallback job-cost rows instead of real saved expenses.
+            </div>
+          ) : null}
+
           <FinanceTableShell
-            minWidth={1040}
+            minWidth={980}
             loading={loading}
             rowCount={rows.length}
-            emptyText="No saved expenses found yet."
+            emptyText="No expense data found yet."
             headers={[
-              { key: "date", label: "Date", className: "w-[120px]" },
-              { key: "category", label: "Category", className: "w-[120px]" },
               { key: "description", label: "Description" },
-              { key: "qty", label: "Qty", className: "w-[80px]" },
-              { key: "unitPrice", label: "Unit Price", className: "w-[110px]" },
-              { key: "total", label: "Total", className: "w-[110px]" },
-              { key: "paidBy", label: "Paid By", className: "w-[120px]" },
+              { key: "qty", label: "Qty", className: "w-[90px]" },
+              { key: "unitPrice", label: "Unit Price", className: "w-[120px]" },
+              { key: "total", label: "Total (ETB)", className: "w-[140px]" },
               { key: "receipt", label: "Receipt", className: "w-[100px]" },
+              { key: "purchasedBy", label: "Purchased By", className: "w-[150px]" },
+              { key: "category", label: "Category", className: "w-[140px]" },
             ]}
-            colSpan={8}
+            colSpan={7}
           >
             {rows.map((row) => (
-              <tr key={row.id} className="border-t border-zinc-200 transition-colors hover:bg-zinc-50">
-                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.date ? new Date(row.date).toLocaleDateString() : "-"}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.category}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.description}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.qty}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{Number(row.unitPrice || 0).toLocaleString()}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{Number(row.total || 0).toLocaleString()}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.purchasedBy}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-zinc-800">{row.receipt ? "YES" : "NO"}</td>
+              <tr key={row.id} className="border-t border-zinc-100 transition-colors hover:bg-zinc-50/70">
+                <td className="px-5 py-3 font-medium text-zinc-800">{row.description}</td>
+                <td className="px-4 py-3 font-medium text-zinc-800">{row.qty}</td>
+                <td className="px-4 py-3 font-medium text-zinc-800">{Number(row.unitPrice || 0).toLocaleString()}</td>
+                <td className="px-4 py-3 font-medium text-zinc-800">{Number(row.total || 0).toLocaleString()}</td>
+                <td className="px-4 py-3 font-medium text-zinc-800">{row.receipt}</td>
+                <td className="px-4 py-3 font-medium text-zinc-800">{row.purchasedBy}</td>
+                <td className="px-4 py-3 font-medium text-zinc-800">{row.category}</td>
               </tr>
             ))}
           </FinanceTableShell>
 
-          <div className="mt-5 flex items-center justify-between rounded-2xl border border-zinc-200 bg-bgLight px-5 py-4">
+          <div className="mt-6 flex items-center justify-between rounded-2xl border border-zinc-200 bg-bgLight px-5 py-4">
             <div className="text-[15px] font-semibold text-zinc-800">Grand total</div>
-            <div className="text-[20px] font-semibold text-primary">{money(summary.totalVariableExpenses)}</div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              className={financePrimaryBtnClass}
-              onClick={() => navigate(`${basePath}/expenses/register`)}
-            >
-              + Add Expense
-            </button>
-            <button type="button" className={financeSecondaryBtnClass} onClick={exportCsv}>
-              Export CSV
-            </button>
+            <div className="text-[20px] font-semibold text-primary">
+              {money(summary.totalVariableExpenses)}
+            </div>
           </div>
         </FinanceSectionCard>
 
-        <FinanceSidePanel title="Tax & Compliance" subtitle="Now backed by real saved expenses.">
+        <FinanceSidePanel
+          title="Tax & Compliance"
+          subtitle={routeMissing ? "Backend save route is still missing on Railway." : "Now backed by real saved expenses."}
+        >
           <div className="space-y-4 text-[14px] leading-[1.45] text-zinc-900">
-            {reminders.map((item) => (
-              <div key={item.title}>
-                <div className="font-semibold">{item.title}</div>
-                <div className="mt-1 text-zinc-700">{item.body}</div>
-              </div>
-            ))}
+            <div>
+              <div className="font-semibold">VAT Payment</div>
+              <div className="mt-1 text-zinc-700">Due by 30th of the month.</div>
+            </div>
+            <div>
+              <div className="font-semibold">Salary Income Tax</div>
+              <div className="mt-1 text-zinc-700">Due within the first 10 days of the next month.</div>
+            </div>
+            <div>
+              <div className="font-semibold">Pension Contribution</div>
+              <div className="mt-1 text-zinc-700">Align with salary payment date.</div>
+            </div>
           </div>
 
           <div className="mt-7 border-t border-zinc-100 pt-5">
-            <h4 className="text-[17px] font-semibold text-primary">Insights</h4>
+            <h4 className="text-[18px] font-semibold text-primary">Insights</h4>
             <ul className="mt-4 list-disc space-y-2 pl-5 text-[14px] leading-[1.45] text-zinc-900">
-              {insights.map((item, idx) => (
-                <li key={`${idx}-${item}`}>{item}</li>
-              ))}
+              <li>Deploy the finance backend route to stop the 404.</li>
+              <li>Run the expense migration so saved rows can load normally.</li>
+              <li>Until then, this page can only show fallback job-cost data.</li>
             </ul>
           </div>
         </FinanceSidePanel>
