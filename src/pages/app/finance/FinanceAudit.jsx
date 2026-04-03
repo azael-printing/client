@@ -4,6 +4,7 @@ import FinanceSectionCard from "../../../components/common/FinanceSectionCard";
 import FinanceTableShell from "../../../components/common/FinanceTableShell";
 import { http } from "../../api/http";
 import { formatJobId } from "../../../utils/jobFormatting";
+import { exportTableToPdf } from "../../../utils/exportPdf";
 
 function displayEntryId(row, index, offset = 0) {
   const raw = row?.job?.jobNo ?? row?.jobNo ?? "";
@@ -32,6 +33,21 @@ export default function FinanceAudit() {
 
   useEffect(() => { load(); }, []);
 
+  function exportPdf() {
+    exportTableToPdf({
+      title: "Finance History Log",
+      headers: ["Time", "Job", "Actor", "Action", "From → To", "Note"],
+      rows: rows.map((row, index) => [
+        new Date(row.createdAt).toLocaleString(),
+        displayEntryId(row, index),
+        row.actorRole || "-",
+        row.action || "-",
+        `${row.fromStatus || "-"} → ${row.toStatus || "-"}`,
+        row.note || "-",
+      ]),
+    });
+  }
+
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const pageSafe = Math.min(page, totalPages);
   const slice = rows.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
@@ -39,7 +55,7 @@ export default function FinanceAudit() {
   return (
     <FinanceSectionCard
       title="History Log"
-      action={<button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button>}
+      action={<div className="flex items-center gap-3"><button onClick={exportPdf} className="px-3 py-2 rounded-xl bg-primary text-white font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Export PDF</button><button onClick={load} className="px-3 py-2 rounded-xl bg-bgLight text-primary font-bold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Refresh</button></div>}
     >
       {err && <div className="mt-3 text-zinc-600 font-bold">{err}</div>}
       <FinanceTableShell

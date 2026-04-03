@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Pagination from "../../../components/common/Pagination";
 import FinanceStatCard from "../../../components/common/FinanceStatCard";
@@ -32,12 +32,6 @@ export default function FinanceRevenue() {
   const [tablePage, setTablePage] = useState(1);
   const tablePageSize = 10;
 
-  const viewportRef = useRef(null);
-  const contentRef = useRef(null);
-
-  const BASE_WIDTH = 1120;
-  const [scale, setScale] = useState(1);
-  const [scaledHeight, setScaledHeight] = useState(0);
 
   async function load() {
     try {
@@ -57,35 +51,7 @@ export default function FinanceRevenue() {
     load();
   }, []);
 
-  useLayoutEffect(() => {
-    function updateScale() {
-      const viewport = viewportRef.current;
-      const content = contentRef.current;
-      if (!viewport || !content) return;
 
-      const availableWidth = viewport.clientWidth;
-      const nextScale = Math.min(1, availableWidth / BASE_WIDTH);
-
-      setScale(nextScale);
-      setScaledHeight(content.scrollHeight * nextScale);
-    }
-
-    updateScale();
-
-    const ro = new ResizeObserver(() => {
-      updateScale();
-    });
-
-    if (viewportRef.current) ro.observe(viewportRef.current);
-    if (contentRef.current) ro.observe(contentRef.current);
-
-    window.addEventListener("resize", updateScale);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", updateScale);
-    };
-  }, [jobs, loading, err]);
 
   const rows = useMemo(() => toInvoiceRows(jobs), [jobs]);
 
@@ -135,20 +101,7 @@ export default function FinanceRevenue() {
   }, [rows]);
 
   return (
-    <div ref={viewportRef} className="w-full overflow-x-hidden">
-      <div
-        className="relative"
-        style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
-      >
-        <div
-          ref={contentRef}
-          className="origin-top-left"
-          style={{
-            width: `${BASE_WIDTH}px`,
-            transform: `scale(${scale})`,
-          }}
-        >
-          <div className="grid gap-5">
+    <div className="grid gap-5">
             {err && (
               <div className="text-red-600 font-semibold text-sm">{err}</div>
             )}
@@ -321,9 +274,6 @@ export default function FinanceRevenue() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

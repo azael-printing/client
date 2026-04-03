@@ -62,6 +62,14 @@ function onlyNumberLike(s) {
   return parts.length <= 2 ? cleaned : `${parts[0]}.${parts.slice(1).join("")}`;
 }
 
+function getPriceRuleLabel(rule, machines = []) {
+  const fallbackMachine = machines.find((m) => m.id === rule.machineId)?.name;
+  const machineName = rule.machineName || fallbackMachine || "Machine";
+  const variant = rule.variantLabel || rule.variant || (rule.vatEnabled ? "VAT" : "NON_VAT");
+  const cleanVariant = String(variant).replace(/[_-]+/g, " ");
+  return `${machineName} · ${cleanVariant} · ETB ${Math.round(Number(rule.unitPrice || 0)).toLocaleString()}`;
+}
+
 export default function CreateOrder() {
   const navigate = useNavigate();
   const dialog = useDialog();
@@ -319,7 +327,7 @@ Note:
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0">
+      <div className="bg-white border border-zinc-200 rounded-2xl p-3 sm:p-4 shadow-sm min-w-0 xl:sticky xl:top-4 self-start">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h2 className="text-lg sm:text-xl font-semibold text-primary">Create Order</h2>
           <div className="flex gap-2 flex-wrap">
@@ -361,7 +369,7 @@ Note:
                 <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">Price Rule</div>
                 <select className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={f.priceRuleId} onChange={(e) => update("priceRuleId", e.target.value)}>
                   <option value="">Select price</option>
-                  {priceOptions.map((rule) => <option key={rule.id} value={rule.id}>{`${rule.machineName || rule.machineId} - ${Math.round(rule.unitPrice || 0).toLocaleString()} - ${rule.variant || (rule.vatEnabled ? "VAT" : "NON_VAT")}`}</option>)}
+                  {priceOptions.map((rule) => <option key={rule.id} value={rule.id}>{getPriceRuleLabel(rule, machines)}</option>)}
                 </select>
               </div>
               <div>
@@ -426,7 +434,7 @@ Note:
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">Unit Price</div>
-              <input className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm" value={Math.round(unitPriceNum || 0).toLocaleString()} disabled />
+              <input className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-sm" value={f.unitPrice} onChange={(e) => update("unitPrice", onlyNumberLike(e.target.value))} />
             </div>
             <div>
               <div className="text-xs sm:text-sm font-semibold text-zinc-700 mb-1">VAT</div>

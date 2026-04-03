@@ -494,7 +494,7 @@ export default function AdminLayout() {
         <main
           ref={mainRef}
           onScroll={onMainScroll}
-          className="flex-1 overflow-auto p-1.5 sm:p-3 md:p-4"
+          className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-1.5 sm:p-3 md:p-4"
         >
           <Outlet context={{ machines }} />
 
@@ -539,7 +539,7 @@ export default function AdminLayout() {
             className="absolute inset-0 bg-black/30"
             onClick={() => setNotifOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-full w-full sm:w-[420px] bg-white border-l border-zinc-200 p-3 sm:p-4 overflow-auto">
+          <div className="absolute right-0 top-0 h-full w-full sm:w-[420px] bg-white border-l border-zinc-200 p-3 sm:p-4 overflow-y-auto overflow-x-hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="font-bold text-primary text-base sm:text-lg">
                 Notifications

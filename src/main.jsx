@@ -81,6 +81,18 @@ function BootGate({ children }) {
   return children;
 }
 
+function RoleJobsRedirect() {
+  const { user } = useAuth();
+  const role = String(user?.role || "").toUpperCase();
+  if (role === "ADMIN") return <Navigate to="/app/admin/jobs" replace />;
+  if (role === "CS") return <Navigate to="/app/cs/jobs" replace />;
+  if (role === "FINANCE") return <Navigate to="/app/finance/jobs/list" replace />;
+  if (role === "DESIGNER") return <Navigate to="/app/designer/queue" replace />;
+  if (role === "OPERATOR") return <Navigate to="/app/operator/queue" replace />;
+  return <Navigate to="/" replace />;
+}
+
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
@@ -222,7 +234,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="history" element={<FinanceAudit />} />
                 <Route path="audit" element={<Navigate to="/app/finance/history" replace />} />
               </Route>
-              <Route path="jobs" element={<JobsList />} />
+              <Route path="jobs" element={<RoleJobsRedirect />} />
 
               {/* ==== */}
               <Route index element={<Navigate to="/" replace />} />

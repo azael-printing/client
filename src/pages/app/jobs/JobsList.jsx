@@ -406,7 +406,7 @@ export default function JobsList() {
       {updateModalOpen && editingId === selected?.id && draft && isTopLevelAdminJobs && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" onClick={stopEditing} />
-          <div className="absolute left-1/2 top-1/2 w-[96%] max-w-[980px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-3xl p-4 sm:p-5 shadow-2xl max-h-[88vh] overflow-auto">
+          <div className="absolute left-1/2 top-1/2 w-[94%] max-w-[760px] -translate-x-1/2 -translate-y-1/2 bg-white border border-zinc-200 rounded-3xl p-4 sm:p-5 shadow-2xl max-h-[88vh] overflow-auto">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="font-semibold text-primary text-base sm:text-lg">Update Job</div>
@@ -416,6 +416,7 @@ export default function JobsList() {
             </div>
 
             <div className="mt-4">
+              <div className="mx-auto max-w-[700px]">
               <JobInlineEditor
                 draft={draft}
                 setDraft={setDraft}
@@ -424,9 +425,10 @@ export default function JobsList() {
                 canEditPayment={role === "ADMIN"}
                 paymentNote="Payment status is editable only for Admin."
               />
+              </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
               <button onClick={submitUpdate} className="flex-1 px-4 py-2.5 rounded-xl bg-success text-white text-xs sm:text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Update Job</button>
               <button onClick={stopEditing} className="px-4 py-2.5 rounded-xl border border-zinc-200 text-xs sm:text-sm font-semibold hover:bg-bgLight transition">Cancel</button>
             </div>

@@ -351,7 +351,7 @@ export default function CSJobControlPanel() {
         <Pagination page={pageSafe} totalPages={totalPages} onChange={setPage} />
       </div>
 
-      <div className="bg-white border border-zinc-200 rounded-2xl p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
+      <div className="bg-white border border-zinc-200 rounded-2xl p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20 self-start lg:sticky lg:top-4">
         {!selected ? (
           <div className="text-zinc-500 font-normal text-center mt-10">no job selected — select the job to see the detail</div>
         ) : editingId === selected.id && draft ? (

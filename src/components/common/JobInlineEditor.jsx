@@ -7,7 +7,7 @@ import {
 } from "../../utils/jobEditor";
 
 function fieldClass() {
-  return "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-300 hover:border-primary/30 focus:border-primary/40";
+  return "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-[13px] font-medium outline-none transition-all duration-300 hover:border-primary/30 focus:border-primary/40";
 }
 
 export default function JobInlineEditor({
@@ -28,7 +28,7 @@ export default function JobInlineEditor({
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="mx-auto grid max-w-[680px] gap-3.5">
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <div className="mb-1 text-xs sm:text-sm font-semibold text-zinc-700">Customer name</div>
@@ -60,7 +60,7 @@ export default function JobInlineEditor({
 
       <div>
         <div className="mb-1 text-xs sm:text-sm font-semibold text-zinc-700">Description</div>
-        <textarea className={`${fieldClass()} min-h-[84px] resize-y`} value={draft.description} onChange={(e) => patch("description", e.target.value)} />
+        <textarea className={`${fieldClass()} min-h-[78px] resize-y`} value={draft.description} onChange={(e) => patch("description", e.target.value)} />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -135,13 +135,13 @@ export default function JobInlineEditor({
         </div>
       </div>
 
-      <label className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-semibold text-zinc-700">
+      <label className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-[13px] font-semibold text-zinc-700">
         <input type="checkbox" checked={draft.designerRequired} onChange={(e) => patch("designerRequired", e.target.checked)} />
         Designer required
       </label>
 
       {showPaymentPanel ? (
-        <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
+        <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <div className="mb-1 text-xs sm:text-sm font-semibold text-zinc-700">Payment status</div>

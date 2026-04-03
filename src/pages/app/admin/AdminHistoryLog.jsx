@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Pagination from "../../../components/common/Pagination";
 import { http } from "../../api/http";
 import { formatJobId } from "../../../utils/jobFormatting";
+import { exportTableToPdf } from "../../../utils/exportPdf";
 
 function displayEntryId(row, index, offset = 0) {
   const raw = row?.job?.jobNo ?? row?.jobNo ?? "";
@@ -32,6 +33,21 @@ export default function AdminHistoryLog() {
     load();
   }, []);
 
+  function exportPdf() {
+    exportTableToPdf({
+      title: "Admin History Log",
+      headers: ["Time", "Job", "Actor", "Action", "From → To", "Note"],
+      rows: rows.map((row, index) => [
+        new Date(row.createdAt).toLocaleString(),
+        displayEntryId(row, index),
+        row.actorRole || "-",
+        row.action || "-",
+        `${row.fromStatus || "-"} → ${row.toStatus || "-"}`,
+        row.note || "-",
+      ]),
+    });
+  }
+
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const pageSafe = Math.min(page, totalPages);
   const slice = rows.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
@@ -43,12 +59,20 @@ export default function AdminHistoryLog() {
           <h2 className="text-[30px] font-extrabold leading-none text-primary">History Log</h2>
           <p className="mt-1 text-sm font-semibold text-zinc-500">All system activity for admin.</p>
         </div>
-        <button
-          onClick={load}
-          className="rounded-xl bg-bgLight px-4 py-2 text-sm font-bold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={exportPdf}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
+          >
+            Export PDF
+          </button>
+          <button
+            onClick={load}
+            className="rounded-xl bg-bgLight px-4 py-2 text-sm font-bold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       {err ? <div className="mt-4 text-sm font-semibold text-red-600">{err}</div> : null}
