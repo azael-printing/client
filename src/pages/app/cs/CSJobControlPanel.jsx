@@ -236,7 +236,7 @@ export default function CSJobControlPanel() {
   }
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_348px]">
+    <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
       <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
         <div className="text-2xl font-bold text-primary leading-tight">Job Control Panel</div>
         <div className="text-zinc-400 font-normal text-sm">Overview of Orders and Quotations</div>
@@ -371,9 +371,9 @@ export default function CSJobControlPanel() {
               paymentNote="Payment status is disabled here for Customer Service."
             />
 
-            <div className="flex flex-wrap gap-2">
-              <button onClick={submitUpdate} className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">Update Job</button>
-              <button onClick={stopEditing} className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold hover:bg-bgLight transition">Cancel</button>
+            <div className="grid gap-2">
+              <button onClick={submitUpdate} className="w-full rounded-xl border border-primary bg-white px-4 py-2.5 text-sm font-semibold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-bgLight hover:shadow-sm">Update Job</button>
+              <button onClick={stopEditing} className="w-full rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition-all duration-300 hover:bg-red-50 hover:text-white hover:border-red-400">Cancel</button>
             </div>
           </div>
         ) : (
