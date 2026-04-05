@@ -1,0 +1,432 @@
+/* azael-document.css */
+.azael-doc-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.azael-doc {
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  background: #f2f2f2;
+  color: #1e3f8f;
+  font-family: "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+  overflow: hidden;
+  box-sizing: border-box;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  padding: 0 14px 0 14px;
+}
+
+.azael-top-lines {
+  position: absolute;
+  top: 14px;
+  right: 0;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: flex-end;
+}
+
+.azael-top-lines span {
+  display: block;
+  height: 6px;
+  background: #0f74ba;
+  border-radius: 8px 0 0 8px;
+}
+
+.azael-top-lines span:first-child {
+  width: 58px;
+}
+
+.azael-top-lines span:last-child {
+  width: 43px;
+}
+
+.azael-brand-box {
+  width: 208px;
+  height: 82px;
+  background: #0f74ba;
+  border-bottom-right-radius: 38px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 10px 12px 0 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin-left: -14px;
+}
+
+.azael-brand-logo {
+  width: 128px;
+  height: auto;
+  object-fit: contain;
+}
+
+.azael-brand-fallback {
+  color: #ffffff;
+  line-height: 1;
+}
+
+.azael-brand-main {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.azael-brand-sub {
+  font-size: 10px;
+  margin-top: -2px;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+.azael-brand-am {
+  font-size: 9px;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.azael-doc-type {
+  position: absolute;
+  left: 44px;
+  bottom: 7px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: transparent;
+  -webkit-text-stroke: 1px #ffffff;
+  text-transform: uppercase;
+}
+
+.azael-meta {
+  position: absolute;
+  top: 58px;
+  right: 22px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #3562b6;
+}
+
+.meta-key {
+  margin-right: 4px;
+}
+
+.azael-customer-block {
+  margin-top: 73px;
+  margin-left: 4px;
+  width: 315px;
+}
+
+.azael-line-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.azael-line-row-tin {
+  padding-left: 88px;
+}
+
+.azael-line-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2f5dae;
+  white-space: nowrap;
+}
+
+.azael-line-value {
+  flex: 1;
+  min-height: 15px;
+  border-bottom: 1.7px solid #5f7fc0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #234785;
+  padding: 0 3px 1px 3px;
+  box-sizing: border-box;
+}
+
+.azael-table-area {
+  margin-top: 18px;
+}
+
+.azael-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 10px;
+  color: #21478e;
+}
+
+.azael-items-table thead th {
+  background: #0f74ba;
+  color: #ffffff;
+  border: 1.4px solid #2f69ae;
+  padding: 3px 4px;
+  text-align: left;
+  font-weight: 700;
+}
+
+.azael-items-table td {
+  border: 1.4px solid #4d74b5;
+  height: 18px;
+  padding: 1px 4px;
+  vertical-align: middle;
+  background: #f2f2f2;
+  font-weight: 600;
+}
+
+.col-no {
+  width: 4%;
+}
+
+.col-description {
+  width: 46%;
+}
+
+.col-qty {
+  width: 13%;
+}
+
+.col-unit {
+  width: 18%;
+}
+
+.col-total {
+  width: 19%;
+}
+
+.cell-center {
+  text-align: center;
+}
+
+.cell-right {
+  text-align: right;
+}
+
+.azael-summary-box {
+  width: 36%;
+  margin-left: auto;
+  margin-top: -1px;
+}
+
+.summary-row {
+  display: grid;
+  grid-template-columns: 46% 54%;
+}
+
+.summary-label {
+  background: #0f74ba;
+  color: #ffffff;
+  border: 1.4px solid #4d74b5;
+  border-right: none;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.summary-value {
+  background: #f2f2f2;
+  color: #21478e;
+  border: 1.4px solid #4d74b5;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  min-height: 19px;
+}
+
+.azael-bottom-content {
+  position: absolute;
+  left: 10px;
+  right: 12px;
+  bottom: 38px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.azael-bottom-left {
+  width: 52%;
+  color: #4d69b2;
+}
+
+.azael-section-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #3658a3;
+}
+
+.azael-info-line {
+  font-size: 10px;
+  line-height: 1.35;
+  margin-bottom: 1px;
+  color: #4d69b2;
+  font-weight: 600;
+}
+
+.azael-note-list {
+  margin: 8px 0 0 16px;
+  padding: 0;
+  color: #5a73b5;
+}
+
+.azael-note-list li {
+  font-size: 10px;
+  line-height: 1.25;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.azael-stamp-sign {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 44%;
+  justify-content: center;
+}
+
+.azael-stamp-box {
+  width: 82px;
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.azael-stamp-img {
+  width: 82px;
+  height: 82px;
+  object-fit: contain;
+}
+
+.azael-stamp-fallback {
+  width: 74px;
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stamp-ring {
+  width: 74px;
+  height: 74px;
+  border: 3px solid #556cb2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stamp-inner {
+  width: 42px;
+  height: 42px;
+  border: 2px solid #556cb2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #556cb2;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.azael-signature-box {
+  text-align: left;
+  color: #586faf;
+  margin-bottom: 7px;
+}
+
+.azael-manager-name {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.azael-manager-title {
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.azael-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #0f74ba;
+  color: #ffffff;
+  min-height: 38px;
+  border-radius: 0 0 18px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px 6px;
+  box-sizing: border-box;
+}
+
+.azael-footer-title {
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.azael-footer-phones {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.azael-footer-bottom {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+@media screen and (max-width: 900px) {
+  .azael-doc-wrap {
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 10px;
+  }
+
+  .azael-doc {
+    min-width: 794px;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  .azael-doc-wrap {
+    display: block;
+    overflow: visible;
+  }
+
+  .azael-doc {
+    width: 210mm;
+    min-height: 297mm;
+    box-shadow: none;
+    margin: 0;
+    border-radius: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

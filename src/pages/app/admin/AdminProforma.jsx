@@ -36,7 +36,60 @@ function autoGrow(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 
-function ProformaSheet({ docNumber, customerName, tin, rows, totals }) {
+// // function ProformaSheet({ docNumber, customerName, tin, rows, totals }) {
+// //   return (
+// //     <DocumentExactSheet
+// //       type="proforma"
+// //       docNumber={docNumber}
+// //       customerName={customerName}
+// //       tin={tin}
+// //       rows={rows}
+// //       totals={totals}
+// //     />
+// //   );
+// // }
+// function ProformaSheet({
+//   docNumber,
+//   customerName,
+//   tin,
+//   rows,
+//   totals,
+//   deliveryDate,
+// }) {
+//   return (
+//     // <DocumentExactSheet
+//     //   type="proforma"
+//     //   docNumber={docNumber}
+//     //   customerName={customerName}
+//     //   tin={tin}
+//     //   rows={rows}
+//     //   totals={totals}
+//     //   deliveryDate={deliveryDate}
+//     // />
+
+//     <DocumentExactSheet
+//       type="invoice"
+//       docNumber={docNumber}
+//       customerName={customerName}
+//       tin={tin}
+//       rows={rows}
+//       totals={totals}
+//       accountName={accountName}
+//       bankName={bankName}
+//       accountNumber={accountNumber}
+//       logoSrc="/assets/logo.png"
+//       sealSrc="/assets/azaelCompanySeal-01.png"
+//     />
+//   );
+// }
+function ProformaSheet({
+  docNumber,
+  customerName,
+  tin,
+  rows,
+  totals,
+  deliveryDate,
+}) {
   return (
     <DocumentExactSheet
       type="proforma"
@@ -45,12 +98,11 @@ function ProformaSheet({ docNumber, customerName, tin, rows, totals }) {
       tin={tin}
       rows={rows}
       totals={totals}
+      deliveryDate={deliveryDate}
     />
   );
 }
-
 export default function AdminProforma() {
-
   const [docNumber] = useState(() =>
     getNextDocNumber("azael_proforma_counter", "AZ-PR-"),
   );
@@ -533,6 +585,7 @@ export default function AdminProforma() {
               tin={f.tin}
               rows={rows}
               totals={totals}
+              deliveryDate={f.deliveryDate}
             />
           </div>
         </div>

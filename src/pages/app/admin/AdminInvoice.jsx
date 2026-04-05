@@ -139,7 +139,6 @@ function InvoiceSheet({
 }
 
 export default function AdminInvoice() {
-
   const [docNumber] = useState(() =>
     getNextDocNumber("azael_invoice_counter", "AZ-INV-"),
   );
@@ -281,6 +280,33 @@ export default function AdminInvoice() {
     setItems((prev) => [...prev, buildItem()]);
   }
 
+  // // function addNew() {
+  // //   addItem();
+  // //   setF((p) => ({
+  // //     ...p,
+  // //     description: "",
+  // //     quantity: "",
+  // //     unitType: "pcs",
+  // //     unitPrice: "",
+  // //     deliveryDate: "",
+  // //     deliveryTime: "",
+  // //   }));
+  // //   setItems([]);
+  // //   requestAnimationFrame(() => autoGrow(textRef.current));
+  // // }
+  // function addNew() {
+  //   addItem();
+  //   setF((p) => ({
+  //     ...p,
+  //     description: "",
+  //     quantity: "",
+  //     unitType: "pcs",
+  //     unitPrice: "",
+  //     deliveryDate: "",
+  //     deliveryTime: "",
+  //   }));
+  //   requestAnimationFrame(() => autoGrow(textRef.current));
+  // }
   function addNew() {
     addItem();
     setF((p) => ({
@@ -292,10 +318,8 @@ export default function AdminInvoice() {
       deliveryDate: "",
       deliveryTime: "",
     }));
-    setItems([]);
     requestAnimationFrame(() => autoGrow(textRef.current));
   }
-
   function removeRow(id) {
     setItems((prev) => prev.filter((x) => x.id !== id));
   }
